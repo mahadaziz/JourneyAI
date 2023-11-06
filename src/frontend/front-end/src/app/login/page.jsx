@@ -1,20 +1,25 @@
 'use client'
 import { useState } from 'react';
-import { redirect } from 'next/navigation'
+// import { redirect } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import { signIn } from 'next-auth/react';
 
 // signOut, useSession
 export default function page() {
-    const [email, setEmail] = useState("");
+    // const [email, setEmail] = useState("");
+    const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState("");
     
+    const router = useRouter();
+
     const handleSubmit = async (e) => {
         e.preventDefault();
 
         // built in nextAuth authentication for front-end.
         const res = await signIn("credentials", {
-            email: email,
+            // email: email,
+            name: username,
             password: password,
             redirect: false,
             callbackUrl: "/"
@@ -23,25 +28,26 @@ export default function page() {
             setError("Invalid Credentials");
             return;
         }
+        router.replace('/');
+        // redirect("/");
 
         // fetching login API to authenticate with backend Flask aswell.
-        await fetch("http://127.0.0.1:5000/login", {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({email, password}),
-        }).then(async res => {
-            if (res?.ok) {
-                const data = await res.json();
-                console.log("response is ok", data)
-            }
-        }).catch(error => {
-            console.error("Error in the flask login" + error);
-        });
+        // await fetch("http://127.0.0.1:5000/login", {
+        //     method: 'POST',
+        //     headers: {
+        //         'Content-Type': 'application/json'
+        //     },
+        //     body: JSON.stringify({email, password}),
+        // }).then(async res => {
+        //     if (res?.ok) {
+        //         const data = await res.json();
+        //         console.log("response is ok", data)
+        //     }
+        // }).catch(error => {
+        //     console.error("Error in the flask login" + error);
+        // });
 
         // redirect user to login when all calls are successful.
-        redirect("/");
 
         // if (restest.ok) {
         //     const data = await restest.json();
@@ -72,13 +78,13 @@ export default function page() {
                         <form className="relative flex flex-col items-center px-8 pt-8 pb-10 space-y-7" action="#" onSubmit={handleSubmit}>
                             <div>
                                 <label htmlFor="username" className="flex mb-2 text-sm font-bold text-white ">Username:</label>                        
-                                <input type="username" name="username" id="username" className="bg-white border-solid border-[3px] border-borderColor 
+                                <input onChange={(e) => setUsername(e.target.value)} type="username" name="username" id="username" className="bg-white border-solid border-[3px] border-borderColor 
                                 focus:outline-none rounded-full block min-w-full py-2 px-4 text-gray-900 sm:text-sm md:w-[300px]" placeholder="Enter your Username..." required/>
                             </div>
                             <div>
                                 <label htmlFor="password" className="flex mb-2 text-sm font-bold text-white">Password:</label>                        
                                 {/* </div><input type="password" name="password" id="password" autoComplete="new-password" className="bg-white border text-gray-900 sm:text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5" placeholder="password..." required/> */}
-                                <input type="password" name="password" id="password" autoComplete="new-password" className="bg-white border-solid border-[3px] border-borderColor
+                                <input onChange={(e) => setPassword(e.target.value)} type="password" name="password" id="password" autoComplete="new-password" className="bg-white border-solid border-[3px] border-borderColor
                                 focus:outline-none rounded-full block min-w-full py-2 px-4 text-gray-900 sm:text-sm md:w-[300px]" placeholder="Enter your Password..." required/>
                             </div>
 
