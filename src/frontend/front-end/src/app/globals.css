@@ -1,3 +1,43 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* sm	640px	@media (min-width: 640px) { ... }
+md	768px	@media (min-width: 768px) { ... }
+lg	1024px	@media (min-width: 1024px) { ... }
+xl	1280px	@media (min-width: 1280px) { ... }
+2xl	1536px	@media (min-width: 1536px) { ... } */
+
+input:-webkit-autofill {
+    -webkit-box-shadow: 0 0 0px 1000px white inset;
+    -webkit-text-fill-color: rgb(0, 0, 0)
+}
+
+.customBg {
+    background: url('../../public/img.png');
+    background-repeat: no-repeat;
+    background-blend-mode: none;
+    background-position: center;
+    background-size: cover;
+    clip-path: none;
+}
+
+/* clip image for xl screens and above */
+@media (min-width: 1280px) {
+.customBg {
+    /* 0,0 is top left corner, goes to top-right corner 100%, 0 */
+    /* Botton-right corner 100 100, then to bottom left 0, 100 */
+    clip-path: polygon(0 0, 65% 0, 100% 100%, 0% 100%)
+    }
+}
+
+.customBorder {
+    /* box-shadow: 10px 10px 4px 0px #3E47AC inset, -10px -10px 4px 0px #4947A7 inset; */
+    box-shadow: 10px 10px 4px 0px #3E47AC;
+    /* box-shadow: 10px 10px 4px 0px #412b93; */
+}
+  
+.customDropShadow {
+    filter: drop-shadow(0px 10px 10px #5C55BC) drop-shadow(0px 4px 4px rgba(0, 0, 0, 0.25));
+    /* filter: drop-shadow(0px 1px 1px #5C55BC); */
+}
