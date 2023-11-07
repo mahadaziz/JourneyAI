@@ -1,6 +1,9 @@
 import { Inter } from 'next/font/google'
-import { ThemeProvider } from './theme-provider'
-import '../globals.css'
+import { ThemeProvider } from '../theme-provider'
+import { getServerSession } from 'next-auth';
+import { authOptions } from '../../api/auth/[...nextauth]/route';
+import { AuthProvider } from "../../Providers";
+import '../../globals.css'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -14,7 +17,9 @@ export default async function RootLayout({ children }) {
     <html suppressHydrationWarning>
       <body>
         <ThemeProvider  attribute="class" defaultTheme="system" enableSystem>
-            {children}
+          <AuthProvider>
+              {children}
+          </AuthProvider>
         </ThemeProvider>
       </body>
     </html>

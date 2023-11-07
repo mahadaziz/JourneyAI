@@ -1,10 +1,8 @@
 'use client'
 import { useState } from 'react';
-// import { redirect } from 'next/navigation'
 import { useRouter } from 'next/navigation'
 import { signIn } from 'next-auth/react';
 
-// signOut, useSession
 export default function page() {
     // const [email, setEmail] = useState("");
     const [username, setUsername] = useState("");
@@ -29,7 +27,6 @@ export default function page() {
             return;
         }
         router.replace('/');
-        // redirect("/");
 
         // fetching login API to authenticate with backend Flask aswell.
         // await fetch("http://127.0.0.1:5000/login", {

@@ -27,7 +27,7 @@
     ".next/types/**/*.ts",
     "**/*.ts",
     "**/*.tsx"
-, "src/app/(main)/page.jsx", "lib/mongodb.js", "models/users.js"  ],
+, "src/app/(main)/homepage/page.jsx", "lib/mongodb.js", "models/users.js"  ],
   "exclude": [
     "node_modules"
   ]
