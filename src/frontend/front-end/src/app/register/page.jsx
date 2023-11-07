@@ -1,8 +1,6 @@
 'use client';
 import { useState } from 'react';
 import { redirect } from 'next/navigation'
-import Image from 'next/image';
-import img from "/public/img.png"
 
 export default function page() {
     const [email, setEmail] = useState("");
@@ -63,7 +61,7 @@ export default function page() {
         }
       };
     return (
-        <section className='relative flex w-screen min-h-screen mx-auto items-center justify-center bg-bgLight'>
+        <section className='relative flex w-screen h-screen mx-auto items-center justify-center bg-bgLight'>
             
             {/*  Image on left testing before it was lg:w-1/2*/}
             <div className="w-full customBg h-screen z-0 opacity-40 md:min-h-screen md:opacity-100 lg:w-1/2 xl:w-full xl:z-10">
@@ -81,11 +79,16 @@ export default function page() {
                         </h1>
                         
                         {/* Styles for form effect username and password text and input box */}
-                        <form className="relative flex flex-col items-center px-8 pt-8 pb-10 space-y-7" action="#" onSubmit={handleSubmit}>
+                        <form className="relative flex flex-col items-center px-8 pt-8 pb-8 space-y-7" action="#" onSubmit={handleSubmit}>
                             <div>
                                 <label htmlFor="username" className="flex mb-2 text-sm font-bold text-white ">Username:</label>                        
                                 <input type="username" name="username" id="username" className="bg-white border-solid border-[3px] border-borderColor 
                                 focus:outline-none rounded-full block min-w-full py-2 px-4 text-gray-900 sm:text-sm md:w-[300px]" placeholder="Enter your Username..." required/>
+                            </div>
+                            <div>
+                                <label htmlFor="email" className="flex mb-2 text-sm font-bold text-white ">Email:</label>                        
+                                <input type="email" name="email" id="email" className="bg-white border-solid border-[3px] border-borderColor 
+                                focus:outline-none rounded-full block min-w-full py-2 px-4 text-gray-900 sm:text-sm md:w-[300px]" placeholder="Enter your Email..." required/>
                             </div>
                             <div>
                                 <label htmlFor="password" className="flex mb-2 text-sm font-bold text-white">Password:</label>                        
