@@ -41,3 +41,81 @@ input:-webkit-autofill {
     filter: drop-shadow(0px 10px 10px #5C55BC) drop-shadow(0px 4px 4px rgba(0, 0, 0, 0.25));
     /* filter: drop-shadow(0px 1px 1px #5C55BC); */
 }
+
+/* Custom css for slate editor */
+/* Customize React-Quill toolbar */
+/* ql-toolbar ql-snow */
+/* ql-container ql-snow - outside container for textbox */
+/* ql-editor ql-blank - actual box to edit and type in */
+/* might need to change p tag too */
+
+/* .ql-editor.ql-snow {
+    width: 100%;
+    height: auto !important;
+}
+
+.ql-container.ql-snow {
+    min-height: 550px  !important;
+    color:black;
+} */
+
+.ql-container.ql-snow {
+    display: flex; 
+    flex-direction: column;
+    height: 550px; 
+    border: 1px solid #ccc; 
+    position: relative; 
+    color:black;
+  }
+  
+.ql-editor.ql-snow {
+    flex-grow: 1; 
+    overflow-y: auto;
+}
+
+.ql-toolbar.ql-snow {
+    position: sticky;
+    bottom: 10%; 
+    background: white; 
+}
+
+/* Style the scrollbar track (the part that the scrollbar thumb moves within) */
+.ql-editor::-webkit-scrollbar-track {
+    background-color: #f4f4f4;
+    border-radius: 10px;
+  }
+  
+  /* Style the scrollbar thumb (the part that you drag) */
+  .ql-editor::-webkit-scrollbar-thumb {
+    background-color: #c1c1c1;
+    border-radius: 10px;
+    border: 3px solid #f4f4f4; /* Same as the track color to create padding around thumb */
+  }
+  
+  /* Style the scrollbar itself (width, color etc.) */
+  .ql-editor::-webkit-scrollbar {
+    width: 8px;
+    background-color: #f4f4f4;
+  }
+  
+  /* Optionally, style the scrollbar for hovering */
+  .ql-editor::-webkit-scrollbar-thumb:hover {
+    background-color: #a0a0a0;
+  }
+
+/* globals.css */
+.ql-formats button {
+    margin-right: 2px; /* Adjust spacing between buttons */
+  }
+
+  #toolbar {
+    display: flex;          /* Use Flexbox */
+    justify-content: center; /* Center horizontally */
+    align-items: center;     /* Center vertically */
+    flex-wrap: wrap;         /* Allow items to wrap onto the next line */
+    padding: 10px 0;         /* Add some padding at the top and bottom */
+  }
+  
+  #toolbar button {
+    margin: 0 5px; /* Add some margin around buttons for spacing */
+  }
