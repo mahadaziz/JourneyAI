@@ -1,11 +1,8 @@
 'use client';
-
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import 'react-quill/dist/quill.snow.css';
-// import 'react-quill/dist/quill.bubble.css';
 import '../app/globals.css'
-// React Quill??
 
 const ReactQuill = dynamic(
     () => import('react-quill'),
@@ -17,10 +14,7 @@ const ReactQuill = dynamic(
   
   const TextBox = () => {
     const [value, setValue] = useState('');
-
-    const handleChange = (content, delta, source, editor) => {
-      setValue(editor.getHTML()); // Or directly content
-    };
+    const quillRef = useRef(null); // Ref to get the Quill instance
 
     // Implement undo and redo functions
     const undoChange = () => {
@@ -33,41 +27,65 @@ const ReactQuill = dynamic(
       editor.history.redo();
     };
 
-// Define the toolbar options
-const modules = {
-  toolbar: [
-    ['bold', 'italic', 'underline', 'strike'], // toggled buttons
-    ['blockquote', 'code-block'],
+    const formats = [
+      'bold',
+      'italic',
+      'underline',
+      'header', // You can specify header values as needed
+      'list',
+      'bullet',
+      'link',
+      'clean', // This format is for removing formatting
+    ];
 
-    [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-    [{ 'script': 'sub'}, { 'script': 'super' }], // superscript/subscript
-    [{ 'indent': '-1'}, { 'indent': '+1' }], // outdent/indent
-    [{ 'direction': 'rtl' }], // text direction
+  return (
+    <div className="row-span-3 col-span-2 pl-3 pr-3">
+      {/* Quill Editor */}
+      <ReactQuill className=''
+        ref={quillRef}
+        theme="snow"
+        value={value}
+        onChange={setValue}
+        modules={{
+          toolbar: '#toolbar', // Selector for the custom toolbar
+        }}
+        formats={formats}
+        placeholder="Start typing..." // Add your placeholder text here
 
-    [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
+      />
+      {/* Custom Toolbar */}
+      <div id="toolbar">
+        {/* Bold, Italic, and Underline buttons */}
+        <div className='toolbar-group border-r-2'>
+          <button className="ql-bold" title="Bold"></button>
+          <button className="ql-italic" title="Italic"></button>
+          <button className="ql-underline" title="Underline"></button>
+        </div>
 
-    [{ 'color': [] }, { 'background': [] }], // dropdown with defaults from theme
-    [{ 'font': [] }],
-    [{ 'align': [] }],
+        <div className='toolbar-group border-r-2'>
+          <button className="ql-header" value="1" title="Heading 1">H1</button>
+          <button className="ql-header" value="2" title="Heading 2">H2</button>
+        </div>
 
-    ['clean'], // remove formatting button
+        {/* Lists */}
+        <div className='toolbar-group border-r-2'>
+          <button className="ql-list" value="ordered" title="Ordered List"></button>
+          <button className="ql-list" value="bullet" title="Bullet List"></button>
+        </div>
 
-    ['undo', 'redo'], // Add undo and redo functions
-  ],
-};
-    return (
-      <div className='row-span-3 col-span-2 pl-3 pb-3'>
-      {/* ReactQuill component */}
-      <div className="flex-grow">
-        <ReactQuill
-          theme="snow"
-          value={value}
-          onChange={handleChange}
-          modules={modules}
-        />
+        {/* Link */}
+        <div className='toolbar-group border-r-2'>
+          <button button className="ql-link" title="Insert Link"></button>
+        </div>
+
+        <div className='toolbar-group border-r-2'>
+          {/* Clear formatting */}
+          <button className="ql-clean" title="Clear Formatting"></button>
+        </div>
+
       </div>
     </div>
-    );
-  };
+  );
+};
 
 export default TextBox;

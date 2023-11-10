@@ -44,58 +44,14 @@ input:-webkit-autofill {
 
 /* Custom css for slate editor */
 /* Customize React-Quill toolbar */
-/* ql-toolbar ql-snow */
-/* ql-container ql-snow - outside container for textbox */
-/* ql-editor ql-blank - actual box to edit and type in */
-/* might need to change p tag too */
-
-/* .ql-container.ql-snow {
-  min-height: 500px;
-  max-height: 100%;
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  border:none;
-} */
-
-
-/* .ql-editor.ql-blank::before {
-  color: #A7A7A7; 
-  content: attr(data-placeholder);
-  position: relative;
-  top: 12px;
-  left: 15px; 
-  right: 15px; 
-  bottom: 0;
-  font-style:normal;
-  font-size: 12px;
-  font-weight: 700;
-  pointer-events: none;
-} */
 
 .ql-editor {
-  max-height: 200px;
-  /* flex: 1; */
-  /* width: 100%; */
+  min-height: 700px;
+  max-height: 100%;
   color:black;
   background: #FDFDFE;
-  /* border-color:red; */
+  padding-bottom: 20px;
 }
-
-
-/* .ql-toolbar.ql-snow {
-  position: sticky;
-  bottom: 0; 
-  background: white;
-  border-radius: 0px;
-  border:none;
-} */
-
-/* Style the scrollbar track (the part that the scrollbar thumb moves within) */
-/* .ql-editor::-webkit-scrollbar-track {
-  background-color: #f4f4f4;
-  border-radius: 10px;
-} */
   
 /* Style the scrollbar thumb (the part that you drag) */
 .ql-editor::-webkit-scrollbar-thumb {
@@ -115,19 +71,48 @@ input:-webkit-autofill {
   background-color: #a0a0a0;
 }
 
-/* globals.css */
 .ql-formats button {
     margin-right: 2px; /* Adjust spacing between buttons */
   }
+
+.ql-container.ql-snow {
+  min-height: 100%;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  border: none;
+  animation: fadeIn 1s ease forwards;
+  animation-delay: 1s; /* Delay the start of the animation by 2 seconds */
+  visibility: hidden; /* Start with toolbar hidden */
+  opacity: 0; /* Start with toolbar fully transparent */
+}
 
 #toolbar {
   display: flex;          /* Use Flexbox */
   justify-content: center; /* Center horizontally */
   align-items: center;     /* Center vertically */
   flex-wrap: wrap;         /* Allow items to wrap onto the next line */
-  padding: 50px 0 10px 0;         /* Add some padding at the top and bottom */
+  padding: 10px 0 10px 0;         /* Add some padding at the top and bottom */
+  border:none;
+  animation: fadeIn 1s ease forwards;
+  animation-delay: 1s; /* Delay the start of the animation by 2 seconds */
+  visibility: hidden; /* Start with toolbar hidden */
+  opacity: 0; /* Start with toolbar fully transparent */
+  background: #FDFDFE;
+
 }
   
 #toolbar button {
   margin: 0 5px; /* Add some margin around buttons for spacing */
+}
+
+@keyframes fadeIn {
+  from {
+    visibility: hidden;
+    opacity: 0;
+  }
+  to {
+    visibility: visible;
+    opacity: 1;
+  }
 }
