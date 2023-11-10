@@ -57,7 +57,7 @@ const ReactQuill = dynamic(
       <div id="toolbar">
         {/* Bold, Italic, and Underline buttons */}
         <div className='toolbar-group border-r-2'>
-          <button className="ql-bold" title="Bold"></button>
+          <button className="ql-bold" title="Bold" ></button>
           <button className="ql-italic" title="Italic"></button>
           <button className="ql-underline" title="Underline"></button>
         </div>
@@ -75,7 +75,7 @@ const ReactQuill = dynamic(
 
         {/* Link */}
         <div className='toolbar-group border-r-2'>
-          <button button className="ql-link" title="Insert Link"></button>
+          <button className="ql-link" title="Insert Link"></button>
         </div>
 
         <div className='toolbar-group border-r-2'>
