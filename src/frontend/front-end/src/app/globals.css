@@ -41,3 +41,78 @@ input:-webkit-autofill {
     filter: drop-shadow(0px 10px 10px #5C55BC) drop-shadow(0px 4px 4px rgba(0, 0, 0, 0.25));
     /* filter: drop-shadow(0px 1px 1px #5C55BC); */
 }
+
+/* Custom css for slate editor */
+/* Customize React-Quill toolbar */
+
+.ql-editor {
+  min-height: 700px;
+  max-height: 100%;
+  color:black;
+  background: #FDFDFE;
+  padding-bottom: 20px;
+}
+  
+/* Style the scrollbar thumb (the part that you drag) */
+.ql-editor::-webkit-scrollbar-thumb {
+  background-color: #c1c1c1;
+  border-radius: 10px;
+  border: 3px solid #f4f4f4; /* Same as the track color to create padding around thumb */
+}
+  
+/* Style the scrollbar itself (width, color etc.) */
+.ql-editor::-webkit-scrollbar {
+  width: 8px;
+  background-color: #f4f4f4;
+}
+
+/* Optionally, style the scrollbar for hovering */
+.ql-editor::-webkit-scrollbar-thumb:hover {
+  background-color: #a0a0a0;
+}
+
+.ql-formats button {
+    margin-right: 2px; /* Adjust spacing between buttons */
+  }
+
+.ql-container.ql-snow {
+  min-height: 100%;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  border: none;
+  animation: fadeIn 1s ease forwards;
+  animation-delay: 1s; /* Delay the start of the animation by 2 seconds */
+  visibility: hidden; /* Start with toolbar hidden */
+  opacity: 0; /* Start with toolbar fully transparent */
+}
+
+#toolbar {
+  display: flex;          /* Use Flexbox */
+  justify-content: center; /* Center horizontally */
+  align-items: center;     /* Center vertically */
+  flex-wrap: wrap;         /* Allow items to wrap onto the next line */
+  padding: 10px 0 10px 0;         /* Add some padding at the top and bottom */
+  border:none;
+  animation: fadeIn 1s ease forwards;
+  animation-delay: 1s; /* Delay the start of the animation by 2 seconds */
+  visibility: hidden; /* Start with toolbar hidden */
+  opacity: 0; /* Start with toolbar fully transparent */
+  background: #FDFDFE;
+
+}
+  
+#toolbar button {
+  margin: 0 5px; /* Add some margin around buttons for spacing */
+}
+
+@keyframes fadeIn {
+  from {
+    visibility: hidden;
+    opacity: 0;
+  }
+  to {
+    visibility: visible;
+    opacity: 1;
+  }
+}
