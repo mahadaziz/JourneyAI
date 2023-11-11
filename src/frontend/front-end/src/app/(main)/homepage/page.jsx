@@ -1,7 +1,9 @@
+import ThemeSwitcher from "../../../components/ThemeSwitcher"
+
 export default function page() {
   return (
-   <div>
-    Homepage
+   <div className="bg-white dark:bg-black">
+    <ThemeSwitcher/>
    </div>
   )
 }
