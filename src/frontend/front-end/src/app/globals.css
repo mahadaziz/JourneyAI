@@ -46,34 +46,41 @@ input:-webkit-autofill {
 /* Customize React-Quill toolbar */
 
 .ql-editor {
-  min-height: 700px;
+  padding: 25px; /* Start text 50 pixels from the left */
+  height: 700px;
   max-height: 100%;
   color:black;
   background: #FDFDFE;
-  padding-bottom: 20px;
 }
-  
+
+/* target placeholder attribute */
+.ql-editor.ql-blank::before{
+  top: 25px; /* Adjust this value to position the placeholder as needed */
+  padding: 0 10px;
+  font-weight: 600 !important;
+  font-size: 15px;
+  opacity: 0.5;
+  color: black;
+  font-style:normal; 
+}
+
 /* Style the scrollbar thumb (the part that you drag) */
 .ql-editor::-webkit-scrollbar-thumb {
-  background-color: #c1c1c1;
-  border-radius: 10px;
-  border: 3px solid #f4f4f4; /* Same as the track color to create padding around thumb */
+  background-color: #7d76da;
+  border-radius: 5px;
+  border: 2px solid #f4f4f4; /* Same as the track color to create padding around thumb */
 }
   
 /* Style the scrollbar itself (width, color etc.) */
 .ql-editor::-webkit-scrollbar {
   width: 8px;
-  background-color: #f4f4f4;
+  background-color: #ffffff;
 }
 
 /* Optionally, style the scrollbar for hovering */
 .ql-editor::-webkit-scrollbar-thumb:hover {
   background-color: #a0a0a0;
 }
-
-.ql-formats button {
-    margin-right: 2px; /* Adjust spacing between buttons */
-  }
 
 .ql-container.ql-snow {
   min-height: 100%;
@@ -86,18 +93,54 @@ input:-webkit-autofill {
 #toolbar {
   display: flex;          /* Use Flexbox */
   justify-content: center; /* Center horizontally */
-  align-items: center;     /* Center vertically */
-  flex-wrap: wrap;         /* Allow items to wrap onto the next line */
   padding: 10px 0 10px 0;         /* Add some padding at the top and bottom */
   border:none;
+  border-radius: 1px;
+  opacity: 0.1;
   background: #FDFDFE;
-  bottom:0;
   position: sticky;
-
 }
   
 #toolbar button {
-  margin: 0 5px; /* Add some margin around buttons for spacing */
+  margin: 0 4px; /* Add some margin around buttons for spacing */
+}
+
+
+.toolbar-group button {
+  color: black !important;
+  opacity: 0.5;
+}
+
+.toolbar-group button:hover {
+  background-color: #e2e8f0; /* This is a light gray color; change as needed */
+  border-radius: 5px;
+  cursor: pointer;
+  color: black !important; /* Your desired text color for hover, with !important to ensure it takes precedence */
+  opacity: 0.8;
+  text-decoration: none !important;
+
+}
+
+button:hover .ql-stroke,
+.ql-picker-label:hover .ql-stroke {
+  fill: none;
+  stroke: black !important;
+}
+
+.ql-active .ql-stroke {
+  fill: none;
+  stroke: black !important;
+}
+
+button:hover .ql-fill,
+.ql-picker-label:hover .ql-fill {
+  fill: black !important;
+  stroke: none;
+}
+
+.ql-active .ql-fill {
+  fill: black !important;
+  stroke: none;
 }
 
 .delayAnimation {
@@ -183,15 +226,94 @@ input:-webkit-autofill {
 @layer utilities {
   .dark .ql-editor {
     color:white;
-    background-color: rgb(40, 40, 40);
-    border: white 2px solid;
+    /* background-color: #030712; */
+    background-color: #171717;
   }
 
-  .dark .ql-container.ql-snow {
-    min-height: 100%;
-    flex: 1;
-    display: flex;
-    flex-direction: column;
+  /* target placeholder attribute */
+  .dark .ql-editor.ql-blank::before{
+    font-weight: 600 !important;
+    font-size: 15px;
+    color:white !important;
+    font-style:normal; 
+  }
+
+  /* Style the scrollbar thumb (the part that you drag) */
+  .dark .ql-editor::-webkit-scrollbar-thumb {
+    background-color: #7d76da;
+    border-radius: 5px;
+    border: 2px solid #000000; /* Same as the track color to create padding around thumb */
+  }
+    
+  /* Style the scrollbar itself (width, color etc.) */
+  .dark .ql-editor::-webkit-scrollbar {
+    width: 8px;
+    background-color: black;
+  }
+
+  /* Optionally, style the scrollbar for hovering */
+  .dark .ql-editor::-webkit-scrollbar-thumb:hover {
+    background-color: #a0a0a0;
+  }
+
+  .dark #toolbar {
+    /* background-color: #020617; */
+    /* background-color: #030712; */
+    background-color: #171717;
+    /* background-color: #374151; */
+    color: white;
+    /* border: black 2px solid; */
+  }
+
+  .dark .toolbar-group button {
+    color: white !important;
+    opacity: 1;
+  }
+
+  .dark .toolbar-group button .ql-bold::before {
+    color: white !important;
+  }
+  
+  .dark .toolbar-group button:hover {
+    background-color: #e2e8f0; /* This is a light gray color; change as needed */
+    border-radius: 5px;
+    cursor: pointer;
+    color: black !important; /* Your desired text color for hover, with !important to ensure it takes precedence */
+    opacity: 0.4;
+    text-decoration: none !important;
+  
+  }
+  
+  .dark button:hover .ql-stroke,
+  .ql-picker-label:hover .ql-stroke {
+    fill: none;
+    stroke: black !important;
+  }
+  
+  .dark .ql-stroke {
+    fill: none;
+    stroke: white !important;
+  }
+
+  .dark .ql-fill {
+    fill: white !important;
+    stroke: none;
+  }
+
+  .dark .ql-active .ql-stroke {
+    fill: none;
+    stroke: white !important;
+  }
+  
+  .dark button:hover .ql-fill,
+  .ql-picker-label:hover .ql-fill {
+    fill: black !important;
+    stroke: none;
+  }
+  
+  .dark .ql-active .ql-fill {
+    fill: white !important;
+    stroke: none;
   }
 }
   

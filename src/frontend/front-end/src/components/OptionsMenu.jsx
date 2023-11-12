@@ -15,7 +15,8 @@ const OptionsMenu = () => {
                 id="dropdownDefaultButton" 
                 data-dropdown-toggle="dropdown" className="relative text-black bg-white hover:bg-gray-100 focus:outline-none 
                 font-medium rounded-2xl text-sm px-5 py-2.5 border border-black text-center inline-flex items-center
-                w-auto min-w-0 sm:min-w-[300px] md:min-w-[400px] lg:min-w-[500px]" 
+                w-auto min-w-0 sm:min-w-[300px] md:min-w-[400px] lg:min-w-[500px]
+                dark:bg-gray-700 dark:text-gray-200" 
                 
                 type="button">
                 Tell me about...
@@ -23,7 +24,7 @@ const OptionsMenu = () => {
                 <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="m1 1 4 4 4-4"/>
                 </svg>
             </button>
-            <div className={`z-10 ${isOpen ? '' : 'hidden'} absolute bg-white divide-y divide-gray-100 rounded-lg shadow w-full dark:bg-gray-700`}>
+            <div className={`z-10 ${isOpen ? '' : 'hidden'} absolute bg-white divide-y divide-gray-100 rounded-2xl shadow w-full dark:bg-gray-700`}>
                 <ul className="py-2 text-sm text-gray-700 dark:text-gray-200" aria-labelledby="dropdownDefaultButton">
                 <li>
                     <a href="#" className="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Emissions</a>
