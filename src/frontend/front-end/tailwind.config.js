@@ -13,7 +13,8 @@ module.exports = {
         bgDark: "#280235",
         loginBoxLight: "#280235",
         bgWhite: "#FFFFFF",
-        borderColor: "#4947A7"
+        borderColor: "#4947A7",
+        bgGrey: "#F6F6F6"
       },
       backgroundImage: {
         'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
