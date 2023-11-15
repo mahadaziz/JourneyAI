@@ -49,13 +49,12 @@ export default function Page() {
       {/* Dataset cards in the middle */}
       <div className="flex justify-center items-center grid grid-cols-4 bg-bgGrey text-center max-w-screen-md mx-auto">
         {/* First Row */}
-        <div className="h-48 w-36 bg-white rounded-lg shadow-lg shadow-bottom py-4 mx-5 mb-6">
+        <button className="h-48 w-36 bg-white rounded-lg shadow-lg shadow-bottom py-4 mx-5 mb-6 hover:drop-shadow-xl">
           <p className="text-lg">Upload Dataset</p>
-        </div>
-
-        <div className="h-48 w-36 bg-white rounded-lg shadow-lg shadow-bottom py-4 mx-5 mb-6">
+        </button>
+        <button className="h-48 w-36 bg-white rounded-lg shadow-lg shadow-bottom py-4 mx-5 mb-6 hover:drop-shadow-xl">
           <p className="text-lg">Fuel Consumption</p>
-        </div>
+        </button>
       </div>
 
       {/* Copyright message at the bottom */}
