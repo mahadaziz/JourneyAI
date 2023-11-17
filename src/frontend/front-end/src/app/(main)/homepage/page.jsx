@@ -10,7 +10,6 @@ export default function Page() {
   
   return (
     <section className='min-h-screen flex flex-col justify-between bg-bgGrey text-black'>
-      
       {/* Search bar and User Menu at the top */}
       <div className="flex w-full justify-center items-center relative p-12">
         <div className="flex-grow flex justify-center">

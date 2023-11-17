@@ -19,12 +19,12 @@ const ThemeSwitcher = () => {
         <button
             type="button"
             onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-            className={`border-1 rounded-md h-10`}
+            className={`border border-gray-700 rounded-2xl h-10 hover:bg-gray-300 dark:hover:bg-gray-700`}
         >
         {theme === "light" ? (
             <MoonIcon className="h-6 w-11  cursor-pointer stroke-1" aria-hidden="true" /> // Moon icon
         ) : (
-            <SunIcon className="h-6 w-11  cursor-pointer stroke-1" aria-hidden="true" /> // Sun icon
+            <SunIcon className="h-6 w-11  cursor-pointer stroke-1 text-yellow-200" aria-hidden="true" /> // Sun icon
         )}
         </button>
     </div>
