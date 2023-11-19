@@ -1,0 +1,64 @@
+Latency Test Notes:
+
+Response Times
+- 10.48 seconds: "Explain the rules of Candy Crush"
+- 2.86 seconds: "Why has there been an increase in the production of electric vehicles"
+- 2.08 seconds: "Why do gasoline cars emit more carbon dioxide than hybrid vehicles"
+- 2.75: "Why is the number of non-electric cars decreasing every year"
+- 3.92: "Why do hybrid cars tend to have lower fuel consumption than fully gasoline cars"
+- 2.42: "Why is there an increase in recharge time for electric vehicles in the past 10 years"
+- 6.10: "In the context of advancing artificial intelligence, consider the ethical implications of creating 
+        highly autonomous systems with decision-making capabilities. How should society navigate 
+        the delicate balance between technological progress and the potential risks associated with AI, 
+        such as job displacement, bias in algorithms, and the potential for misuse? Additionally, what proactive measures 
+        and policies do you believe should be in place to ensure that AI development aligns with human values and benefits 
+        society as a whole?"
+- 5.09: "Given the urgency and complexity of the global climate crisis, discuss the multifaceted challenges and potential 
+        solutions associated with mitigating and adapting to climate change. Consider the role of international cooperation, 
+        the impact of human activities on the environment, the challenges in transitioning to sustainable energy sources, 
+        and the ethical considerations involved in addressing climate-related issues. Additionally, explore the potential 
+        role of technology, policy, and individual actions in fostering a more sustainable and resilient future. How can 
+        society strike a balance between economic development and environmental conservation, and what strategies should be 
+        employed to engage diverse stakeholders in the collective effort to combat climate change?"
+
+- The response time is relative to the length of the answer. The 10.48 seconds response gave an answer triple the size of 
+the < 4s responses.
+
+Making several API calls in a short amount of time
+- I asked 15 questions back to back, these were the response times
+
+1.4394826889038086
+0.8487710952758789
+1.2351057529449463
+0.5655138492584229
+1.9840905666351318
+2.9178640842437744
+2.443319082260132
+4.019013404846191
+2.3286354541778564
+0.44640541076660156
+0.4604177474975586
+1.4725570678710938
+0.4564087390899658
+0.46442294120788574
+0.4634220600128174
+0.46942615509033203
+
+The 4 second response was a big question which required a larger answer. 
+Overall, no drop in performance, its possible that there will be no need for hosting the AI model.
+
+Testing latency with multiple users
+- Tested with 3 users, all made API calls at the same time.
+- 10.48 -> 16.90: "Explain the rules of Candy Crush"
+- 2.86 -> 2.99: "Why has there been an increase in the production of electric vehicles"
+- 2.08 -> 1.49: "Why do gasoline cars emit more carbon dioxide than hybrid vehicles"
+- 0.42 -> 0.43: "Can you name the planets in our solar system?"
+- 6.10 -> 7.54: "In the context of advancing artificial intelligence, consider the ethical implications of creating 
+        highly autonomous systems with decision-making capabilities. How should society navigate 
+        the delicate balance between technological progress and the potential risks associated with AI, 
+        such as job displacement, bias in algorithms, and the potential for misuse? Additionally, what proactive measures 
+        and policies do you believe should be in place to ensure that AI development aligns with human values and benefits 
+        society as a whole?"
+
+- With very large inputs, the AI model would sometimes return an empty response, and in some cases this error message:
+    - "{'error': 'Model tiiuae/falcon-7b-instruct is currently loading', 'estimated_time': 1685.13330078125}"
