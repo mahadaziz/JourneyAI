@@ -10,6 +10,8 @@ load_dotenv()
 
 app = Flask(__name__)
 
+cors = CORS(app, resources={r"/*": {"origins": "*"}})
+
 app.secret_key = os.getenv("SECRET_KEY")
 
 # MongoDB Configuration

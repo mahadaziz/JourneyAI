@@ -17,6 +17,26 @@ def login_required(f):
 def home():
     return "home"
 
+
+
+@app.route("/signup", methods=['POST'])
+@cross_origin()
+def signup():
+    return User().signup()
+
+@app.route("/signout")
+@login_required
+@cross_origin()
+def signout():
+    return User().signout()
+
+@app.route("/login", methods=['POST'])
+@cross_origin()
+def login():
+    return User().login()
+
+
+
 # # Testing that the database was connected 
 # @app.route("/<name>")
 # def name(name):
@@ -28,21 +48,3 @@ def home():
     
 
 #     return f'User {name} added to the database.'
-
-
-
-
-@app.route("/signup", methods=['POST'])
-@cross_origin()
-def signup():
-    return User().signup()
-
-@app.route("/signout")
-@cross_origin()
-def signout():
-    return User().signout()
-
-@app.route("/login", methods=['POST'])
-@cross_origin()
-def login():
-    return User().login()
