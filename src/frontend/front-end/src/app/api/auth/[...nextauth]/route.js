@@ -13,21 +13,18 @@ export const authOptions = {
           // password: {  label: 'Password', type: 'password' }
         },
         async authorize(credentials, req)  {
-        //   const email = credentials.email;
-          const username = credentials.username
+          const email = credentials.email;
           const password = credentials.password;
           try {
             const db = await connectMongoDB();
-            // const user = await User.findOne({ email });
-            const user = await User.findOne({ username });
+            const user = await User.findOne({ email });
 
-            console.log("this is the user", user);
             if (!user) {
               return null; // Return null when user is not found
             }
-            // const passwordsMatch = await bcrypt.compare(password, user.password);
+            const passwordsMatch = await bcrypt.compare(password, user.password);
   
-            if (!(password == user.password)) {
+            if (!passwordsMatch) {
                 console.log("Passwords did not match");
               return null; // Return null when passwords do not match
             }
@@ -44,13 +41,13 @@ export const authOptions = {
     callbacks: {
       async jwt({token, user}) {
         if (user) {
-          token.username = user.username;
+          token.email = user.email;
         }
         return token;
       },
       async session({ session}) {
         if (session.user) {
-            const user = await User.findOne({ username: session.user.username });
+            const user = await User.findOne({ email: session.user.email });
             session.user = user; // Update the session user object
         //   session.user.test = user.test;
         }
