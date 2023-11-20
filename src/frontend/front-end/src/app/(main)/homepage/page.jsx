@@ -1,6 +1,7 @@
 "use client"
 import { UserCircleIcon } from '@heroicons/react/24/solid';
 import React, { useState } from 'react';
+import { signOut } from 'next-auth/react';
 export default function Page() {
   const [isHidden, setIsHidden] = useState(true);
 
@@ -8,6 +9,12 @@ export default function Page() {
     setIsHidden(!isHidden);
   };
   
+  const handleSignOut = async () => {
+    console.log("SignOut");
+    await signOut({ redirect: true, callbackUrl: '/login' });
+    await fetch("http://127.0.0.1:5000/signout");
+
+  }
   return (
     <section className='min-h-screen flex flex-col justify-between bg-bgGrey text-black'>
       {/* Search bar and User Menu at the top */}
@@ -38,7 +45,7 @@ export default function Page() {
                 <a href="#" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 dark:text-gray-200 dark:hover:text-white">Settings</a>
               </li>
               <li>
-                <a href="#" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 dark:text-gray-200 dark:hover:text-white">Sign out</a>
+                <a href="#" onClick={handleSignOut} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 dark:text-gray-200 dark:hover:text-white">Sign out</a>
               </li>
             </ul>
           </div>

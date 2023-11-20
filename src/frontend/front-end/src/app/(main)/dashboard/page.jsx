@@ -7,14 +7,14 @@ import '../../../app/globals.css'
 
 export default function page() {
     return (
-    <div className="grid grid-cols-3 w-screen min-h-screen bg-bgGrey delayAnimation transition-colors duration-500 ease-in dark:bg-neutral-900">
+    <div className="grid grid-cols-3 w-screen min-h-screen bg-bgGrey delayAnimation transition-colors duration-100 ease-in-out dark:bg-neutral-900">
         {/* <!-- This is the first item at the top-left corner spanning 2 columns --> /} */}
         <div className="row-span-1 col-span-2 m-3">
             {/* put the home icon and drop down menu here */}
             <div className="flex flex-row justify-between items-center">
                 <div className="flex flex-row justify-content items-center align-center border border-gray-700 ml-2 pl-2 pr-2 rounded-2xl bg-white dark:bg-neutral-900">
                     <a href="/homepage">
-                        <button className="p-2 hover:text-bgLight hover:bg-gray-300 dark:hover:bg-gray-700 rounded-lg">
+                        <button className="p-2 rounded-lg hover:text-bgLight hover:bg-gray-300 dark:hover:bg-gray-700">
                             <HomeIcon className="w-6 h-6 "/>
                         </button>
                     </a>

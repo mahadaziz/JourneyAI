@@ -65,11 +65,33 @@ input:-webkit-autofill {
 }
 
 /* resize editor box for smaller screens */
-@media (min-height: 720px) {
+@media (min-height: 500px) {
+  .ql-editor {
+    height: 400px;
+  }
+}
+
+/* resize editor box for smaller screens */
+@media (min-height: 700px) {
+  .ql-editor {
+    height: 600px;
+  }
+}
+
+/* resize editor box for smaller screens */
+@media (min-height: 900px) {
   .ql-editor {
     height: 700px;
   }
 }
+
+
+/* resize editor box for smaller screens
+@media (min-height: 720px) {
+  .ql-editor {
+    height: 700px;
+  }
+} */
 
 /* target placeholder attribute */
 .ql-editor.ql-blank::before{
@@ -275,8 +297,7 @@ button:hover .ql-fill,
     background-color: #171717;
     /* background-color: #374151; */
     color: white;
-    /* transition: ease-in 1s; */
-    transition: color 1s ease-in;
+    /* transition: color 500ms ease-in; */
 
   }
 

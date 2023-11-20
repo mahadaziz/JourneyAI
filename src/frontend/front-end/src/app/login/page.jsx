@@ -4,8 +4,8 @@ import { useRouter } from 'next/navigation'
 import { signIn } from 'next-auth/react';
 
 export default function page() {
-    // const [email, setEmail] = useState("");
-    const [username, setUsername] = useState("");
+    const [email, setEmail] = useState("");
+    // const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState("");
     
@@ -16,8 +16,7 @@ export default function page() {
 
         // built in nextAuth authentication for front-end.
         const res = await signIn("credentials", {
-            // email: email,
-            name: username,
+            email: email,
             password: password,
             redirect: false,
             callbackUrl: "/"
@@ -26,33 +25,25 @@ export default function page() {
             setError("Invalid Credentials");
             return;
         }
-        router.replace('/');
 
         // fetching login API to authenticate with backend Flask aswell.
-        // await fetch("http://127.0.0.1:5000/login", {
-        //     method: 'POST',
-        //     headers: {
-        //         'Content-Type': 'application/json'
-        //     },
-        //     body: JSON.stringify({email, password}),
-        // }).then(async res => {
-        //     if (res?.ok) {
-        //         const data = await res.json();
-        //         console.log("response is ok", data)
-        //     }
-        // }).catch(error => {
-        //     console.error("Error in the flask login" + error);
-        // });
+        await fetch("http://127.0.0.1:5000/login", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({email, password}),
+        }).then(async res => {
+            if (res?.ok) {
+                const data = await res.json();
+                console.log("response is ok", data)
+            }
+        }).catch(error => {
+            console.error("Error in the flask login" + error);
+        });
 
         // redirect user to login when all calls are successful.
-
-        // if (restest.ok) {
-        //     const data = await restest.json();
-        //     console.log("restest is ok", data)
-        // } else {
-        //     const data = await restest.json();
-        //     console.error("Error in the flask login" + data.error);
-        // }
+        router.replace('/dashboard');
     };
     return (
         <section className='relative flex w-screen min-h-screen mx-auto items-center justify-center bg-bgLight'>
@@ -74,9 +65,9 @@ export default function page() {
                         {/* Styles for form effect username and password text and input box */}
                         <form className="relative flex flex-col items-center px-8 pt-8 pb-10 space-y-7" action="#" onSubmit={handleSubmit}>
                             <div>
-                                <label htmlFor="username" className="flex mb-2 text-sm font-bold text-white ">Username:</label>                        
-                                <input onChange={(e) => setUsername(e.target.value)} type="username" name="username" id="username" className="bg-white border-solid border-[3px] border-borderColor 
-                                focus:outline-none rounded-full block min-w-full py-2 px-4 text-gray-900 sm:text-sm md:w-[300px]" placeholder="Enter your Username..." required/>
+                                <label htmlFor="email" className="flex mb-2 text-sm font-bold text-white ">Email:</label>                        
+                                <input onChange={(e) => setEmail(e.target.value)} type="email" name="email" id="email" className="bg-white border-solid border-[3px] border-borderColor 
+                                focus:outline-none rounded-full block min-w-full py-2 px-4 text-gray-900 sm:text-sm md:w-[300px]" placeholder="Enter your Email..." required/>
                             </div>
                             <div>
                                 <label htmlFor="password" className="flex mb-2 text-sm font-bold text-white">Password:</label>                        

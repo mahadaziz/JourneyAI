@@ -24,16 +24,16 @@ const OptionsMenu = () => {
                 <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="m1 1 4 4 4-4"/>
                 </svg>
             </button>
-            <div className={`z-10 ${isOpen ? '' : 'hidden'} absolute bg-white divide-y divide-gray-100 rounded-2xl shadow w-full dark:bg-gray-700`}>
+            <div className={`z-10 ${isOpen ? '' : 'hidden'} absolute rounded-3xl bg-white divide-y divide-gray-100 shadow w-full dark:bg-gray-700`}>
                 <ul className="py-2 text-sm text-gray-700 dark:text-gray-200" aria-labelledby="dropdownDefaultButton">
                 <li>
-                    <a href="#" className="block px-4 py-2 hover:bg-gray-300 dark:hover:bg-gray-600 dark:hover:text-white">Emissions</a>
+                    <a href="#" className="block px-4 py-2 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 dark:hover:text-white">Emissions</a>
                 </li>
                 <li>
-                    <a href="#" className="block px-4 py-2 hover:bg-gray-300 dark:hover:bg-gray-600 dark:hover:text-white">Idk1</a>
+                    <a href="#" className="block px-4 py-2 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 dark:hover:text-white">Idk1</a>
                 </li>
                 <li>
-                    <a href="#" className="block px-4 py-2 hover:bg-gray-300 dark:hover:bg-gray-600 dark:hover:text-white">Idk2</a>
+                    <a href="#" className="block px-4 py-2 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 dark:hover:text-white">Idk2</a>
                 </li>
                 </ul>
             </div>
