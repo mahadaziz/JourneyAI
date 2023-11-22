@@ -17,9 +17,9 @@ export default async function page() {
     }
 
     return (
-    <div className="grid grid-cols-3 w-screen min-h-screen bg-bgGrey delayAnimation transition-colors duration-100 ease-in-out dark:bg-neutral-900">
+    <div className="grid grid-cols-3 w-screen h-screen bg-bgGrey delayAnimation transition-colors duration-500 ease-in-out dark:bg-neutral-900">
         {/* <!-- This is the first item at the top-left corner spanning 2 columns --> /} */}
-        <div className="row-span-1 col-span-2 m-3">
+        <div className="col-span-2 m-3">
             {/* put the home icon and drop down menu here */}
             <div className="flex flex-row justify-between items-center">
                 <div className="flex flex-row justify-content items-center align-center border border-gray-700 ml-2 pl-2 pr-2 rounded-2xl bg-white dark:bg-neutral-900">
@@ -40,16 +40,20 @@ export default async function page() {
                 </div>
             </div>
         </div>
-        <div className="row-span-2 col-span-1">
-            <HypothesisBox/>
-        </div>
 
         {/* <!-- TextBox should span the entire height minus the first row and span all columns --> /} */}
-        <TextBox className="col-span-2 row-span-full pl-3 pr-3 "/>
+        <div className="col-span-2">
+            <TextBox/>
+        </div>
 
-        {/* <!-- These two divs are placed on the right side, each occupying a single column and multiple rows --> */}
-        <div className="row-span-2 col-span-1">
-            <InsightsBox/>
+
+        <div className="col-span-1">
+            <div>
+                <HypothesisBox/>
+            </div>
+            <div>
+                <InsightsBox/>
+            </div>
         </div>
     </div>
     )
