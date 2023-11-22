@@ -12,14 +12,14 @@ const nextConfig = {}
 //     },
 //   };
 // module.exports = nextConfig
-// module.exports = {
-//   async redirects() {
-//       return [
-//           {
-//               source: '/',
-//               destination: '/dashboard',
-//               permanent: false, // Consider using false during development
-//           },
-//       ];
-//   },
-// };
+module.exports = {
+  async redirects() {
+      return [
+          {
+              source: '/',
+              destination: '/dashboard',
+              permanent: false, // Consider using false during development
+          },
+      ];
+  },
+};

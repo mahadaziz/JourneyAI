@@ -1,11 +1,21 @@
-import TextBox from "../../../components/TextBox"
-import OptionsMenu from "../../../components/OptionsMenu"
 import { HomeIcon } from '@heroicons/react/24/solid';
+import { authOptions } from "../../api/auth/[...nextauth]/route";
+import { getServerSession } from "next-auth";
+import { redirect } from "next/navigation";
+import TextBox from "../../../components/TextBox"
 import ThemeSwitcher from "../../../components/ThemeSwitcher"
 import SideNav from "../../../components/SideNav"
+import OptionsMenu from "../../../components/OptionsMenu"
+import HypothesisBox from "../../../components/HypothesisBox";
+import InsightsBox from "../../../components/InsightsBox";
 import '../../../app/globals.css'
 
-export default function page() {
+export default async function page() {
+    const session = await getServerSession(authOptions);    
+    if (!session) {
+        redirect('/login');
+    }
+
     return (
     <div className="grid grid-cols-3 w-screen min-h-screen bg-bgGrey delayAnimation transition-colors duration-100 ease-in-out dark:bg-neutral-900">
         {/* <!-- This is the first item at the top-left corner spanning 2 columns --> /} */}
@@ -30,13 +40,17 @@ export default function page() {
                 </div>
             </div>
         </div>
-        <div className="row-span-2 col-span-1">2</div>
+        <div className="row-span-2 col-span-1">
+            <HypothesisBox/>
+        </div>
 
         {/* <!-- TextBox should span the entire height minus the first row and span all columns --> /} */}
         <TextBox className="col-span-2 row-span-full pl-3 pr-3 "/>
 
         {/* <!-- These two divs are placed on the right side, each occupying a single column and multiple rows --> */}
-        <div className="row-span-2 col-span-1">3</div>
+        <div className="row-span-2 col-span-1">
+            <InsightsBox/>
+        </div>
     </div>
     )
 }

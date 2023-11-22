@@ -43,7 +43,7 @@ export default function page() {
         });
 
         // redirect user to login when all calls are successful.
-        router.replace('/dashboard');
+        router.push('/dashboard');
     };
     return (
         <section className='relative flex w-screen min-h-screen mx-auto items-center justify-center bg-bgLight'>
