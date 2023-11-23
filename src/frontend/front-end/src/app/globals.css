@@ -74,7 +74,7 @@ input:-webkit-autofill {
 /* resize editor box for smaller screens */
 @media (min-height: 700px) {
   .ql-editor {
-    height: 600px;
+    height: 650px;
   }
 }
 
