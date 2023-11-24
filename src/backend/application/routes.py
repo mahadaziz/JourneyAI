@@ -1,5 +1,5 @@
 from application import app
-from application.models import User
+from application.models import User, insights
 from functools import wraps
 from flask import Flask, redirect, session
 from flask_cors import CORS,cross_origin
@@ -36,6 +36,14 @@ def login():
     return User().login()
 
 
+
+
+
+@app.route("/get_insights", methods=['POST'])
+@cross_origin()
+@login_required
+def generate_insights():
+    return insights().generate_insights()
 
 # # Testing that the database was connected 
 # @app.route("/<name>")

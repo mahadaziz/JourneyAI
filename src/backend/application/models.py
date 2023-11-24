@@ -82,3 +82,54 @@ class User:
             {'$set': {'last_login_time' : datetime.datetime.utcnow()}}
         )
         return jsonify ({"message": 'Updated last update time for user'}), 200
+
+class insights:
+    
+    def get_outliers (self, column_name):
+        return []
+    
+    def get_trends (self, column_name):
+        return []
+    
+    def get_distributions (self, column_name):
+        return []
+    
+    def get_basic_stats (self, column_name):
+        return []
+    
+    def get_clusters (self, column_name):
+        return []
+    
+    def get_rank (self, column_name):
+        return []
+    
+    def get_derived_values (self, column_name):
+        return []
+    
+    def get_associations (self, column_name):
+        return []
+    
+    def get_differences (self, column_name):
+        return []
+    
+    
+    def generate_insights(self, column_name):
+        all_insights[column_name] = {'outliers' : self.get_outliers(column_name) ,
+                                     'derived values' : self.get_derived_values(column_name),
+                                     'associations' : self.get_associations(column_name),
+                                     'differences' : self.get_differences(column_name),
+                                     'trends' : self.get_trends(column_name),
+                                     'distribution' : self.get_distributions(column_name),
+                                     'basic_stats' : self.get_basic_stats(column_name),
+                                     'clusters' : self.get_clusters(column_name),
+                                     'rank' : self.get_rank(column_name)}        
+
+        
+        #Make it a fair portion of all_insights and take care of errors when there isn't enough of certain number of insight-types
+        session['current_insights'] = []
+        ###################
+        # Add to session variables the index of each insight-type that was added to current_insights 
+        # Add to session variables the maximum index possible so that we know when to refresh for each type 
+        
+        ####################
+        return session['current_insights']
