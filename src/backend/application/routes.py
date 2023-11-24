@@ -42,8 +42,8 @@ def login():
 @app.route("/get_insights", methods=['POST'])
 @cross_origin()
 @login_required
-def generate_insights():
-    return insights().generate_insights()
+def get_insights():
+    return insights().get_insights()
 
 # # Testing that the database was connected 
 # @app.route("/<name>")

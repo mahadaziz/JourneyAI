@@ -114,6 +114,7 @@ class insights:
     
     
     def generate_insights(self, column_name):
+        
         all_insights[column_name] = {'outliers' : self.get_outliers(column_name) ,
                                      'derived values' : self.get_derived_values(column_name),
                                      'associations' : self.get_associations(column_name),
@@ -133,3 +134,12 @@ class insights:
         
         ####################
         return session['current_insights']
+    def get_insights(self):
+        column_name = request.json.get('column_name')
+        # Check if column_name already has insights in the session/db
+        ########
+        #IF BLOCK
+        ########
+        #ELSE BLOCK 
+        return self.generate_insights(column_name)
+        ########
