@@ -36,7 +36,7 @@ def login():
     return User().login()
 
 
-@app.route("/get_column_names")
+@app.route("/get_column_names", methods=['GET'])
 @cross_origin()
 @login_required
 def get_column_names():
@@ -45,9 +45,23 @@ def get_column_names():
     return jsonify({'column_names' :  column_names})
 
 
+@app.route("/get_data_1", methods=['GET'])
+@cross_origin()
+@login_required
+def get_data_1():
+    data = list(db.cars.find({'Fuel consumption inside cities (l/100km)': {'$gt': 0}}, {'_id': 0, 'model year': 1, 'Fuel consumption inside cities (l/100km)': 1}))
+    return jsonify({'data' : data})
 
 
-@app.route("/get_insights", methods=['POST'])
+@app.route("/get_data_2", methods=['GET'])
+@cross_origin()
+@login_required
+def get_data_2():
+    data = list(db.cars.find({'Electrical consumption inside cities (kwh/100km)': {'$gt': 0}}, {'_id': 0, 'model year': 1, 'Electrical consumption inside cities (kwh/100km)': 1}))
+    return jsonify({'data' : data})
+
+
+@app.route("/get_insights", methods=['GET'])
 @cross_origin()
 @login_required
 def get_insights():
