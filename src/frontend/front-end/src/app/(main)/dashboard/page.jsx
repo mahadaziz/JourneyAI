@@ -24,7 +24,7 @@ export default async function page() {
             <div className="flex flex-row justify-between items-center">
                 <div className="flex flex-row justify-content items-center align-center border border-gray-700 ml-2 pl-2 pr-2 rounded-2xl bg-white dark:bg-neutral-900">
                     <a href="/homepage">
-                        <button className="p-2 rounded-lg hover:text-bgLight hover:bg-gray-300 dark:hover:bg-gray-700">
+                        <button className="p-2 rounded-lg hover:text-bgLight hover:bg-gray-200 dark:hover:bg-gray-700">
                             <HomeIcon className="w-6 h-6 "/>
                         </button>
                     </a>

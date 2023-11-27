@@ -97,7 +97,7 @@ const ReactQuill = dynamic(
         </div>
 
         {/* Word Count */}
-        <div className="ml-5 mr-5 text-gray-400 dark:text-white">{wordCount} words</div>
+        <div className="ml-12 mr-5 text-gray-400 dark:text-white">{wordCount} words</div>
       </div>
     </div>
   );
