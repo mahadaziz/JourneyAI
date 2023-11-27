@@ -2,12 +2,14 @@
 
 const HypothesisButton = ({ header }) => {
     return (
-        <button type="button" className="flex flex-col items-center w-full bg-white border border-gray-200 rounded-lg shadow md:flex-row md:max-w-xl p-4 hover:bg-gray-100 dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700">
-            <h5 className="mb-2 text-2xl font-normal tracking-tight text-gray-900 dark:text-white">
+        <div className="px-4 py-2">
+            <button type="button" className="flex flex-col items-center w-full bg-white border border-gray-200 rounded-lg shadow md:flex-row md:max-w-xl hover:bg-gray-100 dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700">
+            <h5 className="text-xl font-normal tracking-tight p-4 text-gray-900 dark:text-white">
                 {header}
             </h5>
             <p className="mb-3 font-normal text-gray-700 dark:text-gray-400"></p>
-        </button>
+            </button>
+        </div>
     )
 }
 
@@ -19,8 +21,8 @@ const HypothesisBox = () => {
     ];
 
     return (
-        <div className="pl-4 pr-4 w-full">
-            <div className="flex justify-between items-center bg-neutral-900 border border-gray-200 rounded-lg shadow md:flex-row md:max-w-xl hover:bg-gray-100 dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700">
+        <div className="px-2 w-full">
+            <div className="flex justify-between items-center bg-neutral-900 border border-gray-200 rounded-lg shadow md:flex-row md:max-w-xl dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700">
                 <div className="flex flex-col justify-between p-4 leading-normal">
                     <h5 className="mb-2 text-2xl font-bold tracking-tight text-white dark:text-white">
                         Hypotheses
