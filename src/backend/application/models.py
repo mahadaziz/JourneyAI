@@ -163,7 +163,8 @@ class insights:
         
         current_insights = random.sample([v for v in all_values if v not in prev_insights], new_insights_count)
         
-        session['insights']['prev_insights'][column_name].extend(current_insights)
+        if new_insights_count >= 10:
+            session['insights']['prev_insights'][column_name].extend(current_insights)
         if new_insights_count < 10:
             print (current_insights)
             current_insights.extend(random.sample(prev_insights, 10 - len(current_insights)))
