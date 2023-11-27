@@ -19,7 +19,7 @@ const ThemeSwitcher = () => {
         <button
             type="button"
             onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-            className={`border border-gray-700 rounded-2xl h-10 hover:bg-gray-300 dark:hover:bg-gray-700`}
+            className={`border border-gray-700 rounded-2xl h-10 hover:bg-gray-200 dark:hover:bg-gray-700`}
         >
         {theme === "light" ? (
             <SunIcon className="h-6 w-11  cursor-pointer stroke-1 text-cyan-400" aria-hidden="true" /> // Sun icon

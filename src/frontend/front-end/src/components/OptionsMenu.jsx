@@ -19,7 +19,7 @@ const OptionsMenu = () => {
                 data-dropdown-toggle="dropdown" className="relative focus:outline-none 
                 font-medium rounded-2xl text-sm px-5 py-2.5 border border-gray-700 text-center inline-flex items-center
                 w-auto min-w-0 sm:min-w-[300px] md:min-w-[400px] lg:min-w-[500px]
-                text-black bg-white hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-200" 
+                text-black bg-white hover:bg-gray-100 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600" 
                 
                 type="button">
                 Tell me about:

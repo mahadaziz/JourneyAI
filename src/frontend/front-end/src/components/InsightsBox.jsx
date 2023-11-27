@@ -33,25 +33,25 @@ const InsightsBox = () => {
     }
 
     return (
-        <div className="px-2 w-full">
+        <div className="py-4 px-2 w-full">
             <div className="flex justify-between items-center bg-neutral-900 border border-gray-200 rounded-lg shadow md:flex-row md:max-w-xl dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700">
                 <div className="flex flex-col justify-between p-4 leading-normal">
                     <h5 className="mb-2 text-2xl font-bold tracking-tight text-white dark:text-white">
                         Insights
                     </h5>
                 </div>
-                <div className="mb-4 border-gray-200 dark:border-gray-700">
-                    <ul className="flex flex-wrap -mb-px text-sm font-medium text-center" id="default-tab" role="tablist">
+                <div className=" border-gray-200 dark:border-gray-700">
+                    <ul className="flex flex-wrap -mb-px text-md font-medium text-center " id="default-tab" role="tablist">
                         {tabs.map(tab => (
-                            <li className="me-6" role="presentation" key={tab.id}>
-                                <button className="flex justify-center items-center p-4 border-b-2 rounded-lg text-white hover:bg-gray-300" id={`${tab.id}-tab`} type="button" role="tab" aria-controls={tab.id} aria-selected={activeTab === tab.id} onClick={() => handleTabClick(tab.id)}>
+                            <li className="me-6 " role="presentation" key={tab.id}>
+                                <button className="flex justify-center items-center h-[40px] w-[20px] p-4 rounded-lg text-white bg-gray-600 hover:bg-gray-400" id={`${tab.id}-tab`} type="button" role="tab" aria-controls={tab.id} aria-selected={activeTab === tab.id} onClick={() => handleTabClick(tab.id)}>
                                     {tab.title}
                                 </button>
                             </li>
                         ))}
                     </ul>
                 </div>
-                <button type="button" className="text-white bg-gray-600 hover:bg-gray-900 focus:outline-none focus:ring-4 focus:ring-gray-300 font-medium rounded-full text-sm px-5 py-2.5 text-center inline-flex items-center me-2 dark:text-gray-800 dark:bg-white dark:hover:bg-gray-300 dark:focus:ring-gray-700 dark:border-gray-700">
+                <button type="button" className="text-white bg-gray-600 hover:bg-gray-400 focus:outline-none focus:ring-4 focus:ring-gray-300 font-medium rounded-full text-sm px-5 py-2.5 text-center inline-flex items-center me-2 dark:text-gray-800 dark:bg-white dark:hover:bg-gray-300 dark:focus:ring-gray-700 dark:border-gray-700">
                     Refresh
                 </button>
             </div>
