@@ -15,6 +15,7 @@ export default async function page() {
     if (!session) {
         redirect('/login');
     }
+    console.log(session);
 
 
     return (
