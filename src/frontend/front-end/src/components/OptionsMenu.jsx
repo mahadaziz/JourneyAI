@@ -17,7 +17,8 @@ const OptionsMenu = () => {
     // http://localhost:5000/get_column_names
     // use the setValue function to set the selected column
     const getColumnNames = async () => {
-        const optionsData = await fetch('http://127.0.0.1:5000/get_column_names');
+        const optionsData = await fetch('http://127.0.0.1:5000/get_column_names', {
+        });
         console.log(await optionsData.json());
     }
 
