@@ -36,32 +36,34 @@ def login():
     return User().login()
 
 
-@app.route("/get_column_names", methods=['GET'])
+@app.route("/get_column_names")
 @cross_origin()
 @login_required
 def get_column_names():
     names = list(db.cars.find_one().keys())
-    column_names = [ name.capitalize() for name in  names if name != '_id' ]
+    # column_names = [ name.capitalize() for name in  names if name != '_id' ]
+    column_names = [ name for name in  names if name != '_id' ]
+    
     return jsonify({'column_names' :  column_names})
 
 
-@app.route("/get_data_1", methods=['GET'])
+@app.route("/get_data", methods=['POST'])
 @cross_origin()
 @login_required
-def get_data_1():
-    data = list(db.cars.find({'Fuel consumption inside cities (l/100km)': {'$gt': 0}}, {'_id': 0, 'model year': 1, 'Fuel consumption inside cities (l/100km)': 1}))
-    return jsonify({'data' : data})
+def get_data():
+    column_name = request.json.get('column_name')
+    if 'Fuel consumption inside cities (l/100km)'.lower() in column_name.lower():
+        data = list(db.cars.find({'Fuel consumption inside cities (l/100km)': {'$gt': 0}}, {'_id': 0, 'model year': 1, 'Fuel consumption inside cities (l/100km)': 1}))
+        return jsonify({'data' : data})
+
+    if 'Electrical consumption inside cities (kwh/100km)'.lower() in column_name.lower():
+        data = list(db.cars.find({'Electrical consumption inside cities (kwh/100km)': {'$gt': 0}}, {'_id': 0, 'model year': 1, 'Electrical consumption inside cities (kwh/100km)': 1}))
+        return jsonify({'data' : data})
+    else:
+        return jsonify ({'data' : []})
 
 
-@app.route("/get_data_2", methods=['GET'])
-@cross_origin()
-@login_required
-def get_data_2():
-    data = list(db.cars.find({'Electrical consumption inside cities (kwh/100km)': {'$gt': 0}}, {'_id': 0, 'model year': 1, 'Electrical consumption inside cities (kwh/100km)': 1}))
-    return jsonify({'data' : data})
-
-
-@app.route("/get_insights", methods=['GET'])
+@app.route("/get_insights", methods=['POST'])
 @cross_origin()
 @login_required
 def get_insights():
