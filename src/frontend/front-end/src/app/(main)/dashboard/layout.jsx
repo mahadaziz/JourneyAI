@@ -17,7 +17,7 @@ export default async function RootLayout({ children }) {
   return (
     <html suppressHydrationWarning>
       <body>
-        <ThemeProvider  attribute="class" defaultTheme="system" enableSystem>
+        <ThemeProvider  attribute="class" defaultTheme="light" enableSystem>
           <AuthProvider>
               {children}
           </AuthProvider>
