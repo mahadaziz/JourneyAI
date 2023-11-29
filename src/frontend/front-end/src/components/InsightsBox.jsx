@@ -7,8 +7,8 @@ import { SelectedColumnContext } from '../context/SelectedColumnContext'
 const InsightButton = ({header}) => {
     return (
         <div className="px-4 py-2">
-            <button type="button" className="flex flex-col items-center w-full bg-white border border-gray-200 rounded-lg shadow md:flex-row md:max-w-xl p-4 hover:bg-gray-100 dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700">
-            <h5 className="text-xl tracking-tight text-gray-900 dark:text-white">
+            <button type="button" className="flex flex-col w-full bg-white border border-gray-200 rounded-lg shadow md:flex-row md:max-w-xl p-4 hover:bg-gray-100 dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700">
+            <h5 className="text-lg tracking-tight text-gray-900 dark:text-white">
                 {header}
             </h5>
             <p className="mb-3 font-normal text-gray-700 dark:text-gray-400"></p>
@@ -21,24 +21,27 @@ const InsightsBox = () => {
     const { selectedColumn } = useContext(SelectedColumnContext);
     const [insightsData, setInsightsData] = useState([]);
     const [previousInsights, setPreviousInsights] = useState([]);
-    // const [activeTab, setActiveTab] = useState('insightsSetOne');
+    const [activeTab, setActiveTab] = useState(0);
+    const itemsTab = 3;
 
     useEffect(() => {
-        const getInsightsData = async (selectedColumn, previousInsights) => {
+        if (selectedColumn === undefined || selectedColumn === null || selectedColumn === '') {
+            return;
+        }
+        const getInsightsData = async (column_name, prev_insights) => {
+            console.log("?this is the selected column", column_name);
             try {
                 const response = await fetch('http://127.0.0.1:8080/get_insights', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({selectedColumn, previousInsights}),
+                    body: JSON.stringify({column_name, prev_insights}),
                 });
                 const data = await response.json();
-                console.log("Data in frontend: ", data)
                 // Check if the response is ok
                 if (response.ok) {
                     const insightsData = data.insights;
-                    console.log("what is this", data);
                     const previousData = data.prev_insights;
                     setInsightsData(insightsData);
                     setPreviousInsights(previousData);
@@ -54,22 +57,28 @@ const InsightsBox = () => {
         getInsightsData(selectedColumn, previousInsights);
     }, [selectedColumn]);
 
-    // insightsData = {
-    //     insightsSetOne: ['AI Generated Prompt Header 1', 'AI Generated Prompt Header 2', 'AI Generated Prompt Header 3', 'AI Generated Prompt Header 4'],
-    //     insightsSetTwo: ['AI Generated Prompt Header 5', 'AI Generated Prompt Header 6', 'AI Generated Prompt Header 7', 'AI Generated Prompt Header 8'],
-    //     insightsSetThree: ['AI Generated Prompt Header 9', 'AI Generated Prompt Header 10', 'AI Generated Prompt Header 11', 'AI Generated Prompt Header 12']
-    // };
+    // useEffect(() => {
+    //     if (Object.keys(insightsData).length > 0) {
+    //         setActiveTab(Object.keys(insightsData)[0]);
+    //     }
+    // }, [insightsData]);
 
-    console.log(insightsData);
-    console.log(previousInsights);
     // const tabs = Object.keys(insightsData).map((tabId, index) => ({
-    //     id: tabId,
-    //     title: (index + 1).toString()
-    // }));
-
-    const handleTabClick = (tabId) => {
-        setActiveTab(tabId)
+        //     id: tabId,
+        //     title: (index + 1).toString()
+        // }));
+        
+    console.log("this is the insights data", insightsData);
+    // Assuming insightsData is an array of strings
+    const insightsDataSplit = [];
+    for (let i = 0; i < insightsData.length; i += itemsTab) {
+        insightsDataSplit.push(insightsData.slice(i, i + itemsTab));
     }
+
+    console.log("This is the split data: ", insightsDataSplit);
+    const handleTabClick = (index) => {
+        setActiveTab(index);
+    };
 
     return (
         <div className="py-4 px-2 w-full">
@@ -81,6 +90,16 @@ const InsightsBox = () => {
                 </div>
                 <div className=" border-gray-200 dark:border-gray-700">
                     <ul className="flex flex-wrap -mb-px text-md font-medium text-center " id="default-tab" role="tablist">
+                        {insightsDataSplit.map((_, index) => (
+                            <li key={index} role="presentation">
+                                <button
+                                    className={`button-styles ${activeTab === index ? 'active-styles' : ''}`}
+                                    onClick={() => handleTabClick(index)}
+                                >
+                                    Tab {index + 1}
+                                </button>
+                            </li>
+                        ))}
                         {/* {tabs.map(tab => (
                             <li className="me-6 " role="presentation" key={tab.id}>
                                 <button className="flex justify-center items-center h-[40px] w-[20px] p-4 rounded-lg text-white bg-gray-600 hover:bg-gray-400" id={`${tab.id}-tab`} type="button" role="tab" aria-controls={tab.id} aria-selected={activeTab === tab.id} onClick={() => handleTabClick(tab.id)}>
@@ -94,7 +113,19 @@ const InsightsBox = () => {
                     Refresh
                 </button>
             </div>
-            {/* {Object.entries(insightsData).map(([key, values]) => (
+            <div className="overflow-auto" style={{ height: '300px' }}>
+                {insightsDataSplit[activeTab]?.map((header, index) => (
+                        <InsightButton key={index} header={header} />
+                    ))}
+            </div>
+        </div>
+    )
+}
+
+export default InsightsBox
+
+
+            {/* {insightsData?.map(([key, values]) => (
                 activeTab === key && (
                     <div key={key}>
                         {values.map((header, index) => (
@@ -103,8 +134,3 @@ const InsightsBox = () => {
                     </div>
                 )
             ))} */}
-        </div>
-    )
-}
-
-export default InsightsBox
