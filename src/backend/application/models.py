@@ -111,7 +111,7 @@ class insights:
             f'Differences in {column_name} are evident when comparing groups with {column_name} = {random.choice(["D", "E", "F"])} and {column_name} = {random.choice(["G", "H", "I"])}.'
         ]
     
-    def generate_insights(self, column_name, prev_insights):
+    def generate_insights(self, column_name, prev_insights, insight_count):
         insights = {'outliers' : self.get_outliers(column_name) ,
                                         'derived values' : self.get_derived_values(column_name),
                                         'associations' : self.get_associations(column_name),
@@ -124,19 +124,19 @@ class insights:
 
         
         all_values = ([value for values in insights.values() for value in values])
-        if len(all_values) <= 10:
+        if len(all_values) <= insight_count:
             return jsonify({'insights' :all_values})
         
-        new_insights_count = min(10,len(all_values) - len(prev_insights))
+        new_insights_count = min(insight_count,len(all_values) - len(prev_insights))
                 
         current_insights = random.sample([v for v in all_values if v not in prev_insights], new_insights_count)
         
-        if new_insights_count >= 10:
+        if new_insights_count >= insight_count:
             prev_insights.extend(current_insights)
-        if new_insights_count < 10:
+        if new_insights_count < insight_count:
             print (current_insights)
             if prev_insights != []:
-                current_insights.extend(random.sample(prev_insights, 10 - len(current_insights)))
+                current_insights.extend(random.sample(prev_insights, insight_count - len(current_insights)))
                 prev_insights = []
         
         
@@ -155,7 +155,8 @@ class insights:
     def get_insights(self):
         column_name = request.json.get('column_name')
         prev_insights = request.json.get('prev_insights')
-
+        insight_count = request.json.get('insight_count')
+        
         if not prev_insights:
             prev_insights = []
         # column_name = json.loads(request.args.get('json_data')).get('column_name')
@@ -165,5 +166,5 @@ class insights:
         ########
         #ELSE BLOCK 
   
-        return self.generate_insights(column_name, prev_insights)
+        return self.generate_insights(column_name, prev_insights, insight_count)
         ########
