@@ -42,7 +42,6 @@ input:-webkit-autofill {
     /* filter: drop-shadow(0px 1px 1px #5C55BC); */
 }
 
-
 /* Custom css for slate editor */
 /* Customize React-Quill toolbar */
 .ql-container.ql-snow {
@@ -51,7 +50,6 @@ input:-webkit-autofill {
   display: flex;
   flex-direction: column;
   border: none;
-
 }
 
 .ql-editor {
@@ -61,29 +59,34 @@ input:-webkit-autofill {
   font-size:14px;
   color:black;
   background: #FDFDFE;
-  box-shadow: 0px 5px 10px rgba(0, 0, 0, 0.1); /* Horizontal offset, vertical offset, blur radius, color */
+  /* box-shadow: 0px 5px 10px rgba(0, 0, 0, 0.1); Horizontal offset, vertical offset, blur radius, color */
+  box-shadow: 0px 5px 50px rgba(0, 0, 0, 0.1); /* Horizontal offset, vertical offset, blur radius, color */
+
 }
 
-/* resize editor box for smaller screens */
 @media (min-height: 500px) {
   .ql-editor {
-    height: 400px;
+    height: 350px;
   }
 }
 
-/* resize editor box for smaller screens */
 @media (min-height: 700px) {
   .ql-editor {
-    height: 650px;
+    height: 600px;
   }
 }
 
-/* resize editor box for smaller screens */
-@media (min-height: 900px) {
+@media (min-height: 850px) {
   .ql-editor {
     height: 700px;
   }
 }
+
+/* @media (min-height: 900px) {
+  .ql-editor {
+    height: 750px;
+  } */
+/* } */
 
 
 /* resize editor box for smaller screens
@@ -131,8 +134,7 @@ input:-webkit-autofill {
   opacity: 0.1;
   background: #FDFDFE;
   position: sticky;
-  box-shadow: 0px 5px 10px rgba(0, 0, 0, 0.1); /* Horizontal offset, vertical offset, blur radius, color */
-
+  /* box-shadow: 0px 5px 50px rgba(0, 0, 0, 0.1); /* Horizontal offset, vertical offset, blur radius, color */
 }
   
 #toolbar button {

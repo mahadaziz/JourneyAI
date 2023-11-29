@@ -11,11 +11,13 @@ import InsightsBox from "../../../components/InsightsBox";
 import '../../../app/globals.css'
 
 export default async function page() {
-    const session = await getServerSession(authOptions);    
+    const session = await getServerSession(authOptions);   
+
     if (!session) {
         redirect('/login');
     }
-
+    console.log(session);
+    
     return (
     <div className="grid grid-rows-[auto_1fr_1fr] grid-cols-3 w-screen h-screen bg-bgGrey delayAnimation transition-colors duration-500 ease-in-out dark:bg-neutral-900">
         {/* <!-- This is the first item at the top-left corner spanning 2 columns --> /} */}
@@ -24,7 +26,7 @@ export default async function page() {
             <div className="flex flex-row justify-between items-center">
                 <div className="flex flex-row justify-content items-center align-center border border-gray-700 ml-2 pl-2 pr-2 rounded-2xl bg-white dark:bg-neutral-900">
                     <a href="/homepage">
-                        <button className="p-2 rounded-lg hover:text-bgLight hover:bg-gray-300 dark:hover:bg-gray-700">
+                        <button className="p-2 rounded-lg hover:text-bgLight hover:bg-gray-200 dark:hover:bg-gray-700">
                             <HomeIcon className="w-6 h-6 "/>
                         </button>
                     </a>

@@ -30,7 +30,7 @@ const SideNav = () => {
     const handleSignOut = async () => {
         console.log("SignOut");
         await signOut({ redirect: true, callbackUrl: '/login' });
-        await fetch("http://127.0.0.1:5000/signout");
+        await fetch("http://127.0.0.1:8080/signout");
         // try {
         //     // Attempt to sign out using NextAuth
         //     const nextResp = await signOut();
@@ -55,7 +55,7 @@ const SideNav = () => {
     return (
         <div>
             <button onClick={toggleDropdown} data-drawer-target="sidebar-multi-level-sidebar" data-drawer-toggle="sidebar-multi-level-sidebar" aria-controls="sidebar-multi-level-sidebar" type="button" 
-                className="inline-flex items-center p-2 ms-1 text-sm hover:text-bgLight hover:bg-gray-300 rounded-lg focus:outline-none dark:hover:bg-gray-700">
+                className="inline-flex items-center p-2 ms-1 text-sm hover:text-bgLight hover:bg-gray-200 rounded-lg focus:outline-none dark:hover:bg-gray-700">
                 
                 <span className="sr-only">Open sidebar</span>
                 <svg className="w-6 h-6" aria-hidden="true" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">

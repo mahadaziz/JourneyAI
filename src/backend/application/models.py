@@ -1,15 +1,10 @@
 from flask import Flask, jsonify, request, session, redirect
 from application import db
-import bcrypt, datetime, uuid
+import bcrypt, datetime, uuid, json, random
 
 class User:
     
-    def start_session(self, user):
-        del user['password']
-        session['logged_in'] = True
-        session['user'] = user
-        self.update_login_time()
-        return jsonify ({"message": 'soemthign bozxjfsdzfas'}), 200
+    
     
     def signup(self):
         user = {
@@ -42,43 +37,131 @@ class User:
         
         return jsonify({'error': 'Signup failed'}), 400
 
-    def signout(self):
-        session.clear()
-        return redirect('/')
     
-    def login(self):
-        user = db.users.find_one(
-            {
-                'email': request.json.get('email'),
+class insights:
+    all_insights = {}
+    # Function to get outliers templates
+    def get_outliers(self, column_name):
+        return [
+            f'The outliers in {column_name} are beyond the normal range. Notable outliers include {column_name} = {random.uniform(60, 80)} and {column_name} = {random.uniform(120, 150)}.',
+            f'Identification of outliers in {column_name} suggests potential anomalies. Outlying values like {column_name} = {random.uniform(90, 110)} and {column_name} = {random.uniform(160, 190)} should be examined.',
+            f'Outliers in {column_name} may impact the overall analysis. Values such as {column_name} = {random.uniform(75, 95)} and {column_name} = {random.uniform(130, 160)} stand out.'
+        ]
 
-            }
-        )
+    # Function to get trends templates
+    def get_trends(self, column_name):
+        return [
+            f'{column_name} exhibits a noticeable upward trend over time, with values increasing from {random.uniform(20, 30)} to {random.uniform(40, 50)}.',
+            f'The analysis of {column_name} indicates a consistent downward trend. Values have decreased steadily from {random.uniform(70, 80)} to {random.uniform(50, 60)}.',
+            f'A significant upward trend is observed in {column_name}, with values rising from {random.uniform(30, 40)} to {random.uniform(50, 60)}.'
+        ]
 
-        if user and bcrypt.checkpw(request.json.get('password').encode("utf-8"), user['password']):
-            
+    # Function to get distributions templates
+    def get_distributions(self, column_name):
+        return [
+            f'The distribution of {column_name} is positively skewed, as evidenced by values ranging from {round(random.uniform(10, 20),2)} to {round(random.uniform(30, 40),2)}.',
+            f'A left-skewed distribution is evident in {column_name}, with values concentrated between {round(random.uniform(30, 40),2)} and {round(random.uniform(50, 60),2)}.',
+            f'{column_name} displays a symmetrical distribution, with values evenly distributed around the mean ({round(random.uniform(40, 50),2)}).'
+        ]
 
-            return self.start_session(user)
-        # if user and pbkdf2_sha256.verify(request.json.get('password'), user['password']):
-        #     return self.start_session(user)
+    # Function to get basic stats templates
+    def get_basic_stats(self, column_name):
+        return [
+            f'The mean value of {column_name} is {round(random.uniform(30, 40),2)}. This indicates the central tendency of the data.',
+            f'The standard deviation of {column_name} is {round(random.uniform(10, 15),2)}. A lower standard deviation suggests less variability in the data.'
+        ]
+
+    # Function to get clusters templates
+    def get_clusters(self, column_name):
+        return [
+            f'Cluster analysis reveals distinct groups in {column_name}. Notable clusters include {column_name} = {random.choice(["A", "B", "C"])} and {column_name} = {random.choice(["X", "Y", "Z"])}.',
+            f'Data points in {column_name} form identifiable clusters. Notable cluster centers are {column_name} = {round(random.uniform(40, 50), 2)} and {column_name} = {round(random.uniform(60, 70),2)}.',
+            f'Analysis of {column_name} data using clustering techniques identifies distinct groups. Key clusters include {column_name} = {random.choice(["M", "N", "O"])} and {column_name} = {random.choice(["P", "Q", "R"])}.'
+        ]
+
+    # Function to get rank templates
+    def get_rank(self, column_name):
+        return [
+            f'The rank of each category in {column_name} is [2, 4, 1, 0, 3]. Notable ranks include {column_name} = {random.choice(["A", "B", "C"])} at position 2.',
+            f'{column_name} is ranked highest based on specific criteria. For example, {column_name} = {random.choice(["X", "Y", "Z"])} is the top-ranked category.',
+            f'Ranking analysis reveals significant disparities among categories in {column_name}. Notable ranks include {column_name} = {random.choice(["D", "E", "F"])} at position 3.'
+        ]
+
+    # Function to get derived values templates
+    def get_derived_values(self, column_name):
+        return [
+            f'Derived values from {column_name} provide additional insights. For instance, consider the derived value {column_name} = {round(random.uniform(40, 50),2)}.',
+            f'{column_name} derived values contribute to the overall analysis. A notable derived value is {column_name} = {round(random.uniform(60, 70),2)}.',
+            f'Incorporating derived values enhances the understanding of {column_name}. Explore insights from values like {column_name} = {round(random.uniform(70, 80),2)}.'
+        ]
+
+    # Function to get associations templates
+    def get_associations(self, column_name):
+        return [
+            f'There is a strong association between {column_name} and another variable. Notable associations include {column_name} = {round(random.uniform(30, 40),2)} and {column_name} = {round(random.uniform(50, 60),2)}.',
+            f'Association analysis suggests a moderate relationship between {column_name} and another variable. Consider values like {column_name} = {round(random.uniform(70, 80),2)} and {column_name} = {round(random.uniform(90, 100),2)}.',
+            f'Exploring associations with other variables reveals significant correlations. Notable associations include {column_name} = {round(random.uniform(40, 50),2)} with another variable.'
+        ]
+
+    # Function to get differences templates
+    def get_differences(self, column_name):
+        return [
+            f'The differences in {column_name} across groups are statistically significant. Notable differences exist between groups with {column_name} = {random.choice(["A", "B", "C"])} and {column_name} = {random.choice(["X", "Y", "Z"])}.',
+            f'Significant differences exist in {column_name} between different categories. Notable differences are observed between {column_name} = {random.choice(["M", "N", "O"])} and {column_name} = {random.choice(["P", "Q", "R"])}.',
+            f'Differences in {column_name} are evident when comparing groups with {column_name} = {random.choice(["D", "E", "F"])} and {column_name} = {random.choice(["G", "H", "I"])}.'
+        ]
+    
+    def generate_insights(self, column_name, prev_insights):
+        insights = {'outliers' : self.get_outliers(column_name) ,
+                                        'derived values' : self.get_derived_values(column_name),
+                                        'associations' : self.get_associations(column_name),
+                                        'differences' : self.get_differences(column_name),
+                                        'trends' : self.get_trends(column_name),
+                                        'distribution' : self.get_distributions(column_name),
+                                        'basic_stats' : self.get_basic_stats(column_name),
+                                        'clusters' : self.get_clusters(column_name),
+                                        'rank' : self.get_rank(column_name)}        
+
         
-        return  jsonify({'error' : 'Invalid Credintials'}), 401
+        all_values = ([value for values in insights.values() for value in values])
+        if len(all_values) <= 10:
+            return jsonify({'insights' :all_values})
+        
+        new_insights_count = min(10,len(all_values) - len(prev_insights))
+                
+        current_insights = random.sample([v for v in all_values if v not in prev_insights], new_insights_count)
+        
+        if new_insights_count >= 10:
+            prev_insights.extend(current_insights)
+        if new_insights_count < 10:
+            print (current_insights)
+            if prev_insights != []:
+                current_insights.extend(random.sample(prev_insights, 10 - len(current_insights)))
+                prev_insights = []
+        
+        
+        return jsonify({'insights' : current_insights, 'prev_insights' : prev_insights, 'count' : new_insights_count})
+            
+        
+            #Make it a fair portion of all_insights and take care of errors when there isn't enough of certain number of insight-types
+        ###################
+        # Add to session variables the index of each insight-type that was added to current_insights 
+        # Add to session variables the maximum index possible so that we know when to refresh for each type 
+        
+        ####################
     
-    def upload_image(self):
-        # if 
-        return None
 
-    def update_time(self):
-        print(session["user"]["_id"])
-        db.users.update_one (
-            {"_id" : session["user"]["_id"]},
-            {'$set': {'last_update_time' : datetime.datetime.utcnow()}}
-        )
-        return jsonify ({"message": 'Updated last update time for user'}), 200
-    
-    def update_login_time(self):
-        print(session["user"]["_id"])
-        db.users.update_one (
-            {"_id" : session["user"]["_id"]},
-            {'$set': {'last_login_time' : datetime.datetime.utcnow()}}
-        )
-        return jsonify ({"message": 'Updated last update time for user'}), 200
+            
+    def get_insights(self):
+        column_name = request.json.get('column_name')
+        prev_insights = request.json.get('prev_insights')
+
+        # column_name = json.loads(request.args.get('json_data')).get('column_name')
+        # Check if column_name already has insights in the session/db
+        ########
+        #IF BLOCK
+        ########
+        #ELSE BLOCK 
+  
+        return self.generate_insights(column_name, prev_insights)
+        ########
