@@ -1,13 +1,24 @@
 'use client'
+import React, { useState } from 'react'
+import PopupModal from './PopupModal'
+import { ChartBarIcon } from '@heroicons/react/24/solid'
 
 const HypothesisButton = ({ header }) => {
+    const [isModalOpen, setIsModalOpen] = useState(false)
+
+    const openModal = () => setIsModalOpen(true)
+    const closeModal = () => setIsModalOpen(false)
+
     return (
-        <button type="button" className="flex flex-col items-center w-full bg-white border border-gray-200 rounded-lg shadow md:flex-row md:max-w-xl p-4 hover:bg-gray-100 dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700">
-            <h5 className="mb-2 text-2xl font-normal tracking-tight text-gray-900 dark:text-white">
-                {header}
-            </h5>
-            <p className="mb-3 font-normal text-gray-700 dark:text-gray-400"></p>
-        </button>
+        <div>
+            <div className="flex items-center justify-between w-full bg-white border border-gray-200 rounded-lg shadow md:flex-row md:max-w-xl p-4 hover:bg-gray-100 dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700">
+                <h5 className="text-2xl font-normal tracking-tight text-gray-900 dark:text-white">
+                    {header}
+                </h5>
+                <ChartBarIcon onClick={openModal} className="h-6 w-6 cursor-pointer text-gray-500 hover:text-gray-700 dark:hover:text-gray-300" aria-label="Open modal" />
+            </div>
+            <PopupModal isModalOpen={isModalOpen} closeModal={closeModal} />
+        </div>
     )
 }
 
@@ -16,7 +27,7 @@ const HypothesisBox = () => {
         'Hypothesis Generation Header 1',
         'Hypothesis Generation Header 2',
         'Hypothesis Generation Header 3'
-    ];
+    ]
 
     return (
         <div className="pl-4 pr-4 w-full">
