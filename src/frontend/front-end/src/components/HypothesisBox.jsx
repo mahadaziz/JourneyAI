@@ -10,7 +10,7 @@ const HypothesisButton = ({ header }) => {
     const closeModal = () => setIsModalOpen(false)
 
     return (
-        <div>
+        <div className="px-4 py-2">
             <div className="flex items-center justify-between w-full bg-white border border-gray-200 rounded-lg shadow md:flex-row md:max-w-xl p-4 hover:bg-gray-100 dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700">
                 <h5 className="text-2xl font-normal tracking-tight text-gray-900 dark:text-white">
                     {header}

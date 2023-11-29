@@ -19,9 +19,9 @@ const InsightButton = ({header}) => {
 
 const InsightsBox = () => {
     const { selectedColumn } = useContext(SelectedColumnContext);
-    const {insightsData, setInsightsData} = useState([]);
-    const {previousInsights, setPreviousInsights} = useState([]);
-    const [activeTab, setActiveTab] = useState('insightsSetOne');
+    const [insightsData, setInsightsData] = useState([]);
+    const [previousInsights, setPreviousInsights] = useState([]);
+    // const [activeTab, setActiveTab] = useState('insightsSetOne');
 
     useEffect(() => {
         const getInsightsData = async (selectedColumn, previousInsights) => {
@@ -34,10 +34,11 @@ const InsightsBox = () => {
                     body: JSON.stringify({selectedColumn, previousInsights}),
                 });
                 const data = await response.json();
-
+                console.log("Data in frontend: ", data)
                 // Check if the response is ok
                 if (response.ok) {
                     const insightsData = data.insights;
+                    console.log("what is this", data);
                     const previousData = data.prev_insights;
                     setInsightsData(insightsData);
                     setPreviousInsights(previousData);
