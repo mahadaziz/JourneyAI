@@ -168,3 +168,18 @@ class insights:
   
         return self.generate_insights(column_name, prev_insights, insight_count)
         ########
+        
+        
+class hypothesis:
+    
+    def get_hypothesis(self):
+        column_name = request.json.get('column_name')
+        if 'Fuel consumption inside cities (l/100km)'.lower() in column_name.lower():
+            data = ["In gas vehicles, smaller engines have lower carbon dioxide emissions, compared to larger engines. This is because smaller engines have less fuel to burn, resulting in lower carbon dioxide emissions.","The improvement in fuel consumption for gas vehicles is due to the advancement in technology, such as the use of turbochargers and direct injection systems, which have increased the efficiency of the combustion process.","In all vehicles, there is a higher fuel consumption in the city, compared to the highway. This is due to the fact that city driving requires more stops and starts, which results in more fuel consumption."]
+            return jsonify({'data' : data})
+
+        if 'Electrical consumption inside cities (kwh/100km)'.lower() in column_name.lower():
+            data = ["As the production of electric vehicles has been increasing, it is likely that the prices of their components are decreasing due to increased market competition and economies of scale.","Hybrid vehicles from manufacturers like BMW and Mercedes often have similar or even worse fuel efficiency compared to gasoline-powered vehicles, likely due to the inefficiencies of the electric motors.","Hybrid vehicles use both gasoline and electricity, which results in better fuel efficiency.\nIn hybrid vehicles, the electric motor supplements the gasoline engine to improve fuel efficiency. This is because electric motors are more efficient than combustion engines, converting more energy into motion. Additionally, hybrid vehicles often have regenerative braking systems, which convert the kinetic energy of braking into electrical energy, further increasing fuel efficiency."] 
+            return jsonify({'data' : data})
+        else:
+            return jsonify ({'data' : []})
