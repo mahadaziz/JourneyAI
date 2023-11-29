@@ -1,7 +1,7 @@
 from application import app, db
 from application.models import User, insights
 from functools import wraps
-from flask import Flask, redirect, session, jsonify
+from flask import Flask, redirect, session, jsonify, request
 from flask_cors import CORS,cross_origin
 
 
