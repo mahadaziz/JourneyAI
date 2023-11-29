@@ -4,14 +4,6 @@ from functools import wraps
 from flask import Flask, redirect, session, jsonify
 from flask_cors import CORS,cross_origin
 
-def login_required(f):
-    @wraps(f)
-    def wrap (*args, **kwargs):
-        if 'logged_in' in session:
-            return f(*args, **kwargs)
-        else:
-            return redirect('/')
-    return wrap
 
 @app.route("/")
 def home():
@@ -24,21 +16,11 @@ def home():
 def signup():
     return User().signup()
 
-@app.route("/signout")
-@login_required
-@cross_origin()
-def signout():
-    return User().signout()
 
-@app.route("/login", methods=['POST'])
-@cross_origin()
-def login():
-    return User().login()
 
 
 @app.route("/get_column_names")
 @cross_origin()
-@login_required
 def get_column_names():
     names = list(db.cars.find_one().keys())
     # column_names = [ name.capitalize() for name in  names if name != '_id' ]
@@ -49,7 +31,6 @@ def get_column_names():
 
 @app.route("/get_data", methods=['POST'])
 @cross_origin()
-@login_required
 def get_data():
     column_name = request.json.get('column_name')
     if 'Fuel consumption inside cities (l/100km)'.lower() in column_name.lower():
@@ -65,7 +46,6 @@ def get_data():
 
 @app.route("/get_insights", methods=['POST'])
 @cross_origin()
-@login_required
 def get_insights():
     return insights().get_insights()
 
