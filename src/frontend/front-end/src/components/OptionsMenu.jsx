@@ -1,29 +1,76 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect, useContext  } from 'react';
+import { SelectedColumnContext } from '../context/SelectedColumnContext';
 
 const OptionsMenu = () => {
     // State to keep track of whether the dropdown is open
     const [isOpen, setIsOpen] = useState(false);
-    const [selected, setSelected] = useState('');
+    const {selectedColumn, setSelectedColumn} = useContext(SelectedColumnContext);
+    const [dataColumns, setDataColumns] = useState([]);
+    const dropdownRef = useRef(null); // Ref for the dropdown
+
     // Function to toggle the dropdown state
     const toggleDropdown = () => setIsOpen(!isOpen);
 
-    const setValue = (i) => {
-        setSelected(i);
-        console.log(selected);
+    const setValue = (column) => {
+        setSelectedColumn(column);
+        setIsOpen(false); // This will close the dropdown
     }
 
-    // call API for all options in the dropdown menu
-    // http://localhost:5000/get_column_names
-    // use the setValue function to set the selected column
-    const getColumnNames = async () => {
-        const optionsData = await fetch('http://127.0.0.1:5000/get_column_names', {
-        });
-        console.log(await optionsData.json());
+    const capitalizeFirstLetter = (string) => {
+        return string.charAt(0).toUpperCase() + string.slice(1);
     }
+
+    useEffect(() => {
+        console.log("Updated selected: ", selectedColumn);
+    }, [selectedColumn]);
+
+    // Function to handle click outside
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+                setIsOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, [dropdownRef]);
+
+    useEffect(() => {
+        // call API for all options in the dropdown menu
+        // http://localhost:5000/get_column_names
+        // use the setValue function to set the selected column
+        const getColumnNames = async () => {
+            try {
+                const response = await fetch('http://127.0.0.1:8080/get_column_names', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                const data = await response.json();
+
+                // Check if the response is ok
+                if (response.ok) {
+                    // Capitalize first letter of each element in the array
+                    const dataColumns = await data.column_names.map(column => capitalizeFirstLetter(column));
+                    setDataColumns(dataColumns);
+                } else {
+                    // Handle HTTP errors
+                    console.error('Failed to fetch:', data);
+                }
+            } catch (error) {
+                // Handle network errors
+                console.error('Network error:', error);
+            }
+        };
+        getColumnNames();
+    }, [])
 
     return (
-        <div className="relative">
+        <div className="relative" ref={dropdownRef}>
             <button onClick={toggleDropdown} 
                 id="dropdownDefaultButton" 
                 data-dropdown-toggle="dropdown" className="relative focus:outline-none 
@@ -33,29 +80,25 @@ const OptionsMenu = () => {
                 
                 type="button">
                 Tell me about:
-                <span className="pl-2 font-light">
-                    {selected}
+                <span className="pl-2 font-normal">
+                    {selectedColumn}
                 </span>
                 <svg className="w-2.5 h-2.5 ms-auto" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6">
                 <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="m1 1 4 4 4-4"/>
                 </svg>
             </button>
-            <div className={`z-10 ${isOpen ? '' : 'hidden'} absolute rounded-xl bg-white divide-y divide-gray-100 shadow w-full dark:bg-gray-700`}>
+
+            <div className={`z-10 ${isOpen ? 'opacity-100 visible' : 'opacity-0 invisible'} transition ease-in-out duration-300 absolute rounded-xl bg-white divide-y divide-gray-100 shadow w-full dark:bg-gray-700`}>
                 <ul className="py-2 text-sm text-gray-700 dark:text-gray-200" aria-labelledby="dropdownDefaultButton">
-                <li>
-                    <a onClick={() => setValue(e)} href="#" className="block px-4 py-2 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 dark:hover:text-white">Emissions</a>
-                </li>
-                <li>
-                    <a onClick={getColumnNames} href="#" className="block px-4 py-2 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 dark:hover:text-white">Idk1</a>
-                </li>
-                <li>
-                    <a href="#" className="block px-4 py-2 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 dark:hover:text-white">Idk2</a>
-                </li>
+                    {dataColumns.map((column, index) => (
+                    <li key={index}>
+                        <a onClick={() => setValue(column)} href="#" className="block px-4 py-2 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 dark:hover:text-white">{column}</a>
+                    </li>
+                    ))}
                 </ul>
             </div>
         </div>
     );
-
 }
 
 export default OptionsMenu;

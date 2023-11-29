@@ -39,18 +39,25 @@ export const authOptions = {
       }),
     ],
     callbacks: {
-      async jwt({token, user}) {
-        if (user) {
-          token.email = user.email;
-        }
-        console.log(token);
+      async jwt({ token, user }) {
+        if (user?._id) token._id = user._id;
+        console.log(token)
         return token;
       },
-      async session({ session}) {
+      // async jwt({token, user}) {
+      //   if (user) {
+      //     token.email = user.email;
+      //   }
+      //   console.log(token);
+      //   return token;
+      // },
+      async session({ session, token}) {
         if (session.user) {
             const user = await User.findOne({ email: session.user.email });
-            session.user = user; // Update the session user object
-        //   session.user.test = user.test;
+            // session.user = user;
+            session.user = user.name; // Update the session user object
+            session.email = user.email;
+            session._id = user.id;
         }
         return session;
       }
