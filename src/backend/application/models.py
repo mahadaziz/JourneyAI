@@ -156,6 +156,8 @@ class insights:
         column_name = request.json.get('column_name')
         prev_insights = request.json.get('prev_insights')
 
+        if not prev_insights:
+            prev_insights = []
         # column_name = json.loads(request.args.get('json_data')).get('column_name')
         # Check if column_name already has insights in the session/db
         ########
