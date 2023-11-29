@@ -37,7 +37,7 @@ const InsightButton = ({header}) => {
         transition={{ duration: 0.5 }} // Transition properties>
         >
             <button type="button" className="flex flex-col items-center w-full bg-white border border-gray-200 rounded-lg shadow md:flex-row md:max-w-xl p-3 hover:bg-gray-100 dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700">
-            <h5 className="text-lg tracking-tight text-gray-900 dark:text-white">
+            <h5 className="text-lg text-left text-gray-900 dark:text-white">
                 {header}
             </h5>
             <p className="mb-3 font-normal text-gray-700 dark:text-gray-400"></p>
@@ -126,7 +126,7 @@ const InsightsBox = () => {
                 </button>
             </div>
             {insightsData.length > 0 ? (
-                <div className="insightScroll ">
+                <div className="insightScroll">
                     {insightsDataSplit[activeTab]?.map((header, index) => (
                             <div className="insightButton" key={getKey(index)}>
                                 <InsightButton header={header} />
