@@ -1,0 +1,28 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.insightScroll {
+    max-height: 450px;
+    overflow: auto;
+}
+
+/* Custom scrollbar styles */
+.insightScroll::-webkit-scrollbar {
+width: 12px; /* width of the entire scrollbar */
+}
+
+.insightScroll::-webkit-scrollbar-track {
+background: #f1f1f1; /* color of the tracking area */
+}
+
+.insightScroll::-webkit-scrollbar-thumb {
+background-color: #888; /* color of the scroll thumb */
+border-radius: 6px; /* roundness of the scroll thumb */
+border: 3px solid #f1f1f1; /* creates padding around scroll thumb */
+}
+
+.insightScroll::-webkit-scrollbar-thumb:hover {
+background: #555; /* color when hovering over the scroll thumb */
+}
+
