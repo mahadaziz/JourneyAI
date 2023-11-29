@@ -12,6 +12,16 @@ const OptionsMenu = () => {
         setSelected(i);
         console.log(selected);
     }
+
+    // call API for all options in the dropdown menu
+    // http://localhost:5000/get_column_names
+    // use the setValue function to set the selected column
+    const getColumnNames = async () => {
+        const optionsData = await fetch('http://127.0.0.1:5000/get_column_names', {
+        });
+        console.log(await optionsData.json());
+    }
+
     return (
         <div className="relative">
             <button onClick={toggleDropdown} 
@@ -33,10 +43,10 @@ const OptionsMenu = () => {
             <div className={`z-10 ${isOpen ? '' : 'hidden'} absolute rounded-xl bg-white divide-y divide-gray-100 shadow w-full dark:bg-gray-700`}>
                 <ul className="py-2 text-sm text-gray-700 dark:text-gray-200" aria-labelledby="dropdownDefaultButton">
                 <li>
-                    <a onClick={() => setValue("Emissions")} href="#" className="block px-4 py-2 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 dark:hover:text-white">Emissions</a>
+                    <a onClick={() => setValue(e)} href="#" className="block px-4 py-2 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 dark:hover:text-white">Emissions</a>
                 </li>
                 <li>
-                    <a href="#" className="block px-4 py-2 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 dark:hover:text-white">Idk1</a>
+                    <a onClick={getColumnNames} href="#" className="block px-4 py-2 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 dark:hover:text-white">Idk1</a>
                 </li>
                 <li>
                     <a href="#" className="block px-4 py-2 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 dark:hover:text-white">Idk2</a>

@@ -15,6 +15,8 @@ export default async function page() {
     if (!session) {
         redirect('/login');
     }
+    console.log(session);
+
 
     return (
     <div className="grid grid-rows-[auto_1fr_1fr] grid-cols-3 w-screen h-screen bg-bgGrey delayAnimation transition-colors duration-500 ease-in-out dark:bg-neutral-900">

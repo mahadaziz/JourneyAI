@@ -1,6 +1,10 @@
 'use client'
 import React, { useState } from 'react'
 
+// useEffect here to detect change in the selected value in dropdown
+// Call API http://localhost5000/get_insights
+// takes in the column name selected by the user
+
 const InsightButton = ({header}) => {
     return (
         <div className="px-4 py-2">
