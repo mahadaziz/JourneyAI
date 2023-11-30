@@ -43,17 +43,17 @@ class insights:
     # Function to get outliers templates
     def get_outliers(self, column_name):
         return [
-            f'The outliers in {column_name} are beyond the normal range. Notable outliers include {column_name} = {random.uniform(60, 80)} and {column_name} = {random.uniform(120, 150)}.',
-            f'Identification of outliers in {column_name} suggests potential anomalies. Outlying values like {column_name} = {random.uniform(90, 110)} and {column_name} = {random.uniform(160, 190)} should be examined.',
-            f'Outliers in {column_name} may impact the overall analysis. Values such as {column_name} = {random.uniform(75, 95)} and {column_name} = {random.uniform(130, 160)} stand out.'
+            f'The outliers in {column_name} are beyond the normal range. Notable outliers include {column_name} = {round(random.uniform(60, 80), 2)} and {column_name} = {round(random.uniform(120, 150), 2)}.',
+            f'Identification of outliers in {column_name} suggests potential anomalies. Outlying values like {column_name} = {round(random.uniform(90, 110), 2)} and {column_name} = {round(random.uniform(160, 190), 2)} should be examined.',
+            f'Outliers in {column_name} may impact the overall analysis. Values such as {column_name} = {round(random.uniform(75, 95), 2)} and {column_name} = {round(random.uniform(130, 160), 2)} stand out.'
         ]
 
     # Function to get trends templates
     def get_trends(self, column_name):
         return [
-            f'{column_name} exhibits a noticeable upward trend over time, with values increasing from {random.uniform(20, 30)} to {random.uniform(40, 50)}.',
-            f'The analysis of {column_name} indicates a consistent downward trend. Values have decreased steadily from {random.uniform(70, 80)} to {random.uniform(50, 60)}.',
-            f'A significant upward trend is observed in {column_name}, with values rising from {random.uniform(30, 40)} to {random.uniform(50, 60)}.'
+            f'{column_name} exhibits a noticeable upward trend over time, with values increasing from {round(random.uniform(20, 30), 2)} to {round(random.uniform(40, 50), 2)}.',
+            f'The analysis of {column_name} indicates a consistent downward trend. Values have decreased steadily from {round(random.uniform(70, 80), 2)} to {round(random.uniform(50, 60), 2)}.',
+            f'A significant upward trend is observed in {column_name}, with values rising from {round(random.uniform(30, 40), 2)} to {round(random.uniform(50, 60), 2)}.'
         ]
 
     # Function to get distributions templates
