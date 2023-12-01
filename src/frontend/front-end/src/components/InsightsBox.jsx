@@ -1,9 +1,8 @@
 'use client'
-import React, { useState, useContext, useEffect } from 'react'
-import { SelectedColumnContext } from '../context/SelectedColumnContext'
-// useEffect here to detect change in the selected value in dropdown
-// takes in the column name selected by the user
-import { motion } from "framer-motion"
+import React, { useState, useContext, useEffect } from 'react';
+import { SelectedColumnContext } from '../context/SelectedColumnContext';
+import { HypothesisDataContext } from '../context/HypothesisDataContext';
+import { motion } from "framer-motion";
 import '../styles/insights.css';
 
 const variants = {
@@ -27,17 +26,23 @@ const variants = {
     // visible: { opacity: 1, scale: 1 }
 }
 
+const buttonVariants = {
+    hover: { backgroundColor: "#9ca3af" }, // Example hover background color
+    clicked: { scale: 0.9, backgroundColor: "#f3f4f6" },  // Example: slightly scale down when clicked
+    normal: { scale: 1, backgroundColor: "#FFFFFF"}
+};
+
 const InsightButton = ({header}) => {
     return (
         <motion.div 
-        className="px-4 py-2"
-        initial="hidden"  // Initial state before animation
-        animate="visible" // State to animate to
-        variants={variants} // Animation variants
-        transition={{ duration: 0.5 }} // Transition properties>
+            className="px-4 py-2"
+            initial="hidden"  // Initial state before animation
+            animate="visible" // State to animate to
+            variants={variants} // Animation variants
+            transition={{ duration: 0.5 }} // Transition properties>
         >
-            <button type="button" className="flex flex-col items-center w-full bg-white border border-gray-200 rounded-lg shadow md:flex-row md:max-w-xl p-3 hover:bg-gray-100 dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700">
-            <h5 className="text-lg text-left text-gray-900 dark:text-white">
+            <button type="button" className="flex flex-col p-3 items-center w-full bg-white border border-gray-200 rounded-lg shadow md:flex-row md:max-w-xl hover:bg-gray-100 dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700">
+            <h5 className="text-lg text-left tracking-tight text-gray-900 dark:text-white">
                 {header}
             </h5>
             <p className="mb-3 font-normal text-gray-700 dark:text-gray-400"></p>
@@ -48,8 +53,11 @@ const InsightButton = ({header}) => {
 
 const InsightsBox = () => {
     const { selectedColumn } = useContext(SelectedColumnContext);
+    const { hasHypothesisData } = useContext(HypothesisDataContext);
+    console.log(hasHypothesisData);
     const [insightsData, setInsightsData] = useState([]);
     const [previousInsights, setPreviousInsights] = useState([]);
+    const [refresh, setRefresh] = useState(false);
     const [activeTab, setActiveTab] = useState(0);
     const itemsTab = 6;
 
@@ -58,14 +66,13 @@ const InsightsBox = () => {
             return;
         }
         const getInsightsData = async (column_name, prev_insights, insight_count) => {
-            console.log("this is the selected column", column_name);
             try {
                 const response = await fetch('http://127.0.0.1:8080/get_insights', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({column_name, prev_insights, insight_count}),
+                    body: JSON.stringify({'column_name':column_name, 'prev_insights':prev_insights, 'insight_count':insight_count}),
                 });
                 const data = await response.json();
                 if (response.ok) {
@@ -80,11 +87,8 @@ const InsightsBox = () => {
                 console.error('Network error:', error);
             }
         };
-        console.log("this is my selectedColum in asdadas:", selectedColumn);
         getInsightsData(selectedColumn, previousInsights, 18);
-    }, [selectedColumn]);
-        
-    console.log("this is the insights data", insightsData);
+    }, [selectedColumn, refresh]);
 
     // insightsData is an array of strings
     const insightsDataSplit = [];
@@ -95,6 +99,10 @@ const InsightsBox = () => {
     console.log("This is the split data: ", insightsDataSplit);
     const handleTabClick = (index) => {
         setActiveTab(index);
+    };
+
+    const handleRefresh = () => {
+        setRefresh(prev => !prev); // Flip the state to trigger re-fetch
     };
 
     const getKey = (index) => `${selectedColumn}-${activeTab}-${index}`;
@@ -111,24 +119,38 @@ const InsightsBox = () => {
                     <ul className="flex flex-wrap -mb-px text-md font-medium text-center " id="default-tab" role="tablist">
                         {insightsDataSplit.map((_, index) => (
                             <li className="me-6" key={index} role="presentation">
-                                <button
+                                <motion.button
                                     className={`flex justify-center items-center h-[40px] w-[20px] p-4 rounded-lg text-black bg-white hover:bg-gray-400 ${activeTab === index ? 'active-styles' : ''}`}
                                     onClick={() => handleTabClick(index)}
+                                    variants={buttonVariants}
+                                    whileHover="hover"
+                                    whileTap="clicked"  // This applies the 'clicked' variant while the button is being tapped/clicked
+                                    initial="normal"
+                                    transition={{ duration: 0.2 }}
                                 >
                                     {index + 1}
-                                </button>
+                                </motion.button>
                             </li>
                         ))}
                     </ul>
                 </div>
-                <button type="button" className="text-black bg-white hover:bg-gray-400 focus:outline-none focus:ring-4 focus:ring-gray-300 font-medium rounded-full text-sm px-5 py-2.5 text-center inline-flex items-center me-2 dark:text-gray-800 dark:bg-white dark:hover:bg-gray-300 dark:focus:ring-gray-700 dark:border-gray-700">
+                <motion.button 
+                    onClick={handleRefresh} 
+                    type="button" 
+                    className="text-black bg-white hover:bg-gray-400 focus:outline-none font-medium rounded-full text-sm px-5 py-2.5 text-center inline-flex items-center me-2 dark:text-gray-800 dark:bg-white dark:hover:bg-gray-300"
+                    variants={buttonVariants}
+                    whileHover="hover"
+                    whileTap="clicked"  // This applies the 'clicked' variant while the button is being tapped/clicked
+                    initial="normal"
+                    transition={{ duration: 0.2 }}
+                >    
                     Refresh
-                </button>
+                </motion.button>
             </div>
             {insightsData.length > 0 ? (
-                <div className="insightScroll">
+                <div className={hasHypothesisData ? "insightScroll" : "insightScrollFull insightScrollWheel"}>   
                     {insightsDataSplit[activeTab]?.map((header, index) => (
-                            <div className="insightButton" key={getKey(index)}>
+                            <div className="insightButton"  key={`${getKey(index)}-${refresh}`}>
                                 <InsightButton header={header} />
                             </div>
                         ))}
