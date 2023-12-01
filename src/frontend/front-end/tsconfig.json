@@ -30,7 +30,8 @@
     "src/app/(main)/homepage/page.jsx",
     "lib/mongodb.js",
     "models/users.js",
-    ".next/types/**/*.ts"
+    ".next/types/**/*.ts",
+    "d3.d.ts"
   ],
   "exclude": [
     "node_modules"
