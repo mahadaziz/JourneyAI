@@ -51,7 +51,7 @@ const OptionsMenu = () => {
                     }
                 });
                 const data = await response.json();
-                console.log("get column names data:", data);
+
                 // Check if the response is ok
                 if (response.ok) {
                     // Capitalize first letter of each element in the array
