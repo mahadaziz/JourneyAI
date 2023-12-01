@@ -27,22 +27,25 @@ export default function page() {
             setError("Invalid Credentials");
             return;
         }
-
-        const resFlask = await fetch("http://127.0.0.1:8080/login", {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({email, password}),
-        });
-        //redirect user to login when all calls are successful.
-        if (res.ok && resFlask.ok) {
-            console.log(await resFlask.json());
-
-            console.log("Login successful");
-            setLoading(false); // Set loading to false after logic
+        if (res.ok) {
+            setLoading(false);
             router.push('/dashboard');
         }
+        // const resFlask = await fetch("http://127.0.0.1:8080/login", {
+        //     method: 'POST',
+        //     headers: {
+        //         'Content-Type': 'application/json'
+        //     },
+        //     body: JSON.stringify({email, password}),
+        // });
+        //redirect user to login when all calls are successful.
+        // if (res.ok && resFlask.ok) {
+        //     console.log(await resFlask.json());
+
+        //     console.log("Login successful");
+        //     setLoading(false); // Set loading to false after logic
+        //     router.push('/dashboard');
+        // }
 
         // fetching login API to authenticate with backend Flask aswell.
         // await fetch("http://127.0.0.1:5000/login", {
