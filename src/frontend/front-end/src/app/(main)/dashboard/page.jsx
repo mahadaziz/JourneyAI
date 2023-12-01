@@ -48,6 +48,7 @@ export default async function page() {
             <TextBox/>
         </div>
 
+
         <div className="col-span-1 pt-4">
             <div>
                 <HypothesisBox/>

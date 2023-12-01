@@ -4,7 +4,6 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '../../api/auth/[...nextauth]/route';
 import { AuthProvider } from "../../Providers";
 import {SelectedColumnProvider} from "../../../context/SelectedColumnContext";
-import {HypothesisDataProvider} from "../../../context/HypothesisDataContext"
 import '../../globals.css'
 
 const inter = Inter({ subsets: ['latin'] })
@@ -22,9 +21,7 @@ export default async function RootLayout({ children }) {
         <ThemeProvider  attribute="class" defaultTheme="light" enableSystem>
           <AuthProvider>
             <SelectedColumnProvider>
-              <HypothesisDataProvider>
               {children}
-              </HypothesisDataProvider>
             </SelectedColumnProvider>
           </AuthProvider>
         </ThemeProvider>

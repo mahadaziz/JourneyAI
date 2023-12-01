@@ -4,9 +4,6 @@ import dynamic from 'next/dynamic';
 import 'react-quill/dist/quill.snow.css';
 import '../app/globals.css'
 import EditorPlaceholder from './EditorPlaceholder';
-import { Tooltip } from 'react-tooltip'
-
-
 
 const ReactQuill = dynamic(
     () => import('react-quill'),
@@ -47,7 +44,7 @@ const ReactQuill = dynamic(
       'bold',
       'italic',
       'underline',
-      'header', 
+      'header', // You can specify header values as needed
       'list',
       'bullet',
       'link',
@@ -66,38 +63,37 @@ const ReactQuill = dynamic(
           toolbar: '#toolbar', // Selector for the custom toolbar
         }}
         formats={formats}
-        placeholder="Start typing..."
+        placeholder="Start typing..." // Add your placeholder text here
 
       />
       {/* Custom Toolbar */}
       <div id="toolbar" className="delayAnimation">
-      <Tooltip id="my-tooltip" />
         {/* Bold, Italic, and Underline buttons */}
         <div className='toolbar-group border-r-2'>
-          <button className="ql-bold" data-tooltip-id="my-tooltip" data-tooltip-content="Bold" data-tooltip-place="top" title="Bold"></button>
-          <button className="ql-italic" data-tooltip-id="my-tooltip" data-tooltip-content="Italic" data-tooltip-place="top" title="Italic"></button>
-          <button className="ql-underline" data-tooltip-id="my-tooltip" data-tooltip-content="Underline" data-tooltip-place="top" title="Underline"></button>
+          <button className="ql-bold" title="Bold"></button>
+          <button className="ql-italic" title="Italic"></button>
+          <button className="ql-underline" title="Underline"></button>
         </div>
 
         <div className='toolbar-group border-r-2'>
-          <button className="ql-header" data-tooltip-id="my-tooltip" data-tooltip-content="Header 1" data-tooltip-place="top" value="1" title="Heading 1">H1</button>
-          <button className="ql-header" data-tooltip-id="my-tooltip" data-tooltip-content="Header 2" data-tooltip-place="top" value="2" title="Heading 2">H2</button>
+          <button className="ql-header" value="1" title="Heading 1">H1</button>
+          <button className="ql-header" value="2" title="Heading 2">H2</button>
         </div>
 
         {/* Lists */}
         <div className='toolbar-group border-r-2'>
-          <button className="ql-list" data-tooltip-id="my-tooltip" data-tooltip-content="Ordered List" data-tooltip-place="top" value="ordered" title="Ordered List"></button>
-          <button className="ql-list" data-tooltip-id="my-tooltip" data-tooltip-content="Bullet List" data-tooltip-place="top" value="bullet" title="Bullet List"></button>
+          <button className="ql-list" value="ordered" title="Ordered List"></button>
+          <button className="ql-list" value="bullet" title="Bullet List"></button>
         </div>
 
         {/* Link */}
         <div className='toolbar-group'>
-          <button className="ql-link" data-tooltip-id="my-tooltip" data-tooltip-content="Link" data-tooltip-place="top" title="Insert Link"></button>
+          <button className="ql-link" title="Insert Link"></button>
         </div>
 
         <div className='toolbar-group'>
           {/* Clear formatting */}
-          <button className="ql-clean" data-tooltip-id="my-tooltip" data-tooltip-content="Remove Format" data-tooltip-place="top" title="Clear Formatting"></button>
+          <button className="ql-clean" title="Clear Formatting"></button>
         </div>
 
         {/* Word Count */}
