@@ -1,0 +1,43 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+.truncate {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-right:50px;
+}
+
+.hypothesisScroll {
+    max-height: 250px;
+    overflow: auto;
+}
+
+@media  (min-height: 850px) {
+    .hypothesisScroll {
+        max-height: 300px;
+        overflow: auto;
+        overflow-x: hidden;
+    }
+}
+
+/* Custom scrollbar styles */
+.hypothesisScroll::-webkit-scrollbar {
+width: 12px; /* width of the entire scrollbar */
+}
+
+.hypothesisScroll::-webkit-scrollbar-track {
+background: #f1f1f1; /* color of the tracking area */
+}
+
+.hypothesisScroll::-webkit-scrollbar-thumb {
+background-color: #888; /* color of the scroll thumb */
+border-radius: 6px; /* roundness of the scroll thumb */
+border: 3px solid #f1f1f1; /* creates padding around scroll thumb */
+}
+
+.hypothesisScroll::-webkit-scrollbar-thumb:hover {
+background: #555; /* color when hovering over the scroll thumb */
+}

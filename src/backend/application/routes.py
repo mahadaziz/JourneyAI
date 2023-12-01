@@ -1,7 +1,7 @@
 from application import app, db
-from application.models import User, insights, hypothesis
+from application.models import User, insights
 from functools import wraps
-from flask import Flask, redirect, session, jsonify, request
+from flask import Flask, redirect, session, jsonify
 from flask_cors import CORS,cross_origin
 
 
@@ -48,12 +48,6 @@ def get_data():
 @cross_origin()
 def get_insights():
     return insights().get_insights()
-
-
-@app.route("/get_hypothesis", methods=['POST'])
-@cross_origin()
-def get_hypothesis():
-    return hypothesis().get_hypothesis()
 
 # # Testing that the database was connected 
 # @app.route("/<name>")

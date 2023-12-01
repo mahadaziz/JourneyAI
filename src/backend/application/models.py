@@ -43,17 +43,17 @@ class insights:
     # Function to get outliers templates
     def get_outliers(self, column_name):
         return [
-            f'The outliers in {column_name} are beyond the normal range. Notable outliers include {column_name} = {round(random.uniform(60, 80), 2)} and {column_name} = {round(random.uniform(120, 150), 2)}.',
-            f'Identification of outliers in {column_name} suggests potential anomalies. Outlying values like {column_name} = {round(random.uniform(90, 110), 2)} and {column_name} = {round(random.uniform(160, 190), 2)} should be examined.',
-            f'Outliers in {column_name} may impact the overall analysis. Values such as {column_name} = {round(random.uniform(75, 95), 2)} and {column_name} = {round(random.uniform(130, 160), 2)} stand out.'
+            f'The outliers in {column_name} are beyond the normal range. Notable outliers include {column_name} = {random.uniform(60, 80)} and {column_name} = {random.uniform(120, 150)}.',
+            f'Identification of outliers in {column_name} suggests potential anomalies. Outlying values like {column_name} = {random.uniform(90, 110)} and {column_name} = {random.uniform(160, 190)} should be examined.',
+            f'Outliers in {column_name} may impact the overall analysis. Values such as {column_name} = {random.uniform(75, 95)} and {column_name} = {random.uniform(130, 160)} stand out.'
         ]
 
     # Function to get trends templates
     def get_trends(self, column_name):
         return [
-            f'{column_name} exhibits a noticeable upward trend over time, with values increasing from {round(random.uniform(20, 30), 2)} to {round(random.uniform(40, 50), 2)}.',
-            f'The analysis of {column_name} indicates a consistent downward trend. Values have decreased steadily from {round(random.uniform(70, 80), 2)} to {round(random.uniform(50, 60), 2)}.',
-            f'A significant upward trend is observed in {column_name}, with values rising from {round(random.uniform(30, 40), 2)} to {round(random.uniform(50, 60), 2)}.'
+            f'{column_name} exhibits a noticeable upward trend over time, with values increasing from {random.uniform(20, 30)} to {random.uniform(40, 50)}.',
+            f'The analysis of {column_name} indicates a consistent downward trend. Values have decreased steadily from {random.uniform(70, 80)} to {random.uniform(50, 60)}.',
+            f'A significant upward trend is observed in {column_name}, with values rising from {random.uniform(30, 40)} to {random.uniform(50, 60)}.'
         ]
 
     # Function to get distributions templates
@@ -111,7 +111,7 @@ class insights:
             f'Differences in {column_name} are evident when comparing groups with {column_name} = {random.choice(["D", "E", "F"])} and {column_name} = {random.choice(["G", "H", "I"])}.'
         ]
     
-    def generate_insights(self, column_name, prev_insights, insight_count):
+    def generate_insights(self, column_name, prev_insights):
         insights = {'outliers' : self.get_outliers(column_name) ,
                                         'derived values' : self.get_derived_values(column_name),
                                         'associations' : self.get_associations(column_name),
@@ -124,19 +124,19 @@ class insights:
 
         
         all_values = ([value for values in insights.values() for value in values])
-        if len(all_values) <= insight_count:
+        if len(all_values) <= 10:
             return jsonify({'insights' :all_values})
         
-        new_insights_count = min(insight_count,len(all_values) - len(prev_insights))
+        new_insights_count = min(10,len(all_values) - len(prev_insights))
                 
         current_insights = random.sample([v for v in all_values if v not in prev_insights], new_insights_count)
         
-        if new_insights_count >= insight_count:
+        if new_insights_count >= 10:
             prev_insights.extend(current_insights)
-        if new_insights_count < insight_count:
+        if new_insights_count < 10:
             print (current_insights)
             if prev_insights != []:
-                current_insights.extend(random.sample(prev_insights, insight_count - len(current_insights)))
+                current_insights.extend(random.sample(prev_insights, 10 - len(current_insights)))
                 prev_insights = []
         
         
@@ -155,10 +155,7 @@ class insights:
     def get_insights(self):
         column_name = request.json.get('column_name')
         prev_insights = request.json.get('prev_insights')
-        insight_count = request.json.get('insight_count')
-        
-        if not prev_insights:
-            prev_insights = []
+
         # column_name = json.loads(request.args.get('json_data')).get('column_name')
         # Check if column_name already has insights in the session/db
         ########
@@ -166,20 +163,5 @@ class insights:
         ########
         #ELSE BLOCK 
   
-        return self.generate_insights(column_name, prev_insights, insight_count)
+        return self.generate_insights(column_name, prev_insights)
         ########
-        
-        
-class hypothesis:
-    
-    def get_hypothesis(self):
-        column_name = request.json.get('column_name')
-        if 'Fuel consumption inside cities (l/100km)'.lower() in column_name.lower():
-            data = ["In gas vehicles, smaller engines have lower carbon dioxide emissions, compared to larger engines. This is because smaller engines have less fuel to burn, resulting in lower carbon dioxide emissions.","The improvement in fuel consumption for gas vehicles is due to the advancement in technology, such as the use of turbochargers and direct injection systems, which have increased the efficiency of the combustion process.","In all vehicles, there is a higher fuel consumption in the city, compared to the highway. This is due to the fact that city driving requires more stops and starts, which results in more fuel consumption."]
-            return jsonify({'data' : data})
-
-        if 'Electrical consumption inside cities (kwh/100km)'.lower() in column_name.lower():
-            data = ["As the production of electric vehicles has been increasing, it is likely that the prices of their components are decreasing due to increased market competition and economies of scale.","Hybrid vehicles from manufacturers like BMW and Mercedes often have similar or even worse fuel efficiency compared to gasoline-powered vehicles, likely due to the inefficiencies of the electric motors.","Hybrid vehicles use both gasoline and electricity, which results in better fuel efficiency.\nIn hybrid vehicles, the electric motor supplements the gasoline engine to improve fuel efficiency. This is because electric motors are more efficient than combustion engines, converting more energy into motion. Additionally, hybrid vehicles often have regenerative braking systems, which convert the kinetic energy of braking into electrical energy, further increasing fuel efficiency."] 
-            return jsonify({'data' : data})
-        else:
-            return jsonify ({'data' : []})
