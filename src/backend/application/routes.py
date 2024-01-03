@@ -21,7 +21,7 @@ def home():
     return "home"
 
 
-@app.route("/login")
+@app.route("/login", methods=['POST'])
 def login():
     
     document = {
@@ -73,6 +73,7 @@ def get_insights():
 
 
 @app.route("/get_hypothesis", methods=['POST'])
+@login_required
 @cross_origin()
 def get_hypothesis():
     return hypothesis().get_hypothesis()
