@@ -3,6 +3,11 @@ import User from "../../../../../models/users";
 import NextAuth from "next-auth/next";
 import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcrypt";
+import { v4 as uuidv4 } from 'uuid';
+
+function generateSessionId() {
+  return uuidv4();
+}
 
 export const authOptions = {
     providers: [
@@ -28,8 +33,14 @@ export const authOptions = {
                 console.log("Passwords did not match");
               return null; // Return null when passwords do not match
             }
+
+            let sessionId = user.sessionId;
+            if (!sessionId) {
+              sessionId = generateSessionId();
+            }
+
             // Return the user object when authentication is successful
-            return user;
+            return {...user.toObject(), sessionId };
 
           } catch (error) {
             console.log("Error: ", error);
@@ -40,7 +51,13 @@ export const authOptions = {
     ],
     callbacks: {
       async jwt({ token, user }) {
-        if (user?._id) token._id = user._id;
+        if (user?._id) {
+          token._id = user._id;
+          // store sessionId in token
+          if (user.sessionId) {
+            token.sessionId = user.sessionId;
+          }
+        }
         console.log(token)
         return token;
       },
@@ -53,12 +70,15 @@ export const authOptions = {
       // },
       async session({ session, token}) {
         if (session.user) {
-            const user = await User.findOne({ email: session.user.email });
-            // session.user = user;
-            session.user = user.name; // Update the session user object
-            session.email = user.email;
-            session._id = user.id;
+          const user = await User.findOne({ email: session.user.email });
+          // session.user = user;
+          session.user = user.name; // Update the session user object
+          session.email = user.email;
+          session._id = user.id;
+          session.sessionId = token.sessionId;
         }
+        // user _id which matches mongoDB id
+        // 25d043a4f8f94aa5a3488bb481369291
         return session;
       }
     },
@@ -71,6 +91,6 @@ export const authOptions = {
     },
   };
   
-  const handler = NextAuth(authOptions);
-  
-  export { handler as GET, handler as POST };
+const handler = NextAuth(authOptions);
+
+export { handler as GET, handler as POST };

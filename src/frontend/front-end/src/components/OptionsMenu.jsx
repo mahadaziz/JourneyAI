@@ -74,13 +74,13 @@ const OptionsMenu = () => {
             <button onClick={toggleDropdown} 
                 id="dropdownDefaultButton" 
                 data-dropdown-toggle="dropdown" className="relative focus:outline-none 
-                font-medium rounded-2xl text-sm px-5 py-2.5 border border-gray-700 text-center inline-flex items-center
-                w-auto min-w-0 sm:min-w-[300px] md:min-w-[400px] lg:min-w-[500px]
-                text-black bg-white hover:bg-gray-100 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600" 
-                
+                font-medium rounded-2xl px-5 py-2.5 border border-gray-700 text-center inline-flex items-center
+                w-auto sm:min-w-[200px] md:min-w-[400px] md:text-md lg:min-w-[550px]
+                text-black bg-white hover:bg-gray-100 dark:bg-[#030712] dark:text-gray-200 dark:hover:bg-gray-800" 
+
                 type="button">
                 Tell me about:
-                <span className="pl-2 font-normal">
+                <span className="pl-2 font-normal truncate max-w-[150px] sm:max-w-[300px] md:max-w-[150px] md:pr-0 lg:max-w-full">
                     {selectedColumn}
                 </span>
                 <svg className="w-2.5 h-2.5 ms-auto" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6">
@@ -88,7 +88,7 @@ const OptionsMenu = () => {
                 </svg>
             </button>
 
-            <div className={`z-10 ${isOpen ? 'opacity-100 visible' : 'opacity-0 invisible'} transition ease-in-out duration-300 absolute rounded-xl bg-white divide-y divide-gray-100 shadow w-full dark:bg-gray-700`}>
+            <div className={`z-10 ${isOpen ? 'opacity-100 visible' : 'opacity-0 invisible'} transition ease-in-out duration-300 absolute rounded-xl bg-white divide-y divide-gray-100 shadow w-full dark:bg-gray-800`}>
                 <ul className="py-2 text-sm text-gray-700 dark:text-gray-200" aria-labelledby="dropdownDefaultButton">
                     {dataColumns.map((column, index) => (
                     <li key={index}>
