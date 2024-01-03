@@ -3,18 +3,40 @@ from application.models import User, insights, hypothesis
 from functools import wraps
 from flask import Flask, redirect, session, jsonify, request
 from flask_cors import CORS,cross_origin
+from datetime import datetime, timedelta
 
+def login_required(f):
+    @wraps(f)
+    def wrap (*args, **kwargs):
+        session_id = request.json.get('session_id')
+        query = {'session': session_id, 'expiry_date' : {'$gt' : datetime.utcnow()}}
+        if db['logged_in'].find_one(query) is not None:
+            return f(*args, **kwargs)
+        else:
+            return jsonify ({"error": 'User is not logged in'}), 400
+    return wrap
 
 @app.route("/")
 def home():
     return "home"
 
 
+@app.route("/login")
+def login():
+    
+    document = {
+        'session_id' : request.json.get('session_id'),
+        'expiry_date' : datetime.utcnow() + timedelta(hours=4)
+    }
+    db['logged_in'].insert_one(document)
+    return "home"
+
 
 @app.route("/signup", methods=['POST'])
 @cross_origin()
 def signup():
     return User().signup()
+
 
 
 

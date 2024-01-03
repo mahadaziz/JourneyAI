@@ -123,6 +123,7 @@ class insights:
                                         'rank' : self.get_rank(column_name)}        
 
         
+        #Make sure that each returned insight is unvisited
         all_values = ([value for values in insights.values() for value in values])
         if len(all_values) <= insight_count:
             return jsonify({'insights' :all_values})
