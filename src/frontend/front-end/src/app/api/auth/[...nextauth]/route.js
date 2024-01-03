@@ -40,7 +40,15 @@ export const authOptions = {
             }
 
             // Return the user object when authentication is successful
-            return {...user.toObject(), sessionId };
+              // Create a new object with user data and sessionId
+            const userObject = {
+              _id: user._id,
+              name: user.name,
+              email: user.email,
+              // Add other user fields you need
+              sessionId: sessionId
+            };
+            return userObject;
 
           } catch (error) {
             console.log("Error: ", error);
@@ -50,17 +58,6 @@ export const authOptions = {
       }),
     ],
     callbacks: {
-      async jwt({ token, user }) {
-        if (user?._id) {
-          token._id = user._id;
-          // store sessionId in token
-          if (user.sessionId) {
-            token.sessionId = user.sessionId;
-          }
-        }
-        console.log(token)
-        return token;
-      },
       // async jwt({token, user}) {
       //   if (user) {
       //     token.email = user.email;
@@ -68,17 +65,22 @@ export const authOptions = {
       //   console.log(token);
       //   return token;
       // },
+      async jwt({ token, user }) {
+        if (user?._id) {
+          token._id = user._id;
+          // store sessionId in token
+          token.sessionId = user.sessionId;
+        }
+        return token;
+      },
       async session({ session, token}) {
         if (session.user) {
           const user = await User.findOne({ email: session.user.email });
-          // session.user = user;
           session.user = user.name; // Update the session user object
           session.email = user.email;
           session._id = user.id;
           session.sessionId = token.sessionId;
         }
-        // user _id which matches mongoDB id
-        // 25d043a4f8f94aa5a3488bb481369291
         return session;
       }
     },
