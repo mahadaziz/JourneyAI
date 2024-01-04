@@ -39,7 +39,7 @@ def signup():
 
 @app.route("/delete_session", methods=['POST'])
 @cross_origin()
-# @login_required
+@login_required
 def delete_session():
     session_id = request.json.get('session_id'),
     query = {'session_id' : session_id }

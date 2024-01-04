@@ -1,6 +1,7 @@
 from flask import Flask, jsonify, request, session, redirect
 from application import db
 import bcrypt, datetime, uuid, json, random
+import pandas as pd
 
 class User:
     
@@ -66,10 +67,96 @@ class insights:
 
     # Function to get basic stats templates
     def get_basic_stats(self, column_name):
-        return [
-            f'The mean value of {column_name} is {round(random.uniform(30, 40),2)}. This indicates the central tendency of the data.',
-            f'The standard deviation of {column_name} is {round(random.uniform(10, 15),2)}. A lower standard deviation suggests less variability in the data.'
-        ]
+        cursor = db['cars'].find()
+        df = pd.DataFrame(iter(cursor))
+        numerical_columns = df.select_dtypes(include=['int64', 'float64']).columns
+        categorical_columns = df.select_dtypes(include=['object', 'category', 'datetime64']).columns
+        date_columns = df.select_dtypes(include=['datetime64']).columns
+        units = {}
+        for column in numerical_columns:
+        ## TODO: fix the logic to change dates that are misflagged as ints or objects to datetime (include years, months, days,...) 
+            # if df[column].dtype == 'int64' and 1400 <= df[column].min() <= df[column].max() <= 2100 and 'year' in column.lower():
+            #     numerical_columns = numerical_columns[numerical_columns != column]
+            #     date_columns.append(pd.Index([column]))
+            #     pass
+            try:
+                tempUnits = column.split('(')[-1]
+                if tempUnits[-1] == ')':
+                    units[column] = tempUnits[:-1]
+
+            except:
+                pass
+                
+
+        insights = []
+        if column_name in numerical_columns:
+            stats = df.describe()[column_name]    
+            if column_name in units.keys():
+                insights += ['The mean of ' + column_name + ' is equal to ' + str(stats['mean']) + ' ' + units[column_name]]
+                insights += ['The standard deviation of ' + column_name + ' is equal to ' + str(stats['std']) + ' ' + units[column_name]]
+                insights += ['The minimum of ' + column_name + ' is equal to ' + str(stats['min']) + ' ' + units[column_name]]
+                insights += ['The ' + column_name + ' at the 25th percentile is recorded as ' + str(stats['25%']) + ' ' + units[column_name]]
+                insights += ['The ' + column_name + ' at the 50th percentile is recorded as ' + str(stats['50%']) + ' ' + units[column_name]]
+                insights += ['The ' + column_name + ' at the 75th percentile is recorded as ' + str(stats['75%']) + ' ' + units[column_name]]
+                insights += ['The maximum of ' + column_name + ' is equal to ' + str(stats['max']) + ' ' + units[column_name]]
+                insights += ['The total ' + column_name + ' in this dataset, is equal to ' + str(df[column_name].sum()) + ' ' + units[column_name]]
+            else:
+                insights += ['The mean of ' + column_name + ' is equal to ' + str(stats['mean'])]
+                insights += ['The standard deviation of ' + column_name + ' is equal to ' + str(stats['std'])]
+                insights += ['The minimum of ' + column_name + ' is equal to ' + str(stats['min'])]
+                insights += ['The ' + column_name + ' at the 25th percentile is recorded as ' + str(stats['25%'])]
+                insights += ['The ' + column_name + ' at the 50th percentile is recorded as ' + str(stats['50%'])]
+                insights += ['The ' + column_name + ' at the 75th percentile is recorded as ' + str(stats['75%'])]
+                insights += ['The maximum of ' + column_name + ' is equal to ' + str(stats['max'])]
+                insights += ['The total ' + column_name + ' in this dataset, is equal to ' + str(df[column_name].sum())]
+
+        if column_name in categorical_columns:
+            for numerical_column in numerical_columns:
+                avg = df[numerical_column].mean()
+                if numerical_column in units.keys():
+                    insights += [f'The insident with maximum {numerical_column} happens when the {column_name} is {df.loc[df[numerical_column].idxmax()][column_name]}, in this case the {numerical_column} is equal to {df.loc[df[numerical_column].idxmax()][numerical_column]} {units[numerical_column]}']
+                    insights += [f'The insident with minimum {numerical_column} happens when the {column_name} is {df.loc[df[numerical_column].idxmin()][column_name]}, in this case the {numerical_column} is equal to {df.loc[df[numerical_column].idxmin()][numerical_column]} {units[numerical_column]}']
+
+                    asum = df.groupby(column_name)[numerical_column].sum().reset_index()
+                    insights += [f'The {column_name} with the most {numerical_column} is {asum.loc[asum[numerical_column].idxmax()][column_name]}, the sum of {numerical_column} is {asum.loc[asum[numerical_column].idxmax()][numerical_column]} {units[numerical_column]}']
+
+                    insights += [f'The {column_name} with the least {numerical_column} is {asum.loc[asum[numerical_column].idxmin()][column_name]}, the sum of {numerical_column} is {asum.loc[asum[numerical_column].idxmin()][numerical_column]} {units[numerical_column]}']
+
+                    amean = df.groupby(column_name)[numerical_column].mean().reset_index()
+                    insights += [f'The {column_name} with the highest average {numerical_column} is {amean.loc[amean[numerical_column].idxmax()][column_name]}, the highest average is {amean.loc[amean[numerical_column].idxmax()][numerical_column]} {units[numerical_column]}']
+
+                    insights += [f'The {column_name} with the lowest average {numerical_column} is {amean.loc[amean[numerical_column].idxmin()][column_name]}, the lowest average is {amean.loc[amean[numerical_column].idxmin()][numerical_column]} {units[numerical_column]}']
+
+                    std = df.groupby(column_name)[numerical_column].std().reset_index()
+                    insights += [f'The {column_name} with the highest standard deviation in {numerical_column} is {std.loc[std[numerical_column].idxmax()][column_name]}, the standard deviation is {std.loc[std[numerical_column].idxmax()][numerical_column]} {units[numerical_column]}']
+
+                    insights += [f'The {column_name} with the lowest standard deviation in {numerical_column} is {std.loc[std[numerical_column].idxmin()][column_name]}, the standard deviation is {std.loc[std[numerical_column].idxmin()][numerical_column]} {units[numerical_column]}']
+                else:
+
+                    insights += [f'The insident with maximum {numerical_column} happens when the {column_name} is {df.loc[df[numerical_column].idxmax()][column_name]}, in this case the {numerical_column} is equal to {df.loc[df[numerical_column].idxmax()][numerical_column]}']
+                    insights += [f'The insident with minimum {numerical_column} happens when the {column_name} is {df.loc[df[numerical_column].idxmin()][column_name]}, in this case the {numerical_column} is equal to {df.loc[df[numerical_column].idxmin()][numerical_column]}']
+
+                    asum = df.groupby(column_name)[numerical_column].sum().reset_index()
+                    insights += [f'The {column_name} with the most {numerical_column} is {asum.loc[asum[numerical_column].idxmax()][column_name]}, the sum of {numerical_column} is {asum.loc[asum[numerical_column].idxmax()][numerical_column]}']
+
+                    insights += [f'The {column_name} with the least {numerical_column} is {asum.loc[asum[numerical_column].idxmin()][column_name]}, the sum of {numerical_column} is {asum.loc[asum[numerical_column].idxmin()][numerical_column]}']
+
+                    amean = df.groupby(column_name)[numerical_column].mean().reset_index()
+                    insights += [f'The {column_name} with the highest average {numerical_column} is {amean.loc[amean[numerical_column].idxmax()][column_name]}, the highest average is {amean.loc[amean[numerical_column].idxmax()][numerical_column]}']
+
+                    insights += [f'The {column_name} with the lowest average {numerical_column} is {amean.loc[amean[numerical_column].idxmin()][column_name]}, the lowest average is {amean.loc[amean[numerical_column].idxmin()][numerical_column]}']
+
+                    std = df.groupby(column_name)[numerical_column].std().reset_index()
+                    insights += [f'The {column_name} with the highest standard deviation in {numerical_column} is {std.loc[std[numerical_column].idxmax()][column_name]}, the standard deviation is {std.loc[std[numerical_column].idxmax()][numerical_column]}']
+
+                    insights += [f'The {column_name} with the lowest standard deviation in {numerical_column} is {std.loc[std[numerical_column].idxmin()][column_name]}, the standard deviation is {std.loc[std[numerical_column].idxmin()][numerical_column]}']
+
+        return insights 
+
+    # [
+    #         f'The mean value of {column_name} is {round(random.uniform(30, 40),2)}. This indicates the central tendency of the data.',
+    #         f'The standard deviation of {column_name} is {round(random.uniform(10, 15),2)}. A lower standard deviation suggests less variability in the data.'
+    #     ]
 
     # Function to get clusters templates
     def get_clusters(self, column_name):
@@ -112,15 +199,18 @@ class insights:
         ]
     
     def generate_insights(self, column_name, prev_insights, insight_count):
-        insights = {'outliers' : self.get_outliers(column_name) ,
-                                        'derived values' : self.get_derived_values(column_name),
-                                        'associations' : self.get_associations(column_name),
-                                        'differences' : self.get_differences(column_name),
-                                        'trends' : self.get_trends(column_name),
-                                        'distribution' : self.get_distributions(column_name),
-                                        'basic_stats' : self.get_basic_stats(column_name),
-                                        'clusters' : self.get_clusters(column_name),
-                                        'rank' : self.get_rank(column_name)}        
+        insights = {
+            # 'outliers' : self.get_outliers(column_name) ,
+            #                             'derived values' : self.get_derived_values(column_name),
+            #                             'associations' : self.get_associations(column_name),
+            #                             'differences' : self.get_differences(column_name),
+            #                             'trends' : self.get_trends(column_name),
+            #                             'distribution' : self.get_distributions(column_name),
+                                        'basic_stats' : self.get_basic_stats(column_name)
+                                        # ,
+                                        # 'clusters' : self.get_clusters(column_name),
+                                        # 'rank' : self.get_rank(column_name)
+                                        }        
 
         
         #Make sure that each returned insight is unvisited
@@ -184,3 +274,4 @@ class hypothesis:
             return jsonify({'data' : data})
         else:
             return jsonify ({'data' : []})
+
