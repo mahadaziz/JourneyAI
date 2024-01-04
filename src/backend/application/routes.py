@@ -9,8 +9,8 @@ def login_required(f):
     @wraps(f)
     def wrap (*args, **kwargs):
         session_id = request.json.get('session_id')
-        query = {'session': session_id, 'expiry_date' : {'$gt' : datetime.utcnow()}}
-        if db['logged_in'].find_one(query) is not None:
+        query = {'session_id': session_id, 'expiry_date' : {'$gt' : datetime.utcnow()}}
+        if db['logged_in'].find_one(query) is not None and session_id is not None:
             return f(*args, **kwargs)
         else:
             return jsonify ({"error": 'User is not logged in'}), 400
@@ -37,12 +37,25 @@ def login():
 def signup():
     return User().signup()
 
-
-
+@app.route("/delete_session", methods=['POST'])
+@cross_origin()
+# @login_required
+def delete_session():
+    session_id = request.json.get('session_id'),
+    query = {'session_id' : session_id }
+    if query is not None and session_id is not None:
+        db['logged_in'].delete_many(query)
+        
+        return 'Session was deleted', 200
+    else:
+        return 'session never existed', 400
+    
+    
 
 
 @app.route("/get_column_names")
 @cross_origin()
+@login_required
 def get_column_names():
     names = list(db.cars.find_one().keys())
     # column_names = [ name.capitalize() for name in  names if name != '_id' ]
@@ -53,6 +66,7 @@ def get_column_names():
 
 @app.route("/get_data", methods=['POST'])
 @cross_origin()
+@login_required
 def get_data():
     column_name = request.json.get('column_name')
     if 'Fuel consumption inside cities (l/100km)'.lower() in column_name.lower():
@@ -68,13 +82,14 @@ def get_data():
 
 @app.route("/get_insights", methods=['POST'])
 @cross_origin()
+@login_required
 def get_insights():
     return insights().get_insights()
 
 
 @app.route("/get_hypothesis", methods=['POST'])
-@login_required
 @cross_origin()
+@login_required
 def get_hypothesis():
     return hypothesis().get_hypothesis()
 
