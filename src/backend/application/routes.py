@@ -53,7 +53,7 @@ def delete_session():
     
 
 
-@app.route("/get_column_names")
+@app.route("/get_column_names", methods=['POST'])
 @cross_origin()
 @login_required
 def get_column_names():
