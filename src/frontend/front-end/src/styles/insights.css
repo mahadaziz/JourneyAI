@@ -22,18 +22,17 @@
 @media  (min-height: 750px) {
     .insightScroll {
         max-height: 250px;
-
     }
 }
 
 @media  (min-height: 850px) {
     .insightScroll { 
-        max-height: 330px;
+        max-height: 300px;
         overflow: auto;
     }
     .insightScrollFull {
         min-height: 400px;
-        max-height: 600px;
+        max-height: 500px;
         overflow: auto;
     }
     .insightScrollFull::-webkit-scrollbar {

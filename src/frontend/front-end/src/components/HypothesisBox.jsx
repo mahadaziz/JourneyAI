@@ -4,6 +4,7 @@ import PopupModal from './PopupModal';
 import { ChartBarIcon } from '@heroicons/react/24/solid';
 import { SelectedColumnContext } from '../context/SelectedColumnContext';
 import { HypothesisDataContext } from '../context/HypothesisDataContext';
+import { InsightsDataContext } from '../context/InsightsDataContext';
 import { Tooltip } from 'react-tooltip';
 import { motion } from "framer-motion"
 import '../styles/hypothesis.css';
@@ -20,33 +21,42 @@ const buttonVariants = {
     normal: { scale: 1, backgroundColor: "#FFFFFF"}
 };
 
-const HypothesisBox = () => {
-    const { selectedColumn } = useContext(SelectedColumnContext);
-    const { updateHypothesisData } = useContext(HypothesisDataContext);
+const HypothesisBox = ({sessionId}) => {
+    const {selectedColumn} = useContext(SelectedColumnContext);
+    const {updateHypothesisData} = useContext(HypothesisDataContext);
+    const {insightsData} = useContext(InsightsDataContext);
     const [hypothesisData, setHypothesisData] = useState([]);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [refresh, setRefresh] = useState(false);
-
+    const [error, setError] = useState(false);
     const openModal = () => setIsModalOpen(true);
     const closeModal = () => setIsModalOpen(false);
-    
+
     const getHypothesisData = async () => {
-        if (!selectedColumn) return;
+        if (!selectedColumn) {
+            return;
+        }
 
         try {
+            console.log("this is the user session in hypothesis: ", sessionId)
             const response = await fetch('http://127.0.0.1:8080/get_hypothesis', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 'column_name': selectedColumn }),
+                body: JSON.stringify({
+                    'column_name':selectedColumn,
+                    'session_id':sessionId
+                }),
             });
             const data = await response.json();
             if (response.ok) {
                 setHypothesisData(data.data);
                 if (data.data.length > 0) {
                     updateHypothesisData(true);
+                    setError(false);
                 }
                 else {
                     updateHypothesisData(false);
+                    setError(true);
                 }
             } else {
                 console.error('Failed to fetch hypothesisData: ', data);
@@ -57,8 +67,10 @@ const HypothesisBox = () => {
     };
 
     useEffect(() => {
-        getHypothesisData();
-    }, [selectedColumn, refresh]);
+        if (sessionId) {
+            getHypothesisData();
+        }
+    }, [selectedColumn, refresh, sessionId]);
 
     const handleRefresh = () => {
         setRefresh(prev => !prev); // Flip the state to trigger re-fetch
@@ -88,40 +100,44 @@ const HypothesisBox = () => {
                     </svg>
                 </motion.button>
             </div>
-            {selectedColumn === undefined || selectedColumn === null || selectedColumn === ''? (
+            {error ? (
+                <div className="text-center p-4 font-medium">
+                    No data available.
+                </div>
+            ) : selectedColumn === undefined || selectedColumn === null || selectedColumn === ''? (
                 <div className="text-center p-4 font-medium">
                     Select a topic to view hypotheses.
                 </div>
-                ) : hypothesisData.length > 0 ? (
-                    <div className="hypothesisScroll">
-                        <div className="hypothesisContent">
-                        </div>
-                        {hypothesisData.map((header, index) => (
-                            // <HypothesisButton key={index} header={header} />
-                            <motion.div key={`${header}-${refresh}`} 
-                                className="relative px-4 py-1"
-                                initial="hidden"
-                                animate="visible"
-                                variants={variants}
-                                transition={{ duration: 0.5 }}>
-                                <div className="flex items-center justify-between w-full p-3 bg-white border border-gray-200 rounded-lg shadow hover:bg-gray-100 dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700">
-                                    <h5 className="text-lg text-left font-normal tracking-tight text-gray-900 dark:text-white">
-                                        {header}
-                                    </h5>
-                                    <div className="absolute bottom-0 right-0 p-6">
-                                        <ChartBarIcon onClick={openModal} 
-                                                    className="h-6 w-6 cursor-pointer text-gray-500 hover:text-gray-700 dark:hover:text-gray-300" aria-label="Open modal"
-                                                    data-tooltip-id="my-tooltip" data-tooltip-content="View Graph" data-tooltip-place="left"
-                                        />
-                                    </div>
-                                    <PopupModal isModalOpen={isModalOpen} closeModal={closeModal} />
+            ) : hypothesisData.length > 0 ? (
+                <div className="hypothesisScroll">
+                    <div className="hypothesisContent">
+                </div>
+                    {hypothesisData.map((header, index) => (
+                        // <HypothesisButton key={index} header={header} />
+                        <motion.div key={`${header}-${refresh}`} 
+                            className="relative px-4 py-1"
+                            initial="hidden"
+                            animate="visible"
+                            variants={variants}
+                            transition={{ duration: 0.5 }}>
+                            <div className="flex items-center justify-between w-full p-3 bg-white border border-gray-200 rounded-lg shadow hover:bg-gray-100 dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700">
+                                <h5 className="text-lg text-left font-normal tracking-tight text-gray-900 dark:text-white">
+                                    {header}
+                                </h5>
+                                <div className="absolute bottom-0 right-0 p-6">
+                                    <ChartBarIcon onClick={openModal} 
+                                                className="h-6 w-6 cursor-pointer text-gray-500 hover:text-gray-700 dark:hover:text-gray-300" aria-label="Open modal"
+                                                data-tooltip-id="my-tooltip" data-tooltip-content="View Graph" data-tooltip-place="left"
+                                    />
                                 </div>
-                            </motion.div> 
-                        ))}
-                    </div>   
-                ) : (
+                                <PopupModal isModalOpen={isModalOpen} closeModal={closeModal} />
+                            </div>
+                        </motion.div> 
+                    ))}
+                </div>   
+            ) : (
                 <div className="text-center p-4 font-medium">
-                    No data available.
+                    Refresh to generate hypotheses
                 </div>
             )}
         </div>

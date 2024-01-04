@@ -4,8 +4,8 @@ import { useState } from "react";
 
 
 export const HypothesisDataContext = React.createContext({
-    selectedColumn: '',
-    setSelectedColumn: () => {}
+  hasHypothesisData: '',
+  setHasHypothesisData: () => {}
 });
 
 export const HypothesisDataProvider  = ({ children }) => {

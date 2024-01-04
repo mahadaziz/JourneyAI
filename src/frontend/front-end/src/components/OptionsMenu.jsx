@@ -2,7 +2,7 @@
 import React, { useState, useRef, useEffect, useContext  } from 'react';
 import { SelectedColumnContext } from '../context/SelectedColumnContext';
 
-const OptionsMenu = () => {
+const OptionsMenu = ({sessionId}) => {
     // State to keep track of whether the dropdown is open
     const [isOpen, setIsOpen] = useState(false);
     const {selectedColumn, setSelectedColumn} = useContext(SelectedColumnContext);
@@ -40,22 +40,25 @@ const OptionsMenu = () => {
 
     useEffect(() => {
         // call API for all options in the dropdown menu
-        // http://localhost:5000/get_column_names
         // use the setValue function to set the selected column
         const getColumnNames = async () => {
             try {
+                console.log("in columns ", sessionId);
                 const response = await fetch('http://127.0.0.1:8080/get_column_names', {
-                    method: 'GET',
+                    method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
-                    }
+                    },
+                    body: JSON.stringify({
+                        'session_id':sessionId
+                    }),
                 });
                 const data = await response.json();
 
                 // Check if the response is ok
                 if (response.ok) {
                     // Capitalize first letter of each element in the array
-                    const dataColumns = await data.column_names.map(column => capitalizeFirstLetter(column));
+                    const dataColumns = await data.column_names.map(column => column);
                     setDataColumns(dataColumns);
                 } else {
                     // Handle HTTP errors

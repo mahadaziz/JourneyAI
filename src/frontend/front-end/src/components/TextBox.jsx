@@ -67,12 +67,16 @@ const TextBox = () => {
   // keeps track of the updates to the editor content
   useEffect(() => {
     if (editor) {
-      const unsubscribe = editor.on('update', () => {
+      // Subscribe to the update event
+      const handleUpdate = () => {
         debouncedExtraction();
-      });
+      };
+      editor.on('update', handleUpdate);
+  
       // Return a cleanup function
       return () => {
-        unsubscribe();
+        // Unsubscribe from the update event
+        editor.off('update', handleUpdate);
       };
     }
   }, [editor, debouncedExtraction]);

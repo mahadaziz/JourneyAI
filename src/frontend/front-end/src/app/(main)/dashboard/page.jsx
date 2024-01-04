@@ -10,6 +10,7 @@ import HypothesisBox from "../../../components/HypothesisBox";
 import InsightsBox from "../../../components/InsightsBox";
 import DocumentTitle from '../../../components/DocumentTitle';
 import ToggleButton from '../../../components/ToggleButton';
+import NavBar from '../../../components/NavBar';
 
 import '../../../app/globals.css'
 
@@ -19,62 +20,30 @@ export default async function page() {
         redirect('/login');
     }
     console.log("This is the session in page.jsx");
-    console.log(session);
-    
+    console.log(session.sessionId);
+    console.log(session.userId);
     return (
     <div className="grid grid-rows-[auto_1fr] grid-cols-5 w-screen h-screen bg-bgGrey delayAnimation transition-colors duration-500 ease-in-out dark:bg-neutral-900">
         {/* <!-- This is the first item at the top-left corner spanning 2 columns --> /} */}
-        <div className="col-span-5 md:col-span-3 m-3">
+        <div className="col-span-5 md:col-span-5 pb-2">
             {/* put the home icon and drop down menu here */}
             <div className="flex flex-row justify-between items-center w-full">
-                <div className="flex flex-row items-center">
-                    <div className="flex flex-row justify-content items-center align-center border border-gray-700 ml-2 pl-2 pr-2 rounded-2xl bg-white dark:bg-neutral-900">
-                        <a href="/homepage">
-                            <button className="p-2 rounded-lg hover:text-bgLight hover:bg-gray-200 dark:hover:bg-gray-700">
-                                <HomeIcon className="w-7 h-7"/>
-                            </button>
-                        </a>
-                        <SideNav/>
-                    </div>
-                </div>
-
-                <div>
-                    <DocumentTitle/>
-                </div>
-
-                {/* DropDown Menu */}
-                <div className="flex justify-center lg:justify-end mr-3 w-full">
-                    <OptionsMenu/>
-                </div>
-                <div className="md:hidden">
-                    <ToggleButton/>
-                </div>
-            </div>
-        </div>
-
-        <div className='hidden md:col-span-2 md:flex flex-grow items-center w-full pl-3 pr-5'>
-            {/* <div className="hidden lg:flex flex-grow justify-end mx-6">
-                DateTime
-            </div> */}
-            <div className="hidden lg:flex flex-grow justify-end">
-                <div className="bg-white dark:bg-neutral-900 rounded-2xl">
-                    <ThemeSwitcher/>
-                </div>
+                <NavBar sessionId={session.sessionId}/>
             </div>
         </div>
 
 
         {/* <!-- TextBox should span the entire height minus the first row and span all columns --> /} */}
         <div className="flex flex-col col-span-5 md:col-span-3 pt-4 h-full overflow-y-auto">
-            <TextBox/>
+            <TextBox sessionId={session.sessionId}/>
         </div>
 
         <div className="hidden md:flex md:flex-col md:col-span-2 pt-4">
             <div className="w-full overflow-y-auto">
-                <HypothesisBox/>
+                <HypothesisBox sessionId={session.sessionId}/>
             </div>
             <div className="w-full py-8 overflow-y-auto">
-                <InsightsBox/>
+                <InsightsBox sessionId={session.sessionId}/>
             </div>
         </div>
     </div>

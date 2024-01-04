@@ -39,13 +39,28 @@ export const authOptions = {
               sessionId = generateSessionId();
             }
 
+            const resFlask = await fetch("http://127.0.0.1:8080/login", {
+              method: 'POST',
+              headers: {
+                  'Content-Type': 'application/json'
+                },
+                  body: JSON.stringify({ 'session_id' : sessionId}),
+              });
+
+            if (resFlask.ok) {
+              console.log("it was done");
+            }
+            else {
+              console.log("There was an error authenticating the back-end")
+              return null;
+            }
+
             // Return the user object when authentication is successful
-              // Create a new object with user data and sessionId
+            // Create a new object with user data and sessionId
             const userObject = {
               _id: user._id,
               name: user.name,
               email: user.email,
-              // Add other user fields you need
               sessionId: sessionId
             };
             return userObject;
@@ -58,18 +73,10 @@ export const authOptions = {
       }),
     ],
     callbacks: {
-      // async jwt({token, user}) {
-      //   if (user) {
-      //     token.email = user.email;
-      //   }
-      //   console.log(token);
-      //   return token;
-      // },
       async jwt({ token, user }) {
         if (user?._id) {
           token._id = user._id;
-          // store sessionId in token
-          token.sessionId = user.sessionId;
+          token.sessionId = user.sessionId; // store sessionId in token
         }
         return token;
       },
@@ -78,7 +85,7 @@ export const authOptions = {
           const user = await User.findOne({ email: session.user.email });
           session.user = user.name; // Update the session user object
           session.email = user.email;
-          session._id = user.id;
+          session.userId = user.id;
           session.sessionId = token.sessionId;
         }
         return session;
@@ -87,6 +94,7 @@ export const authOptions = {
     secret: process.env.NEXTAUTH_SECRET,
     session: {
       strategy: "jwt",
+      maxAge: 4 * 60 * 60, // 4 hours in seconds
     },
     pages: {
       signIn: "/login",
