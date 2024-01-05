@@ -119,8 +119,8 @@ def input_dataset():
     if file:
         file.filename = secure_filename(file.filename)
         if file.filename.endswith('.csv'):
-            df = pd.read_csv(file).to_dict(orient='records')
-            db['datasets'].insert_one({'title': request.form['title'], 'user_id': request.form['user_id'], 'data': df, 'created_date': datetime.utcnow(),
+            # df = pd.read_csv(file).to_dict(orient='records')
+            db['datasets'].insert_one({'title': request.form['title'], 'user_id': request.form['user_id'], 'data': pd.read_csv(file).to_dict(orient='records'), 'created_date': datetime.utcnow(),
             'last_update_time': datetime.utcnow() })
         
         elif file.filename.endswith('.xlsx'):
@@ -137,7 +137,8 @@ def input_dataset():
             return jsonify({"message" : 'Unsupported file format'}), 400
         
         try:
-            names = list(df[0].keys())
+            # names = list(df[0].keys())
+            names = ['tempbla', 'tempbla2']
             column_names = [ name for name in  names if name != '_id' ]
             return jsonify({'column_names' :  column_names, 'title' : request.form['title']}), 200
         except:
