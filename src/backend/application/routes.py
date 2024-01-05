@@ -10,7 +10,11 @@ from werkzeug.utils import secure_filename
 def login_required(f):
     @wraps(f)
     def wrap (*args, **kwargs):
-        session_id = request.json.get('session_id')
+        try:
+            session_id = request.json.get('session_id')
+        except:
+            session_id = request.form['session_id']
+            
         query = {'session_id': session_id}
         if db['logged_in'].find_one(query) is not None and session_id is not None:
             return f(*args, **kwargs)
@@ -116,17 +120,17 @@ def input_dataset():
         file.filename = secure_filename(file.filename)
         if file.filename.endswith('.csv'):
             df = pd.read_csv(file).to_dict(orient='records')
-            db['datasets'].insert_one({'title': request.json.get('title'), 'user_id': request.json.get('user_id'), 'data': df, 'created_date': datetime.datetime.utcnow(),
+            db['datasets'].insert_one({'title': request.form['title'], 'user_id': request.form['user_id'], 'data': df, 'created_date': datetime.datetime.utcnow(),
             'last_update_time': datetime.datetime.utcnow() })
         
         elif file.filename.endswith('.xlsx'):
             df = pd.read_excel(file).to_dict(orient='records')
-            db['datasets'].insert_one({'title': request.json.get('title'), 'user_id': request.json.get('user_id'), 'data': df, 'created_date': datetime.datetime.utcnow(),
+            db['datasets'].insert_one({'title': request.form['title'], 'user_id': request.form['user_id'], 'data': df, 'created_date': datetime.datetime.utcnow(),
             'last_update_time': datetime.datetime.utcnow() })
         
         elif file.filename.endswith('.json'):
             df = pd.read_json(file).to_dict(orient='records')
-            db['datasets'].insert_one({'title': request.json.get('title'), 'user_id': request.json.get('user_id'), 'data': df, 'created_date': datetime.datetime.utcnow(),
+            db['datasets'].insert_one({'title':request.form['title'], 'user_id': request.form['user_id'], 'data': df, 'created_date': datetime.datetime.utcnow(),
             'last_update_time': datetime.datetime.utcnow() })
         
         else:
@@ -135,7 +139,7 @@ def input_dataset():
         try:
             names = list(df.keys())
             column_names = [ name for name in  names if name != '_id' ]
-            return jsonify({'column_names' :  column_names, 'title' : request.json.get('title')}), 200
+            return jsonify({'column_names' :  column_names, 'title' : request.form['title']}), 200
         except:
             return jsonify({'message' :  'Could not get a list of column_names'}), 400
     else:
