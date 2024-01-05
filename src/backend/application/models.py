@@ -300,19 +300,19 @@ class hypothesis:
         else : 
             history = []
         data = []
-       
+
         
         for prompt in prompts:
             output = query_ai({
-                "inputs": "Respond to the Current Input using the past user inputs below.\nUser Inputs: " + str(history) + "\nCurrent Input: " + prompt + "\nAnswer:",
+                "inputs": "Respond to the Current Input using the past user inputs below.\nUser Inputs: " + str(history) + "\nCurrent Input: " + prompt + "Why is this the case?" + "\nAnswer:",
                 "parameters": {
                     "return_full_text": False,
                     "max_time": 2.0
                     }
             })
-            history.append(prompt)
-            if len(history) > 15:
-                history.pop(0)
+            history.insert(0, prompt)
+            if len(history) > 100:
+                history.pop()
             try:
                 data.append(output[0]['generated_text'])
             except KeyError as e:
