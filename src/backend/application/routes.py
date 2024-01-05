@@ -120,18 +120,18 @@ def input_dataset():
         file.filename = secure_filename(file.filename)
         if file.filename.endswith('.csv'):
             df = pd.read_csv(file).to_dict(orient='records')
-            db['datasets'].insert_one({'title': request.form['title'], 'user_id': request.form['user_id'], 'data': df, 'created_date': datetime.datetime.utcnow(),
-            'last_update_time': datetime.datetime.utcnow() })
+            db['datasets'].insert_one({'title': request.form['title'], 'user_id': request.form['user_id'], 'data': df, 'created_date': datetime.utcnow(),
+            'last_update_time': datetime.utcnow() })
         
         elif file.filename.endswith('.xlsx'):
             df = pd.read_excel(file).to_dict(orient='records')
-            db['datasets'].insert_one({'title': request.form['title'], 'user_id': request.form['user_id'], 'data': df, 'created_date': datetime.datetime.utcnow(),
-            'last_update_time': datetime.datetime.utcnow() })
+            db['datasets'].insert_one({'title': request.form['title'], 'user_id': request.form['user_id'], 'data': df, 'created_date': datetime.utcnow(),
+            'last_update_time': datetime.utcnow() })
         
         elif file.filename.endswith('.json'):
             df = pd.read_json(file).to_dict(orient='records')
-            db['datasets'].insert_one({'title':request.form['title'], 'user_id': request.form['user_id'], 'data': df, 'created_date': datetime.datetime.utcnow(),
-            'last_update_time': datetime.datetime.utcnow() })
+            db['datasets'].insert_one({'title':request.form['title'], 'user_id': request.form['user_id'], 'data': df, 'created_date': datetime.utcnow(),
+            'last_update_time': datetime.utcnow() })
         
         else:
             return jsonify({"message" : 'Unsupported file format'}), 400
