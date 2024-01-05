@@ -9,7 +9,7 @@ def login_required(f):
     @wraps(f)
     def wrap (*args, **kwargs):
         session_id = request.json.get('session_id')
-        query = {'session_id': session_id, 'expiry_date' : {'$gt' : datetime.utcnow()}}
+        query = {'session_id': session_id}
         if db['logged_in'].find_one(query) is not None and session_id is not None:
             return f(*args, **kwargs)
         else:
@@ -25,9 +25,8 @@ def home():
 def login():
     
     document = {
-        'session_id' : request.json.get('session_id'),
-        'expiry_date' : datetime.utcnow() + timedelta(hours=4)
-    }
+        'session_id' : request.json.get('session_id')
+        }
     db['logged_in'].insert_one(document)
     return "home"
 
@@ -104,3 +103,5 @@ def get_hypothesis():
     
 
 #     return f'User {name} added to the database.'
+
+# @app.route("/create_data")
