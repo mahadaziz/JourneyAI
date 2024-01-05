@@ -114,7 +114,7 @@ def get_hypothesis():
 @cross_origin()
 @login_required
 def input_dataset():
-    file = request.files['dataset']
+    file = request.files['file']
     df = None
     if file:
         file.filename = secure_filename(file.filename)
