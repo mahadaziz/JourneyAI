@@ -2,6 +2,7 @@
 import React, {useState} from "react";
 import { UserCircleIcon } from '@heroicons/react/24/solid';
 import { signOut } from 'next-auth/react';
+import ThemeSwitcher from "./ThemeSwitcher";
 
 const UserMenu = () => {
     const [isHidden, setIsHidden] = useState(true);
@@ -18,7 +19,7 @@ const UserMenu = () => {
     }
     return (
     <div className="relative">
-        <button onClick={toggleVisibility} type="button" className="flex  mr-3 text-sm bg-gray-200 rounded-full md:mr-0 focus:ring-4 focus:ring-gray-300 dark:focus:ring-gray-600" id="user-menu-button" aria-expanded="false" data-dropdown-toggle="user-dropdown" data-dropdown-placement="bottom">
+        <button onClick={toggleVisibility} type="button" className="flex  mr-3 text-sm bg-gray-200 rounded-full md:mr-0 " id="user-menu-button" aria-expanded="false" data-dropdown-toggle="user-dropdown" data-dropdown-placement="bottom">
         <span className="sr-only">Open user menu</span>
         <UserCircleIcon className='w-10 h-10 rounded-full bg-white'/>
         {/* <img className="w-8 h-8 rounded-full" src="/docs/images/people/profile-picture-3.jpg" alt="user photo"/> */}
@@ -37,6 +38,9 @@ const UserMenu = () => {
             </li>
             <li>
             <a href="#" onClick={handleSignOut} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 dark:text-gray-200 dark:hover:text-white">Sign out</a>
+            </li>
+            <li>
+              <ThemeSwitcher/>
             </li>
         </ul>
         </div>
