@@ -263,26 +263,47 @@ class insights:
         
         
 class hypothesis:
-    
+    def create_history (self, column_name, dataset_name, user_id, history):
+        document = {
+        'column_name' : column_name,
+        'dataset_name' : dataset_name,
+        'user_id' : user_id,
+        'history' : history
+        }
+        query = {'column_name': column_name, 'dataset_name' : dataset_name, 'user_id': user_id}
+        if db['hypothesis_history'].find_one(query) is None:
+            db['hypothesis_history'].insert_one(document)
+        else:
+            update_operation = {'$set': {'history': history}}
+            db['hypothesis_history'].update_one(query, update_operation)
+
+            
     def get_hypothesis(self):
         column_name = request.json.get('column_name')
+        dataset_name = request.json.get('dataset_name')
+        user_id = request.json.get('user_id')
         insights = request.json.get('insights')
         context = request.json.get('context')
         insights.append(context)
         prompts = insights
-        
         API_URL = "https://api-inference.huggingface.co/models/tiiuae/falcon-7b-instruct"
         headers = {"Authorization": "Bearer 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"} 
         
-        def query(payload):
+        def query_ai(payload):
             response = requests.post(API_URL, headers=headers, json=payload)
             return response.json()
         
-        history = []
+        query = {'column_name': column_name, 'dataset_name' : dataset_name, 'user_id': user_id}
+        if db['hypothesis_history'].find_one(query) is not None:
+            history = db['hypothesis_history'].find_one(query)['history']
+        
+        else : 
+            history = []
         data = []
+       
         
         for prompt in prompts:
-            output = query({
+            output = query_ai({
                 "inputs": "Respond to the Current Input using the past user inputs below.\nUser Inputs: " + str(history) + "\nCurrent Input: " + prompt + "\nAnswer:",
                 "parameters": {
                     "return_full_text": False,
@@ -296,4 +317,7 @@ class hypothesis:
                 data.append(output[0]['generated_text'])
             except KeyError as e:
                 data.append("Error with following prompt: " + prompt)
+        
+        self.create_history (column_name, dataset_name, user_id, history)
+        
         return jsonify({'data' : data})
