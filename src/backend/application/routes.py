@@ -106,7 +106,7 @@ def get_hypothesis():
 
 #     return f'User {name} added to the database.'
 
-@app.route("/input_dataset", methods = ['POST'])
+@app.route("/upload_dataset", methods = ['POST'])
 @cross_origin()
 @login_required
 def input_dataset():
@@ -138,6 +138,8 @@ def input_dataset():
             return jsonify({'column_names' :  column_names, 'title' : request.json.get('title')}), 200
         except:
             return jsonify({'message' :  'Could not get a list of column_names'}), 400
+    else:
+        return jsonify({'message' :  'The file is undefined'}), 400
     # Generate All Insights
 
 
