@@ -4,6 +4,8 @@ from functools import wraps
 from flask import Flask, redirect, session, jsonify, request
 from flask_cors import CORS,cross_origin
 from datetime import datetime, timedelta
+import pandas as pd
+from werkzeug.utils import secure_filename
 
 def login_required(f):
     @wraps(f)
@@ -104,4 +106,42 @@ def get_hypothesis():
 
 #     return f'User {name} added to the database.'
 
-# @app.route("/create_data")
+@app.route("/input_dataset", methods = ['POST'])
+@cross_origin()
+@login_required
+def input_dataset():
+    file = request.files['dataset']
+    df = None
+    if file:
+        file.filename = secure_filename(file.filename)
+        if file.filename.endswith('.csv'):
+            df = pd.read_csv(file).to_dict(orient='records')
+            db['datasets'].insert_one({'title': request.json.get('title'), 'user_id': request.json.get('user_id'), 'data': df, 'created_date': datetime.datetime.utcnow(),
+            'last_update_time': datetime.datetime.utcnow() })
+        
+        elif file.filename.endswith('.xlsx'):
+            df = pd.read_excel(file).to_dict(orient='records')
+            db['datasets'].insert_one({'title': request.json.get('title'), 'user_id': request.json.get('user_id'), 'data': df, 'created_date': datetime.datetime.utcnow(),
+            'last_update_time': datetime.datetime.utcnow() })
+        
+        elif file.filename.endswith('.json'):
+            df = pd.read_json(file).to_dict(orient='records')
+            db['datasets'].insert_one({'title': request.json.get('title'), 'user_id': request.json.get('user_id'), 'data': df, 'created_date': datetime.datetime.utcnow(),
+            'last_update_time': datetime.datetime.utcnow() })
+        
+        else:
+            return jsonify({"message" : 'Unsupported file format'}), 400
+        
+        try:
+            names = list(df.keys())
+            column_names = [ name for name in  names if name != '_id' ]
+            return jsonify({'column_names' :  column_names, 'title' : request.json.get('title')}), 200
+        except:
+            return jsonify({'message' :  'Could not get a list of column_names'}), 400
+    # Generate All Insights
+
+
+@app.route("/index_table")
+def index_table():
+    db['datasets'].create_index([('user_id', 1), ('title', 1)])
+
