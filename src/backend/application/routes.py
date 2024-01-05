@@ -137,7 +137,7 @@ def input_dataset():
             return jsonify({"message" : 'Unsupported file format'}), 400
         
         try:
-            names = list(df.keys())
+            names = list(df[0].keys())
             column_names = [ name for name in  names if name != '_id' ]
             return jsonify({'column_names' :  column_names, 'title' : request.form['title']}), 200
         except:
