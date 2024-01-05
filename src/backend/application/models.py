@@ -2,6 +2,7 @@ from flask import Flask, jsonify, request, session, redirect
 from application import db
 import bcrypt, datetime, uuid, json, random
 import pandas as pd
+import requests
 
 class User:
     
