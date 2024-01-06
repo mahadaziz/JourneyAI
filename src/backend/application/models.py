@@ -3,10 +3,9 @@ from application import db
 import bcrypt, datetime, uuid, json, random
 import pandas as pd
 import requests
+from scipy.stats import zscore
 
 class User:
-    
-    
     
     def signup(self):
         user = {
@@ -117,12 +116,50 @@ class insights:
         return insights
 
     # Function to get trends templates
+
     def get_trends(self, column_name):
-        return [
-            f'{column_name} exhibits a noticeable upward trend over time, with values increasing from {round(random.uniform(20, 30), 2)} to {round(random.uniform(40, 50), 2)}.',
-            f'The analysis of {column_name} indicates a consistent downward trend. Values have decreased steadily from {round(random.uniform(70, 80), 2)} to {round(random.uniform(50, 60), 2)}.',
-            f'A significant upward trend is observed in {column_name}, with values rising from {round(random.uniform(30, 40), 2)} to {round(random.uniform(50, 60), 2)}.'
-        ]
+        cursor = db['cars'].find()
+        df = pd.DataFrame(iter(cursor))
+
+        insights = []
+
+        # Check if column exists
+        if column_name not in df.columns:
+            return [f"Column '{column_name}' does not exist in the dataset."]
+
+        # Trend Analysis for Numerical Columns
+        if column_name in self.NUMERICAL_COLUMNS:
+            df['z_scores'] = zscore(df[column_name].fillna(0))
+            overall_trend_direction = "upward" if df[column_name].iloc[-1] > df[column_name].iloc[0] else "downward"
+            insights.append(f"Overall, '{column_name}' shows a {overall_trend_direction} trend.")
+
+            for date_col in self.DATE_LIKE_COLUMNS:
+                df_sorted = df.sort_values(by=date_col)
+                segments = df_sorted[date_col].dropna().unique()
+                for segment in segments:
+                    segment_data = df_sorted[df_sorted[date_col] == segment]
+                    segment_trend_direction = "upward" if segment_data[column_name].iloc[-1] > segment_data[column_name].iloc[0] else "downward"
+                    insights.append(f"In the period around {segment}, '{column_name}' shows a {segment_trend_direction} trend.")
+
+        # Trend Analysis for Categorical Columns
+        elif column_name in self.CATEGORICAL_COLUMNS and self.DATE_LIKE_COLUMNS:
+            for date_col in self.DATE_LIKE_COLUMNS:
+                grouped_data = df.groupby([date_col, column_name]).size().reset_index(name='count')
+                sorted_grouped_data = grouped_data.sort_values(by=date_col)
+
+                prev_most_freq_category = None
+                for _, group in sorted_grouped_data.groupby(date_col):
+                    current_date = group[date_col].iloc[0]
+                    most_freq_category = group.loc[group['count'].idxmax()][column_name]
+
+                    if most_freq_category != prev_most_freq_category:
+                        insights.append(f"For '{date_col}' period starting {current_date}, '{column_name}' shows a trend towards category '{most_freq_category}'.")
+                        prev_most_freq_category = most_freq_category
+
+        else:
+            insights.append(f"Column '{column_name}' is not suitable for trend analysis.")
+
+        return insights
 
     # Function to get distributions templates
     def get_distributions(self, column_name):
@@ -285,11 +322,11 @@ class insights:
     
     def generate_insights(self, column_name, prev_insights, insight_count):
         insights = {
-             'outliers' : self.get_outliers(column_name)
+            # 'outliers' : self.get_outliers(column_name)
             # 'derived values' : self.get_derived_values(column_name),
             # 'associations' : self.get_associations(column_name),
             # 'differences' : self.get_differences(column_name),
-            # 'trends' : self.get_trends(column_name),
+             'trends' : self.get_trends(column_name)
             # 'distribution' : self.get_distributions(column_name),
             # 'basic_stats' : self.get_basic_stats(column_name),
             # 'clusters' : self.get_clusters(column_name),
