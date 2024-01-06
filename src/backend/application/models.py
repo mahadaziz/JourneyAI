@@ -43,12 +43,78 @@ class User:
 class insights:
     all_insights = {}
     # Function to get outliers templates
+    
+    def is_year_or_date_column(column, column_name):
+        date_time_keywords = ['year', 'date', 'time', 'month', 'day']
+
+        if column.dtype in ['int64', 'float64']:
+            if any(keyword in column_name.lower() for keyword in date_time_keywords) and all(1000 <= x <= 3000 for x in column.dropna()):
+                return True
+        # try:
+        #     pd.to_datetime(column, errors='coerce').notna().any()
+        #     return True
+        # except:
+        #     pass
+        return False
+
+    cursor = db['cars'].find()
+    df = pd.DataFrame(iter(cursor))
+
+    #global NUMERICAL_COLUMNS, CATEGORICAL_COLUMNS, DATE_LIKE_COLUMNS
+
+    NUMERICAL_COLUMNS = df.select_dtypes(include=['int64', 'float64']).columns.tolist()
+    CATEGORICAL_COLUMNS = df.select_dtypes(include=['object', 'category']).columns.tolist()
+    DATE_LIKE_COLUMNS = []
+
+    for col in df.columns:
+        if is_year_or_date_column(df[col], col):
+            DATE_LIKE_COLUMNS.append(col)
+            if col in NUMERICAL_COLUMNS:
+                NUMERICAL_COLUMNS.remove(col)
+            if col in CATEGORICAL_COLUMNS:
+                CATEGORICAL_COLUMNS.remove(col)
+        
     def get_outliers(self, column_name):
-        return [
-            f'The outliers in {column_name} are beyond the normal range. Notable outliers include {column_name} = {round(random.uniform(60, 80), 2)} and {column_name} = {round(random.uniform(120, 150), 2)}.',
-            f'Identification of outliers in {column_name} suggests potential anomalies. Outlying values like {column_name} = {round(random.uniform(90, 110), 2)} and {column_name} = {round(random.uniform(160, 190), 2)} should be examined.',
-            f'Outliers in {column_name} may impact the overall analysis. Values such as {column_name} = {round(random.uniform(75, 95), 2)} and {column_name} = {round(random.uniform(130, 160), 2)} stand out.'
-        ]
+        cursor = db['cars'].find()
+        df = pd.DataFrame(iter(cursor))
+
+        # Combine categorical and date-like columns for analysis
+        combined_categorical_columns = self.CATEGORICAL_COLUMNS + self.DATE_LIKE_COLUMNS
+
+        insights = []
+        if column_name in self.NUMERICAL_COLUMNS:
+            # Filter out null values from the column for outlier detection
+            non_null_data = df[column_name].dropna()
+
+            Q1 = non_null_data.quantile(0.25)
+            Q3 = non_null_data.quantile(0.75)
+            IQR = Q3 - Q1
+            lower_bound = Q1 - 1.5 * IQR
+            upper_bound = Q3 + 1.5 * IQR
+
+            # Detect outliers excluding the rows with null values in the specified column
+            outliers = df[(df[column_name] < lower_bound) | (df[column_name] > upper_bound)]
+            total_outliers = len(outliers)
+
+            # Calculate the percentage of outliers in the column
+            percentage_of_outliers = (total_outliers / len(non_null_data)) * 100
+
+            if total_outliers > 0:
+                insights.append(f'Found {total_outliers} outliers in {column_name}, constituting {percentage_of_outliers:.2f}% of the data.')
+
+                # Analyze relationships with combined categorical columns
+                for col in combined_categorical_columns:
+                    common_values = outliers[col].value_counts()
+                    if not common_values.empty:
+                        most_common = common_values.idxmax()
+                        percentage_in_outliers = (common_values.max() / total_outliers) * 100
+                        insights.append(f'{most_common} is the {col} with the most outliers in {column_name} at {percentage_in_outliers:.2f}% of the outliers.')
+            else:
+                insights.append(f'No outliers found in {column_name}.')
+        else:
+            insights.append(f'Column {column_name} is not a numerical column or does not exist in the dataset.')
+
+        return insights
 
     # Function to get trends templates
     def get_trends(self, column_name):
@@ -193,24 +259,41 @@ class insights:
 
     # Function to get differences templates
     def get_differences(self, column_name):
-        return [
-            f'The differences in {column_name} across groups are statistically significant. Notable differences exist between groups with {column_name} = {random.choice(["A", "B", "C"])} and {column_name} = {random.choice(["X", "Y", "Z"])}.',
-            f'Significant differences exist in {column_name} between different categories. Notable differences are observed between {column_name} = {random.choice(["M", "N", "O"])} and {column_name} = {random.choice(["P", "Q", "R"])}.',
-            f'Differences in {column_name} are evident when comparing groups with {column_name} = {random.choice(["D", "E", "F"])} and {column_name} = {random.choice(["G", "H", "I"])}.'
-        ]
+        cursor = db['cars'].find()
+        df = pd.DataFrame(iter(cursor))
+
+        insights = []
+        if column_name in df.columns and df[column_name].dtype in ['int64', 'float64']:
+            categorical_columns = df.select_dtypes(include=['object', 'category']).columns
+
+        
+            # 2. Differences in Relation to Categorical Columns
+            for cat_column in categorical_columns:
+                if cat_column != column_name:
+                    grouped_diff = df.groupby(cat_column)[column_name].mean()
+                    insights.append(f'Differences in {column_name} are observed when grouped by {cat_column}. Average values per group: {grouped_diff.to_dict()}.')
+
+            # 3. Specific Examples
+            for cat_column in categorical_columns:
+                if cat_column != column_name:
+                    sample_groups = df.groupby(cat_column).apply(lambda x: x.sample(1)).reset_index(drop=True).head(3)
+                    for _, row in sample_groups.iterrows():
+                        example_insight = f'For example, in the {cat_column} group "{row[cat_column]}", the value of {column_name} is {row[column_name]:.2f}.'
+                        #insights.append(example_insight)
+
+        return insights
     
     def generate_insights(self, column_name, prev_insights, insight_count):
         insights = {
-            # 'outliers' : self.get_outliers(column_name) ,
-            #                             'derived values' : self.get_derived_values(column_name),
-            #                             'associations' : self.get_associations(column_name),
-            #                             'differences' : self.get_differences(column_name),
-            #                             'trends' : self.get_trends(column_name),
-            #                             'distribution' : self.get_distributions(column_name),
-                                        'basic_stats' : self.get_basic_stats(column_name)
-                                        # ,
-                                        # 'clusters' : self.get_clusters(column_name),
-                                        # 'rank' : self.get_rank(column_name)
+             'outliers' : self.get_outliers(column_name)
+            # 'derived values' : self.get_derived_values(column_name),
+            # 'associations' : self.get_associations(column_name),
+            # 'differences' : self.get_differences(column_name),
+            # 'trends' : self.get_trends(column_name),
+            # 'distribution' : self.get_distributions(column_name),
+            # 'basic_stats' : self.get_basic_stats(column_name),
+            # 'clusters' : self.get_clusters(column_name),
+            # 'rank' : self.get_rank(column_name)
                                         }        
 
         
