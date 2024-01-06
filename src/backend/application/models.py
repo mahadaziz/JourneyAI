@@ -131,15 +131,33 @@ class insights:
         if column_name in self.NUMERICAL_COLUMNS:
             df['z_scores'] = zscore(df[column_name].fillna(0))
             overall_trend_direction = "upward" if df[column_name].iloc[-1] > df[column_name].iloc[0] else "downward"
+
+            # Analyze parallel and inverse trends with other numerical columns
+            for other_col in self.NUMERICAL_COLUMNS:
+                if other_col != column_name:
+                    other_col_trend = "upward" if df[other_col].iloc[-1] > df[other_col].iloc[0] else "downward"
+                    trend_relation = "parallel" if overall_trend_direction == other_col_trend else "inverse"
+                    insights.append(f"Overall, '{column_name}' and '{other_col}' have a {trend_relation} trend.")
+
             insights.append(f"Overall, '{column_name}' shows a {overall_trend_direction} trend.")
 
+            # Trend Analysis within Date-Like Column Segments
             for date_col in self.DATE_LIKE_COLUMNS:
                 df_sorted = df.sort_values(by=date_col)
                 segments = df_sorted[date_col].dropna().unique()
+
                 for segment in segments:
                     segment_data = df_sorted[df_sorted[date_col] == segment]
-                    segment_trend_direction = "upward" if segment_data[column_name].iloc[-1] > segment_data[column_name].iloc[0] else "downward"
-                    insights.append(f"In the period around {segment}, '{column_name}' shows a {segment_trend_direction} trend.")
+                    segment_trend = "upward" if segment_data[column_name].iloc[-1] > segment_data[column_name].iloc[0] else "downward"
+                    insights.append(f"In the period around {segment}, '{column_name}' shows a {segment_trend} trend.")
+
+                    # Analyzing trend relation within segments
+                    for other_col in self.NUMERICAL_COLUMNS:
+                        if other_col != column_name:
+                            other_segment_data = df_sorted[df_sorted[date_col] == segment]
+                            other_segment_trend = "upward" if other_segment_data[other_col].iloc[-1] > other_segment_data[other_col].iloc[0] else "downward"
+                            trend_relation = "parallel" if segment_trend == other_segment_trend else "inverse"
+                            insights.append(f"In the period around {segment}, '{column_name}' and '{other_col}' have a {trend_relation} trend.")
 
         # Trend Analysis for Categorical Columns
         elif column_name in self.CATEGORICAL_COLUMNS and self.DATE_LIKE_COLUMNS:
