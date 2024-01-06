@@ -3,7 +3,7 @@ from application import db
 import bcrypt, datetime, uuid, json, random
 import pandas as pd
 import requests
-from scipy.stats import zscore
+from scipy.stats import zscore, skew
 
 class User:
     
@@ -180,12 +180,50 @@ class insights:
         return insights
 
     # Function to get distributions templates
+
     def get_distributions(self, column_name):
-        return [
-            f'The distribution of {column_name} is positively skewed, as evidenced by values ranging from {round(random.uniform(10, 20),2)} to {round(random.uniform(30, 40),2)}.',
-            f'A left-skewed distribution is evident in {column_name}, with values concentrated between {round(random.uniform(30, 40),2)} and {round(random.uniform(50, 60),2)}.',
-            f'{column_name} displays a symmetrical distribution, with values evenly distributed around the mean ({round(random.uniform(40, 50),2)}).'
-        ]
+        cursor = db['cars'].find()
+        df = pd.DataFrame(iter(cursor))
+
+        insights = []
+
+        if column_name not in df.columns:
+            return [f"Column '{column_name}' does not exist in the dataset."]
+
+        non_null_data = df[column_name].dropna()
+
+        if column_name in self.NUMERICAL_COLUMNS:
+            column_skewness = skew(non_null_data)
+            skew_type = "positively" if column_skewness > 0 else "negatively"
+            general_skew_type = "right-skewed" if column_skewness > 0 else "left-skewed" if column_skewness < 0 else "symmetric"
+            skew_description = "few unusually high" if skew_type == "positively" else "few unusually low"
+
+            # General insight about the skewness of the column
+            insights.append(f"Overall, '{column_name}' is generally {general_skew_type}, indicating {skew_description} values.")
+
+            # Determine skewed instances
+            threshold = non_null_data.mean() + 2 * non_null_data.std() if skew_type == "positively" else non_null_data.mean() - 2 * non_null_data.std()
+            skewed_instances = df[(df[column_name] > threshold) if skew_type == "positively" else (df[column_name] < threshold)]
+
+            if skewed_instances.empty:
+                return insights  # Returns the general insight if no skewed instances are found
+
+            representative_value = skewed_instances[column_name].iloc[0]  # Example representative value
+
+            # Analyze each other column
+            for col in df.columns:
+                if col != column_name:
+                    if not skewed_instances[col].mode().empty:
+                        most_common_value = skewed_instances[col].mode()[0]
+                        category_percentage = skewed_instances[col].value_counts()[most_common_value] / len(skewed_instances) * 100
+                        insights.append(f"With '{column_name}' being {skew_type} skewed, there are {skew_description} values, with an instance being {representative_value}. In '{col}', the most common corresponding value is '{most_common_value}' at {category_percentage:.2f}% of these instances.")
+                    else:
+                        insights.append(f"With '{column_name}' being {skew_type} skewed, '{col}' does not show a clear mode in the skewed instances.")
+
+        else:
+            insights.append(f"Column '{column_name}' is not a numerical column or does not exhibit significant skewness.")
+
+        return insights
 
     # Function to get basic stats templates
     def get_basic_stats(self, column_name):
@@ -344,8 +382,8 @@ class insights:
             # 'derived values' : self.get_derived_values(column_name),
             # 'associations' : self.get_associations(column_name),
             # 'differences' : self.get_differences(column_name),
-             'trends' : self.get_trends(column_name)
-            # 'distribution' : self.get_distributions(column_name),
+            # 'trends' : self.get_trends(column_name)
+             'distribution' : self.get_distributions(column_name),
             # 'basic_stats' : self.get_basic_stats(column_name),
             # 'clusters' : self.get_clusters(column_name),
             # 'rank' : self.get_rank(column_name)
