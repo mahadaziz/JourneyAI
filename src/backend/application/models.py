@@ -453,17 +453,17 @@ class hypothesis:
             update_operation = {'$set': {'history': history}}
             db['hypothesis_history'].update_one(query, update_operation)
 
-            
+
     def get_hypothesis(self):
         column_name = request.json.get('column_name')
         dataset_name = request.json.get('dataset_name')
         user_id = request.json.get('user_id')
         insights = request.json.get('insights')
         context = request.json.get('context')
-        insights.append(context)
-        prompts = insights
+        insights.insert(0, context)
+        prompts = insights[0:4]
         API_URL = "https://api-inference.huggingface.co/models/tiiuae/falcon-7b-instruct"
-        headers = {"Authorization": "Bearer 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"} 
+        headers = {"Authorization": "Bearer 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"}
         
         def query_ai(payload):
             response = requests.post(API_URL, headers=headers, json=payload)
@@ -472,7 +472,6 @@ class hypothesis:
         query = {'column_name': column_name, 'dataset_name' : dataset_name, 'user_id': user_id}
         if db['hypothesis_history'].find_one(query) is not None:
             history = db['hypothesis_history'].find_one(query)['history']
-        
         else : 
             history = []
         data = []
