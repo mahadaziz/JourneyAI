@@ -3,10 +3,9 @@ from application import db
 import bcrypt, datetime, uuid, json, random
 import pandas as pd
 import requests
+from scipy.stats import zscore, skew
 
 class User:
-    
-    
     
     def signup(self):
         user = {
@@ -43,28 +42,188 @@ class User:
 class insights:
     all_insights = {}
     # Function to get outliers templates
+    
+    def is_year_or_date_column(column, column_name):
+        date_time_keywords = ['year', 'date', 'time', 'month', 'day']
+
+        if column.dtype in ['int64', 'float64']:
+            if any(keyword in column_name.lower() for keyword in date_time_keywords) and all(1000 <= x <= 3000 for x in column.dropna()):
+                return True
+        # try:
+        #     pd.to_datetime(column, errors='coerce').notna().any()
+        #     return True
+        # except:
+        #     pass
+        return False
+
+    cursor = db['cars'].find()
+    df = pd.DataFrame(iter(cursor))
+
+    #global NUMERICAL_COLUMNS, CATEGORICAL_COLUMNS, DATE_LIKE_COLUMNS
+
+    NUMERICAL_COLUMNS = df.select_dtypes(include=['int64', 'float64']).columns.tolist()
+    CATEGORICAL_COLUMNS = df.select_dtypes(include=['object', 'category']).columns.tolist()
+    DATE_LIKE_COLUMNS = []
+
+    for col in df.columns:
+        if is_year_or_date_column(df[col], col):
+            DATE_LIKE_COLUMNS.append(col)
+            if col in NUMERICAL_COLUMNS:
+                NUMERICAL_COLUMNS.remove(col)
+            if col in CATEGORICAL_COLUMNS:
+                CATEGORICAL_COLUMNS.remove(col)
+        
     def get_outliers(self, column_name):
-        return [
-            f'The outliers in {column_name} are beyond the normal range. Notable outliers include {column_name} = {round(random.uniform(60, 80), 2)} and {column_name} = {round(random.uniform(120, 150), 2)}.',
-            f'Identification of outliers in {column_name} suggests potential anomalies. Outlying values like {column_name} = {round(random.uniform(90, 110), 2)} and {column_name} = {round(random.uniform(160, 190), 2)} should be examined.',
-            f'Outliers in {column_name} may impact the overall analysis. Values such as {column_name} = {round(random.uniform(75, 95), 2)} and {column_name} = {round(random.uniform(130, 160), 2)} stand out.'
-        ]
+        cursor = db['cars'].find()
+        df = pd.DataFrame(iter(cursor))
+
+        # Combine categorical and date-like columns for analysis
+        combined_categorical_columns = self.CATEGORICAL_COLUMNS + self.DATE_LIKE_COLUMNS
+
+        insights = []
+        if column_name in self.NUMERICAL_COLUMNS:
+            # Filter out null values from the column for outlier detection
+            non_null_data = df[column_name].dropna()
+
+            Q1 = non_null_data.quantile(0.25)
+            Q3 = non_null_data.quantile(0.75)
+            IQR = Q3 - Q1
+            lower_bound = Q1 - 1.5 * IQR
+            upper_bound = Q3 + 1.5 * IQR
+
+            # Detect outliers excluding the rows with null values in the specified column
+            outliers = df[(df[column_name] < lower_bound) | (df[column_name] > upper_bound)]
+            total_outliers = len(outliers)
+
+            # Calculate the percentage of outliers in the column
+            percentage_of_outliers = (total_outliers / len(non_null_data)) * 100
+
+            if total_outliers > 0:
+                insights.append(f'Found {total_outliers} outliers in {column_name}, constituting {percentage_of_outliers:.2f}% of the data.')
+
+                # Analyze relationships with combined categorical columns
+                for col in combined_categorical_columns:
+                    common_values = outliers[col].value_counts()
+                    if not common_values.empty:
+                        most_common = common_values.idxmax()
+                        percentage_in_outliers = (common_values.max() / total_outliers) * 100
+                        insights.append(f'{most_common} is the {col} with the most outliers in {column_name} at {percentage_in_outliers:.2f}% of the outliers.')
+            else:
+                insights.append(f'No outliers found in {column_name}.')
+        else:
+            insights.append(f'Column {column_name} is not a numerical column or does not exist in the dataset.')
+
+        return insights
 
     # Function to get trends templates
+
     def get_trends(self, column_name):
-        return [
-            f'{column_name} exhibits a noticeable upward trend over time, with values increasing from {round(random.uniform(20, 30), 2)} to {round(random.uniform(40, 50), 2)}.',
-            f'The analysis of {column_name} indicates a consistent downward trend. Values have decreased steadily from {round(random.uniform(70, 80), 2)} to {round(random.uniform(50, 60), 2)}.',
-            f'A significant upward trend is observed in {column_name}, with values rising from {round(random.uniform(30, 40), 2)} to {round(random.uniform(50, 60), 2)}.'
-        ]
+        cursor = db['cars'].find()
+        df = pd.DataFrame(iter(cursor))
+
+        insights = []
+
+        # Check if column exists
+        if column_name not in df.columns:
+            return [f"Column '{column_name}' does not exist in the dataset."]
+
+        # Trend Analysis for Numerical Columns
+        if column_name in self.NUMERICAL_COLUMNS:
+            df['z_scores'] = zscore(df[column_name].fillna(0))
+            overall_trend_direction = "upward" if df[column_name].iloc[-1] > df[column_name].iloc[0] else "downward"
+
+            # Analyze parallel and inverse trends with other numerical columns
+            for other_col in self.NUMERICAL_COLUMNS:
+                if other_col != column_name:
+                    other_col_trend = "upward" if df[other_col].iloc[-1] > df[other_col].iloc[0] else "downward"
+                    trend_relation = "parallel" if overall_trend_direction == other_col_trend else "inverse"
+                    insights.append(f"Overall, '{column_name}' and '{other_col}' have a {trend_relation} trend.")
+
+            insights.append(f"Overall, '{column_name}' shows a {overall_trend_direction} trend.")
+
+            # Trend Analysis within Date-Like Column Segments
+            for date_col in self.DATE_LIKE_COLUMNS:
+                df_sorted = df.sort_values(by=date_col)
+                segments = df_sorted[date_col].dropna().unique()
+
+                for segment in segments:
+                    segment_data = df_sorted[df_sorted[date_col] == segment]
+                    segment_trend = "upward" if segment_data[column_name].iloc[-1] > segment_data[column_name].iloc[0] else "downward"
+                    insights.append(f"In the period around {segment}, '{column_name}' shows a {segment_trend} trend.")
+
+                    # Analyzing trend relation within segments
+                    for other_col in self.NUMERICAL_COLUMNS:
+                        if other_col != column_name:
+                            other_segment_data = df_sorted[df_sorted[date_col] == segment]
+                            other_segment_trend = "upward" if other_segment_data[other_col].iloc[-1] > other_segment_data[other_col].iloc[0] else "downward"
+                            trend_relation = "parallel" if segment_trend == other_segment_trend else "inverse"
+                            insights.append(f"In the period around {segment}, '{column_name}' and '{other_col}' have a {trend_relation} trend.")
+
+        # Trend Analysis for Categorical Columns
+        elif column_name in self.CATEGORICAL_COLUMNS and self.DATE_LIKE_COLUMNS:
+            for date_col in self.DATE_LIKE_COLUMNS:
+                grouped_data = df.groupby([date_col, column_name]).size().reset_index(name='count')
+                sorted_grouped_data = grouped_data.sort_values(by=date_col)
+
+                prev_most_freq_category = None
+                for _, group in sorted_grouped_data.groupby(date_col):
+                    current_date = group[date_col].iloc[0]
+                    most_freq_category = group.loc[group['count'].idxmax()][column_name]
+
+                    if most_freq_category != prev_most_freq_category:
+                        insights.append(f"For '{date_col}' period starting {current_date}, '{column_name}' shows a trend towards category '{most_freq_category}'.")
+                        prev_most_freq_category = most_freq_category
+
+        else:
+            insights.append(f"Column '{column_name}' is not suitable for trend analysis.")
+
+        return insights
 
     # Function to get distributions templates
+
     def get_distributions(self, column_name):
-        return [
-            f'The distribution of {column_name} is positively skewed, as evidenced by values ranging from {round(random.uniform(10, 20),2)} to {round(random.uniform(30, 40),2)}.',
-            f'A left-skewed distribution is evident in {column_name}, with values concentrated between {round(random.uniform(30, 40),2)} and {round(random.uniform(50, 60),2)}.',
-            f'{column_name} displays a symmetrical distribution, with values evenly distributed around the mean ({round(random.uniform(40, 50),2)}).'
-        ]
+        cursor = db['cars'].find()
+        df = pd.DataFrame(iter(cursor))
+
+        insights = []
+
+        if column_name not in df.columns:
+            return [f"Column '{column_name}' does not exist in the dataset."]
+
+        non_null_data = df[column_name].dropna()
+
+        if column_name in self.NUMERICAL_COLUMNS:
+            column_skewness = skew(non_null_data)
+            skew_type = "positively" if column_skewness > 0 else "negatively"
+            general_skew_type = "right-skewed" if column_skewness > 0 else "left-skewed" if column_skewness < 0 else "symmetric"
+            skew_description = "few unusually high" if skew_type == "positively" else "few unusually low"
+
+            # General insight about the skewness of the column
+            insights.append(f"Overall, '{column_name}' is generally {general_skew_type}, indicating {skew_description} values.")
+
+            # Determine skewed instances
+            threshold = non_null_data.mean() + 2 * non_null_data.std() if skew_type == "positively" else non_null_data.mean() - 2 * non_null_data.std()
+            skewed_instances = df[(df[column_name] > threshold) if skew_type == "positively" else (df[column_name] < threshold)]
+
+            if skewed_instances.empty:
+                return insights  # Returns the general insight if no skewed instances are found
+
+            representative_value = skewed_instances[column_name].iloc[0]  # Example representative value
+
+            # Analyze each other column
+            for col in df.columns:
+                if col != column_name:
+                    if not skewed_instances[col].mode().empty:
+                        most_common_value = skewed_instances[col].mode()[0]
+                        category_percentage = skewed_instances[col].value_counts()[most_common_value] / len(skewed_instances) * 100
+                        insights.append(f"With '{column_name}' being {skew_type} skewed, there are {skew_description} values, with an instance being {representative_value}. In '{col}', the most common corresponding value is '{most_common_value}' at {category_percentage:.2f}% of these instances.")
+                    else:
+                        insights.append(f"With '{column_name}' being {skew_type} skewed, '{col}' does not show a clear mode in the skewed instances.")
+
+        else:
+            insights.append(f"Column '{column_name}' is not a numerical column or does not exhibit significant skewness.")
+
+        return insights
 
     # Function to get basic stats templates
     def get_basic_stats(self, column_name):
@@ -193,24 +352,41 @@ class insights:
 
     # Function to get differences templates
     def get_differences(self, column_name):
-        return [
-            f'The differences in {column_name} across groups are statistically significant. Notable differences exist between groups with {column_name} = {random.choice(["A", "B", "C"])} and {column_name} = {random.choice(["X", "Y", "Z"])}.',
-            f'Significant differences exist in {column_name} between different categories. Notable differences are observed between {column_name} = {random.choice(["M", "N", "O"])} and {column_name} = {random.choice(["P", "Q", "R"])}.',
-            f'Differences in {column_name} are evident when comparing groups with {column_name} = {random.choice(["D", "E", "F"])} and {column_name} = {random.choice(["G", "H", "I"])}.'
-        ]
+        cursor = db['cars'].find()
+        df = pd.DataFrame(iter(cursor))
+
+        insights = []
+        if column_name in df.columns and df[column_name].dtype in ['int64', 'float64']:
+            categorical_columns = df.select_dtypes(include=['object', 'category']).columns
+
+        
+            # 2. Differences in Relation to Categorical Columns
+            for cat_column in categorical_columns:
+                if cat_column != column_name:
+                    grouped_diff = df.groupby(cat_column)[column_name].mean()
+                    insights.append(f'Differences in {column_name} are observed when grouped by {cat_column}. Average values per group: {grouped_diff.to_dict()}.')
+
+            # 3. Specific Examples
+            for cat_column in categorical_columns:
+                if cat_column != column_name:
+                    sample_groups = df.groupby(cat_column).apply(lambda x: x.sample(1)).reset_index(drop=True).head(3)
+                    for _, row in sample_groups.iterrows():
+                        example_insight = f'For example, in the {cat_column} group "{row[cat_column]}", the value of {column_name} is {row[column_name]:.2f}.'
+                        #insights.append(example_insight)
+
+        return insights
     
     def generate_insights(self, column_name, prev_insights, insight_count):
         insights = {
-            # 'outliers' : self.get_outliers(column_name) ,
-            #                             'derived values' : self.get_derived_values(column_name),
-            #                             'associations' : self.get_associations(column_name),
-            #                             'differences' : self.get_differences(column_name),
-            #                             'trends' : self.get_trends(column_name),
-            #                             'distribution' : self.get_distributions(column_name),
-                                        'basic_stats' : self.get_basic_stats(column_name)
-                                        # ,
-                                        # 'clusters' : self.get_clusters(column_name),
-                                        # 'rank' : self.get_rank(column_name)
+            # 'outliers' : self.get_outliers(column_name)
+            # 'derived values' : self.get_derived_values(column_name),
+            # 'associations' : self.get_associations(column_name),
+            # 'differences' : self.get_differences(column_name),
+            # 'trends' : self.get_trends(column_name)
+             'distribution' : self.get_distributions(column_name),
+            # 'basic_stats' : self.get_basic_stats(column_name),
+            # 'clusters' : self.get_clusters(column_name),
+            # 'rank' : self.get_rank(column_name)
                                         }        
 
         
@@ -277,17 +453,17 @@ class hypothesis:
             update_operation = {'$set': {'history': history}}
             db['hypothesis_history'].update_one(query, update_operation)
 
-            
+
     def get_hypothesis(self):
         column_name = request.json.get('column_name')
         dataset_name = request.json.get('dataset_name')
         user_id = request.json.get('user_id')
         insights = request.json.get('insights')
         context = request.json.get('context')
-        insights.append(context)
-        prompts = insights
+        insights.insert(0, context)
+        prompts = insights[0:4]
         API_URL = "https://api-inference.huggingface.co/models/tiiuae/falcon-7b-instruct"
-        headers = {"Authorization": "Bearer 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"} 
+        headers = {"Authorization": "Bearer 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"}
         
         def query_ai(payload):
             response = requests.post(API_URL, headers=headers, json=payload)
@@ -296,7 +472,6 @@ class hypothesis:
         query = {'column_name': column_name, 'dataset_name' : dataset_name, 'user_id': user_id}
         if db['hypothesis_history'].find_one(query) is not None:
             history = db['hypothesis_history'].find_one(query)['history']
-        
         else : 
             history = []
         data = []
