@@ -3,6 +3,7 @@ import { ThemeProvider } from '../theme-provider';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '../../api/auth/[...nextauth]/route';
 import { AuthProvider } from "../../Providers";
+import { UploadDataProvider } from "../../../context/UploadDataContext"
 import '../../globals.css';
 
 const inter = Inter({ subsets: ['latin'] })
@@ -19,7 +20,7 @@ export default async function RootLayout({ children }) {
       <body>
         <ThemeProvider  attribute="class" defaultTheme="system" enableSystem>
           <AuthProvider>
-              {children}
+            {children}
           </AuthProvider>
         </ThemeProvider>
       </body>

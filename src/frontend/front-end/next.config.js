@@ -17,7 +17,7 @@ module.exports = {
       return [
           {
               source: '/',
-              destination: '/dashboard',
+              destination: '/homepage',
               permanent: false, // Consider using false during development
           },
       ];

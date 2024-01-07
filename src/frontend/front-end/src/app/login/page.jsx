@@ -29,7 +29,7 @@ export default function page() {
         }
         if (res.ok) {
             setLoading(false);
-            router.push('/dashboard');
+            router.push('/homepage');
         }
 
         // fetching login API to authenticate with backend Flask aswell.

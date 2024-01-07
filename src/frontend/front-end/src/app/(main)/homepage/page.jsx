@@ -12,11 +12,11 @@ export default async function Page() {
   if (!session) {
       redirect('/login');
   }
-
-    // Array simulating data from the database
-    const cardsData = [
-      { title: "The Consumption of Cars during the years", description: "Here are the biggest enterprise technology acquisitions of 2021 so far, in reverse chronological order. Here are the biggest enterprise technology acquisitions of 2021 so far, in reverse chronological order. Here are the biggest enterprise technology acquisitions of 2021 so far, in reverse chronological order.", isUploadCard: false },
-    ];
+  console.log(session.sessionId)
+  // Array simulating data from the database
+  const cardsData = [
+    { title: "The Consumption of Cars during the years", description: "Here are the biggest enterprise technology acquisitions of 2021 so far, in reverse chronological order. Here are the biggest enterprise technology acquisitions of 2021 so far, in reverse chronological order. Here are the biggest enterprise technology acquisitions of 2021 so far, in reverse chronological order.", isUploadCard: false },
+  ];
 
   return (
     <section className='h-screen grid grid-rows-[auto_1fr] grid-cols-5 bg-bgGrey text-black'>

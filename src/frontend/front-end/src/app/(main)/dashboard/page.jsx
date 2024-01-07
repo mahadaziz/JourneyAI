@@ -11,7 +11,6 @@ import InsightsBox from "../../../components/InsightsBox";
 import DocumentTitle from '../../../components/DocumentTitle';
 import ToggleButton from '../../../components/ToggleButton';
 import NavBar from '../../../components/NavBar';
-
 import '../../../app/globals.css'
 
 export default async function page() {
@@ -19,9 +18,6 @@ export default async function page() {
     if (!session) {
         redirect('/login');
     }
-    console.log("This is the session in page.jsx");
-    console.log(session.sessionId);
-    console.log(session.userId);
     return (
     <div className="grid grid-rows-[auto_1fr] grid-cols-5 w-screen h-screen bg-bgGrey delayAnimation transition-colors duration-500 ease-in-out dark:bg-neutral-900">
         {/* <!-- This is the first item at the top-left corner spanning 2 columns --> /} */}
@@ -31,7 +27,6 @@ export default async function page() {
                 <NavBar sessionId={session.sessionId}/>
             </div>
         </div>
-
 
         {/* <!-- TextBox should span the entire height minus the first row and span all columns --> /} */}
         <div className="flex flex-col col-span-5 md:col-span-3 pt-4 h-full overflow-y-auto">
