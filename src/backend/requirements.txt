@@ -28,10 +28,10 @@ python-decouple==3.8
 python-dotenv==1.0.0
 pytz==2023.3.post1
 requests==2.31.0
+scipy==1.11.4
 simplekv==0.14.1
 six==1.16.0
 tzdata==2023.4
 urllib3==2.1.0
 virtualenv==20.24.6
 Werkzeug==2.3.7
-scipy==1.9.1
