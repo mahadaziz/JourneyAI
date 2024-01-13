@@ -32,7 +32,7 @@ function SideNav() {
   const handleSignOut = async () => {
     console.log('SignOut');
     await signOut({ redirect: true, callbackUrl: '/login' });
-    await fetch('http://127.0.0.1:8080/signout');
+    await fetch(`${process.env.NEXT_PUBLIC_LOCAL_URL}/signout`);
   };
 
   return (

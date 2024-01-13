@@ -38,7 +38,7 @@ function UploadForm({
     formData.append('user_id', userId);
     formData.append('title', title);
     try {
-      const response = await fetch('http://127.0.0.1:8080/upload_dataset', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_LOCAL_URL}/upload_dataset`, {
         method: 'POST',
         body: formData,
       });
@@ -46,7 +46,7 @@ function UploadForm({
       if (response.ok) {
         const data = await response.json();
         console.log('File uploaded successfully', data);
-        localStorage.setItem('uploadData', JSON.stringify(data)); // Store the data in localStorage
+        localStorage.setItem('uploadResponse', JSON.stringify(data)); // Store the data in localStorage
         toggleVisibility(false);
         router.push('/dashboard');
       } else {
