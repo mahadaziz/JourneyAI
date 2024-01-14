@@ -46,7 +46,7 @@ function UploadForm({
       if (response.ok) {
         const data = await response.json();
         console.log('File uploaded successfully', data);
-        localStorage.setItem('uploadResponse', JSON.stringify(data)); // Store the data in localStorage
+        localStorage.setItem('dataSetInfo', JSON.stringify(data)); // Store the data in localStorage
         toggleVisibility(false);
         router.push('/dashboard');
       } else {

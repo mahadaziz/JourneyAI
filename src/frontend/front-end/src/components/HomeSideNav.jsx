@@ -6,7 +6,7 @@ import { signOut } from 'next-auth/react';
 import logo from '../../public/logo.png';
 import { HomeIcon, SettingIcon, ProfileIcon } from './Icons';
 
-export default function HomeSideNav() {
+export default function HomeSideNav({session}) {
   const [isOpen, setIsOpen] = useState(false);
   const sidebarRef = useRef(); // Create a ref for the sidebar
 
@@ -70,8 +70,8 @@ export default function HomeSideNav() {
           <ul className="flex flex-col space-y-3 font-medium overflow-hidden">
             <li>
               <div className="flex justify-center items-center flex-col md:flex-col w-full group p-4 mx-5 space-y-3">
-                <span className="block text-md md:text-lg font-bold text-white dark:text-white">Welcome, Talha!</span>
-                <span className="block text-sm md:text-md text-white dark:text-white">Talha@journeyAI.com</span>
+                <span className="block text-md md:text-lg font-bold text-white dark:text-white">Welcome, {session.user}!</span>
+                <span className="block text-sm md:text-md text-white dark:text-white">{session.email}</span>
 
               </div>
             </li>

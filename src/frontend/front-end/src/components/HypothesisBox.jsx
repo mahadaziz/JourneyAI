@@ -7,7 +7,8 @@ import { motion } from 'framer-motion';
 import PopupModal from './PopupModal';
 import { SelectedColumnContext } from '../context/SelectedColumnContext';
 import { HypothesisDataContext } from '../context/HypothesisDataContext';
-// import { InsightsDataContext } from '../context/InsightsDataContext';
+import { InsightsDataContext } from '../context/InsightsDataContext';
+import { EditorDataContext } from '../context/EditorDataContext';
 import '../styles/hypothesis.css';
 
 const variants = {
@@ -22,18 +23,28 @@ const buttonVariants = {
   normal: { scale: 1, backgroundColor: '#FFFFFF' },
 };
 
-function HypothesisBox({ sessionId }) {
+function HypothesisBox({ userId, sessionId }) {
   const { selectedColumn } = useContext(SelectedColumnContext);
-  const { updateHypothesisData } = useContext(HypothesisDataContext);
-  //   const { insightsData } = useContext(InsightsDataContext);
-  const [hypothesisData, setHypothesisData] = useState([]);
+  const { updateHypothesisData, hypothesisData, setHypothesisData } = useContext(HypothesisDataContext);
+  // const [hypothesisData, setHypothesisData] = useState([]);
+  const { insightsData } = useContext(InsightsDataContext);
+  const { editorText } = useContext(EditorDataContext);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [refresh, setRefresh] = useState(false);
-  const [error, setError] = useState(false);
+
   const openModal = () => setIsModalOpen(true);
   const closeModal = () => setIsModalOpen(false);
 
+  const [refresh, setRefresh] = useState(false);
+  const [error, setError] = useState(false);
+  // column_name = request.json.get('column_name')
+  //       dataset_name = request.json.get('dataset_name')
+  //       user_id = request.json.get('user_id')
+  //       insights = request.json.get('insights')
+  //       context = request.json.get('context')
   const getHypothesisData = async () => {
+    const storedDataString = localStorage.getItem('dataSetInfo');
+    const storedData = JSON.parse(storedDataString);
+
     if (!selectedColumn) {
       return;
     }
@@ -44,6 +55,10 @@ function HypothesisBox({ sessionId }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           column_name: selectedColumn,
+          dataset_name: storedData.title,
+          insights: insightsData,
+          context: editorText,
+          user_id: userId,
           session_id: sessionId,
         }),
       });
@@ -69,13 +84,13 @@ function HypothesisBox({ sessionId }) {
     if (sessionId) {
       getHypothesisData();
     }
-  }, [selectedColumn, refresh, sessionId]);
+  }, [selectedColumn, refresh]);
 
   const handleRefresh = () => {
     setRefresh((prev) => !prev); // Flip the state to trigger re-fetch
   };
-  return (
 
+  return (
     <div className="flex flex-col px-6 w-full">
       <Tooltip id="my-tooltip" content="Open Graph" style={{ zIndex: 1 }} />
       <div className="flex justify-between items-center bg-neutral-900 border border-gray-200 rounded-lg shadow dark:border-gray-700 dark:bg-[#030712] ">

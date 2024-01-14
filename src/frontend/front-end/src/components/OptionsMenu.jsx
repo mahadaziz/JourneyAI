@@ -43,7 +43,6 @@ function OptionsMenu({ sessionId }) {
     // use the setValue function to set the selected column
     const getColumnNames = async () => {
       try {
-        console.log('in columns ', sessionId);
         const response = await fetch(`${process.env.NEXT_PUBLIC_LOCAL_URL}/get_column_names`, {
           method: 'POST',
           headers: {
