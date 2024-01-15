@@ -84,7 +84,7 @@ function HypothesisBox({ userId, sessionId }) {
     if (sessionId) {
       getHypothesisData();
     }
-  }, [selectedColumn, refresh]);
+  }, [refresh]);
 
   const handleRefresh = () => {
     setRefresh((prev) => !prev); // Flip the state to trigger re-fetch
