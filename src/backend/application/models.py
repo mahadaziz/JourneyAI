@@ -609,8 +609,8 @@ class hypothesis:
             history = []
         data = []
 
-        # Check if context is not empty
-        if context:
+        # check if context is not empty
+        if context and context != ".":
             # make API call to generate hypothesis with the context
             output = query_ai({
                 "inputs": "Respond to the Current Input using the past user inputs below if needed.\nUser Inputs: " + str(history) + "\nCurrent Input: " + context + "Why is this the case?" + "\nAnswer:",
@@ -628,9 +628,9 @@ class hypothesis:
                 pass
         
         # iterate through insights
-        for insight in insights:
+        for insight in insights[:3]:
             output = query_ai({
-                "inputs": "Respond to the Current Input using the past user inputs below if needed.\nUser Inputs: " + str(history) + "\nCurrent Input: " + insight + "Why is this the case?" + "\nAnswer:",
+                "inputs": "Respond to the Current Input using the past user inputs below if needed. Make sure to reference the current input in the answer. \nUser Inputs: " + str(history) + "\nCurrent Input: " + insight + "Generate an answer for why this is the case in the form of a hypothesis." + "\nAnswer:",
                 "parameters": {
                     "return_full_text": False,
                     "max_time": 2.0
