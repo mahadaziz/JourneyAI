@@ -3,7 +3,7 @@
 'use client';
 
 import React, {
-  useState, useEffect, useRef, useCallback, useContext
+  useState, useEffect, useRef, useCallback, useContext,
 } from 'react';
 // import dynamic from 'next/dynamic';
 import { Tooltip } from 'react-tooltip';
@@ -18,8 +18,8 @@ import { EditorDataContext } from '../context/EditorDataContext';
 import SaveButton from './SaveButton';
 import '../app/globals.css';
 
-function TextBox({userId, sessionId}) {
-  const {editorText, setEditorText} = useContext(EditorDataContext);
+function TextBox({ userId, sessionId }) {
+  const { editorText, setEditorText } = useContext(EditorDataContext);
   // Configure the Placeholder extension separately
   const placeholderExtension = Placeholder.configure({
     placeholder: 'Start typing your text here.',
@@ -112,7 +112,7 @@ function TextBox({userId, sessionId}) {
         <button type="button" aria-label="strike button" data-tooltip-id="my-tooltip" data-tooltip-content="Strike" data-tooltip-place="top" onClick={() => editor.chain().focus().toggleStrike().run()}>
           <Strike />
         </button>
-        <SaveButton/>
+        <SaveButton />
       </div>
     </div>
   );

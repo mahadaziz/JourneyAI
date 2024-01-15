@@ -1,6 +1,6 @@
 'use client';
 
-import React, {useEffect, useState} from 'react';
+import React, { useEffect, useState } from 'react';
 import { HomeIcon } from '@heroicons/react/24/solid';
 import SideNav from './SideNav';
 import DocumentTitle from './DocumentTitle';
@@ -39,7 +39,7 @@ function NavBar({ userId, sessionId }) {
       window.removeEventListener('storage', handleStorageChange);
     };
   }, []);
-  
+
   return (
     <div className="bg-neutral-900 w-screen p-3">
       <div className="flex flex-row justify-between items-center w-full">
@@ -53,7 +53,7 @@ function NavBar({ userId, sessionId }) {
         </div>
 
         <div>
-          <DocumentTitle title={title}/>
+          <DocumentTitle title={title} />
         </div>
 
         {/* DropDown Menu */}

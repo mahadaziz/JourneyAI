@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import '../app/globals.css';
 
-function DocumentTitle({title}) {
+function DocumentTitle({ title }) {
   const [inputTitle, setInputTitle] = useState(title);
 
   useEffect(() => {
@@ -34,9 +34,9 @@ function DocumentTitle({title}) {
           data-name="header-title-input"
           aria-label="Give your document a name."
           suppressContentEditableWarning
-          placeholder='Untitled Document'
-          value={inputTitle}  // Set value to inputTitle or default
-          onChange={handleChange}  // Handle changes to the input
+          placeholder="Untitled Document"
+          value={inputTitle} // Set value to inputTitle or default
+          onChange={handleChange} // Handle changes to the input
         />
       </button>
     </div>

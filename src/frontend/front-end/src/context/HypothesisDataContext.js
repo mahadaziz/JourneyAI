@@ -1,3 +1,6 @@
+/* eslint-disable no-sequences */
+/* eslint-disable max-len */
+
 'use client';
 
 import React, { useState } from 'react';
@@ -6,7 +9,7 @@ export const HypothesisDataContext = React.createContext({
   hasHypothesisData: '',
   setHasHypothesisData: () => {},
   hypothesisData: [],
-  setHypothesisData: () => {}
+  setHypothesisData: () => {},
 });
 
 export function HypothesisDataProvider({ children }) {
@@ -18,7 +21,12 @@ export function HypothesisDataProvider({ children }) {
   };
 
   return (
-    <HypothesisDataContext.Provider value={{ hasHypothesisData, hypothesisData, updateHypothesisData, setHypothesisData}}>
+    <HypothesisDataContext.Provider value={
+      {
+        hasHypothesisData, hypothesisData, updateHypothesisData, setHypothesisData,
+      }
+}
+    >
       {children}
     </HypothesisDataContext.Provider>
   );
