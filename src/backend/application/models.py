@@ -3,7 +3,9 @@ from application import db
 import bcrypt, datetime, uuid, json, random
 import pandas as pd
 import requests
-from scipy.stats import zscore, skew
+from scipy.stats import zscore, skew, stats
+from sklearn.cluster import KMeans
+import numpy as np
 
 class User:
     
@@ -108,11 +110,6 @@ class insights:
                         most_common = common_values.idxmax()
                         percentage_in_outliers = (common_values.max() / total_outliers) * 100
                         insights.append(f'{most_common} is the {col} with the most outliers in {column_name} at {percentage_in_outliers:.2f}% of the outliers.')
-            else:
-                insights.append(f'No outliers found in {column_name}.')
-        else:
-            insights.append(f'Column {column_name} is not a numerical column or does not exist in the dataset.')
-
         return insights
 
     # Function to get trends templates
@@ -125,7 +122,7 @@ class insights:
 
         # Check if column exists
         if column_name not in df.columns:
-            return [f"Column '{column_name}' does not exist in the dataset."]
+            return []
 
         # Trend Analysis for Numerical Columns
         if column_name in self.NUMERICAL_COLUMNS:
@@ -174,9 +171,6 @@ class insights:
                         insights.append(f"For '{date_col}' period starting {current_date}, '{column_name}' shows a trend towards category '{most_freq_category}'.")
                         prev_most_freq_category = most_freq_category
 
-        else:
-            insights.append(f"Column '{column_name}' is not suitable for trend analysis.")
-
         return insights
 
     # Function to get distributions templates
@@ -188,7 +182,7 @@ class insights:
         insights = []
 
         if column_name not in df.columns:
-            return [f"Column '{column_name}' does not exist in the dataset."]
+            return []
 
         non_null_data = df[column_name].dropna()
 
@@ -219,9 +213,6 @@ class insights:
                         insights.append(f"With '{column_name}' being {skew_type} skewed, there are {skew_description} values, with an instance being {representative_value}. In '{col}', the most common corresponding value is '{most_common_value}' at {category_percentage:.2f}% of these instances.")
                     else:
                         insights.append(f"With '{column_name}' being {skew_type} skewed, '{col}' does not show a clear mode in the skewed instances.")
-
-        else:
-            insights.append(f"Column '{column_name}' is not a numerical column or does not exhibit significant skewness.")
 
         return insights
 
@@ -319,20 +310,117 @@ class insights:
     #     ]
 
     # Function to get clusters templates
+    
     def get_clusters(self, column_name):
-        return [
-            f'Cluster analysis reveals distinct groups in {column_name}. Notable clusters include {column_name} = {random.choice(["A", "B", "C"])} and {column_name} = {random.choice(["X", "Y", "Z"])}.',
-            f'Data points in {column_name} form identifiable clusters. Notable cluster centers are {column_name} = {round(random.uniform(40, 50), 2)} and {column_name} = {round(random.uniform(60, 70),2)}.',
-            f'Analysis of {column_name} data using clustering techniques identifies distinct groups. Key clusters include {column_name} = {random.choice(["M", "N", "O"])} and {column_name} = {random.choice(["P", "Q", "R"])}.'
-        ]
+        cursor = db['cars'].find()
+        df = pd.DataFrame(iter(cursor))
+        if column_name not in self.NUMERICAL_COLUMNS:
+            return []
+
+        # Remove NaN values from the column
+        clean_df = df.dropna(subset=[column_name])
+
+        # Determine the optimal number of clusters using the Elbow Method
+        optimal_k = self.find_optimal_clusters(clean_df[[column_name]])
+        if optimal_k is None:
+            return []
+
+        # Perform clustering with the optimal number of clusters
+        kmeans = KMeans(n_clusters=optimal_k)
+        kmeans.fit(clean_df[[column_name]])
+        clean_df['cluster'] = kmeans.labels_
+
+        # Generate insights
+        insights = self.generate_cluster_insights(clean_df, column_name, optimal_k)
+
+        return insights
+
+    def find_optimal_clusters(self, data):
+        distortions = []
+        K = range(1, 10)  # Testing 1 to 9 clusters
+        for k in K:
+            kmeanModel = KMeans(n_clusters=k)
+            kmeanModel.fit(data)
+            distortions.append(kmeanModel.inertia_)
+
+        # Find the elbow point
+        k_distances = np.diff(distortions)
+        second_derivative = np.diff(k_distances)
+        elbow_point = np.argmax(second_derivative) + 2  # +2 due to double differencing
+        if elbow_point > 0 and elbow_point < len(K):
+            return elbow_point
+        return None
+    
+    def generate_cluster_insights(self, df, column_name, num_clusters):
+        insights = []
+
+        # Characteristics of Clusters in the Chosen Column
+        for cluster in sorted(df['cluster'].unique()):
+            cluster_mean = df[df['cluster'] == cluster][column_name].mean()
+            insights.append(f'{num_clusters} clusters found in {column_name}. Cluster {cluster} has an average value of {cluster_mean:.2f}.')
+
+        # Correlation with Other Numerical Columns
+        for other_col in self.NUMERICAL_COLUMNS:
+            if other_col != column_name:
+                for cluster in sorted(df['cluster'].unique()):
+                    cluster_mean = df[df['cluster'] == cluster][column_name].mean()
+                    mean_value = df[df['cluster'] == cluster][other_col].mean()
+                    insights.append(f'Cluster {cluster} (avg {column_name}: {cluster_mean:.2f}) correlates with an average {other_col} value of {mean_value:.2f}')
+
+        # Interaction with Categorical Columns
+        for cat_col in self.CATEGORICAL_COLUMNS:
+            for cluster in sorted(df['cluster'].unique()):
+                cluster_mean = df[df['cluster'] == cluster][column_name].mean()
+                most_common_category = df[df['cluster'] == cluster][cat_col].mode()[0]
+                insights.append(f'In Cluster {cluster} (avg {column_name}: {cluster_mean:.2f}), the most common category in {cat_col} is {most_common_category}')
+
+        # Insights on Outliers Within Clusters
+        for cluster in sorted(df['cluster'].unique()):
+            cluster_data = df[df['cluster'] == cluster][column_name]
+            cluster_mean = cluster_data.mean()
+            std_dev = cluster_data.std()
+            lower_bound = cluster_mean - 2 * std_dev
+            upper_bound = cluster_mean + 2 * std_dev
+            outliers = df[(df['cluster'] == cluster) & ((df[column_name] < lower_bound) | (df[column_name] > upper_bound))]
+            insights.append(f'Cluster {cluster} (avg {column_name}: {cluster_mean:.2f}) has {len(outliers)} outliers. This might indicate special cases or anomalies within this group.')
+
+        return insights
 
     # Function to get rank templates
     def get_rank(self, column_name):
-        return [
-            f'The rank of each category in {column_name} is [2, 4, 1, 0, 3]. Notable ranks include {column_name} = {random.choice(["A", "B", "C"])} at position 2.',
-            f'{column_name} is ranked highest based on specific criteria. For example, {column_name} = {random.choice(["X", "Y", "Z"])} is the top-ranked category.',
-            f'Ranking analysis reveals significant disparities among categories in {column_name}. Notable ranks include {column_name} = {random.choice(["D", "E", "F"])} at position 3.'
-        ]
+        cursor = db['cars'].find()
+        df = pd.DataFrame(iter(cursor))
+
+        insights = []
+
+        if column_name not in df.columns:
+            return []
+
+        if column_name in self.CATEGORICAL_COLUMNS:
+            for num_col in self.NUMERICAL_COLUMNS:
+                ranked = df.groupby(column_name)[num_col].mean().sort_values(ascending=False)
+                top_ranks = ranked.head(3).index.tolist()
+                bottom_ranks = ranked.tail(3).index.tolist()
+                bottom_ranks.reverse()
+                top_rank_str = ', '.join(f"'{val}'" for val in top_ranks[:min(3, len(ranked))])
+                bottom_rank_str = ', '.join(f"'{val}'" for val in bottom_ranks[-min(3, len(ranked)):])
+
+                insights.append(f"In '{column_name}', {top_rank_str} rank highest based on '{num_col}'.")
+                insights.append(f"In '{column_name}', {bottom_rank_str} rank lowest based on '{num_col}'.")
+
+        elif column_name in self.NUMERICAL_COLUMNS or column_name in self.DATE_LIKE_COLUMNS:
+            for cat_col in self.CATEGORICAL_COLUMNS:
+                ranked = df.groupby(cat_col)[column_name].mean().sort_values(ascending=False)
+                top_ranks = ranked.head(3).index.tolist()
+                bottom_ranks = ranked.tail(3).index.tolist()
+                bottom_ranks.reverse()
+                top_rank_str = ', '.join(f"'{val}'" for val in top_ranks[:min(3, len(ranked))])
+                bottom_rank_str = ', '.join(f"'{val}'" for val in bottom_ranks[-min(3, len(ranked)):])
+
+                insights.append(f"Based on '{column_name}', values {top_rank_str} from '{cat_col}' rank highest.")
+                insights.append(f"Based on '{column_name}', values {bottom_rank_str} from '{cat_col}' rank lowest.")
+
+        return insights
 
     # Function to get derived values templates
     def get_derived_values(self, column_name):
@@ -344,11 +432,56 @@ class insights:
 
     # Function to get associations templates
     def get_associations(self, column_name):
-        return [
-            f'There is a strong association between {column_name} and another variable. Notable associations include {column_name} = {round(random.uniform(30, 40),2)} and {column_name} = {round(random.uniform(50, 60),2)}.',
-            f'Association analysis suggests a moderate relationship between {column_name} and another variable. Consider values like {column_name} = {round(random.uniform(70, 80),2)} and {column_name} = {round(random.uniform(90, 100),2)}.',
-            f'Exploring associations with other variables reveals significant correlations. Notable associations include {column_name} = {round(random.uniform(40, 50),2)} with another variable.'
-        ]
+        cursor = db['cars'].find()
+        df = pd.DataFrame(iter(cursor))
+
+        insights = []
+
+        if column_name not in df.columns:
+            return []
+
+        # Correlation Insights Between Numerical Columns
+        if column_name in self.NUMERICAL_COLUMNS:
+            for other_col in self.NUMERICAL_COLUMNS:
+                if other_col != column_name:
+                    # Synchronize non-null data between the two columns
+                    non_null_indices = df[column_name].notnull() & df[other_col].notnull()
+                    valid_data = df[non_null_indices][[column_name, other_col]]
+
+                    if len(valid_data) > 1:
+                        correlation, _ = stats.pearsonr(valid_data[column_name], valid_data[other_col])
+                        correlation_type = 'positive' if correlation > 0 else 'negative'
+                        if abs(correlation) > 0.5:  # Strong correlation threshold
+                            insights.append(f"There appears to be a strong {correlation_type} correlation between '{column_name}' and '{other_col}', suggesting that as one increases, the other also increases/decreases.")
+
+            # Association with Categorical Columns
+            for cat_col in self.CATEGORICAL_COLUMNS:
+                category_means = df.groupby(cat_col)[column_name].mean()
+                highest_mean_category = category_means.idxmax()
+                lowest_mean_category = category_means.idxmin()
+                insights.append(f"There's a notable association between '{column_name}' and '{cat_col}', where '{highest_mean_category}' consistently aligns with higher values and '{lowest_mean_category}' with lower values.")
+        
+        # Association Insights for a Categorical Column
+        elif column_name in self.CATEGORICAL_COLUMNS:
+            for num_col in self.NUMERICAL_COLUMNS:
+                valid_data = df.dropna(subset=[column_name, num_col])
+                category_means = valid_data.groupby(column_name)[num_col].mean()
+                top_category = category_means.idxmax()
+                insights.append(f"Analysis shows that different categories in '{column_name}' have significantly different average values in '{num_col}', particularly '{top_category}' with the highest average.")
+
+                # Association of specific categories with higher/lower numerical values
+                for category in valid_data[column_name].unique():
+                    mean_value = valid_data[valid_data[column_name] == category][num_col].mean()
+                    insights.append(f"There's a notable association between '{column_name}' and '{num_col}', where '{category}' consistently aligns with {'higher' if mean_value > valid_data[num_col].mean() else 'lower'} values.")
+
+            # Association with Other Categorical Columns
+            for cat_col in self.CATEGORICAL_COLUMNS:
+                if cat_col != column_name:
+                    contingency_table = pd.crosstab(df[column_name], df[cat_col])
+                    top_combination = contingency_table.unstack().idxmax()
+                    insights.append(f"Certain combinations of categories from '{column_name}' and '{cat_col}' occur more frequently than others, especially between '{top_combination[0]}' and '{top_combination[1]}'.")
+
+        return insights
 
     # Function to get differences templates
     def get_differences(self, column_name):
@@ -364,7 +497,7 @@ class insights:
             for cat_column in categorical_columns:
                 if cat_column != column_name:
                     grouped_diff = df.groupby(cat_column)[column_name].mean()
-                    insights.append(f'Differences in {column_name} are observed when grouped by {cat_column}. Average values per group: {grouped_diff.to_dict()}.')
+                    #insights.append(f'Differences in {column_name} are observed when grouped by {cat_column}. Average values per group: {grouped_diff.to_dict()}.')
 
             # 3. Specific Examples
             for cat_column in categorical_columns:
@@ -378,15 +511,15 @@ class insights:
     
     def generate_insights(self, column_name, prev_insights, insight_count):
         insights = {
-            # 'outliers' : self.get_outliers(column_name)
+             'outliers' : self.get_outliers(column_name),
             # 'derived values' : self.get_derived_values(column_name),
-            # 'associations' : self.get_associations(column_name),
+             'associations' : self.get_associations(column_name),
             # 'differences' : self.get_differences(column_name),
-            # 'trends' : self.get_trends(column_name)
+             'trends' : self.get_trends(column_name),
              'distribution' : self.get_distributions(column_name),
-            # 'basic_stats' : self.get_basic_stats(column_name),
-            # 'clusters' : self.get_clusters(column_name),
-            # 'rank' : self.get_rank(column_name)
+             'basic_stats' : self.get_basic_stats(column_name),
+             'clusters' : self.get_clusters(column_name),
+             'rank' : self.get_rank(column_name)
                                         }        
 
         
@@ -455,13 +588,13 @@ class hypothesis:
 
 
     def get_hypothesis(self):
+        # Get all variables
         column_name = request.json.get('column_name')
         dataset_name = request.json.get('dataset_name')
         user_id = request.json.get('user_id')
         insights = request.json.get('insights')
         context = request.json.get('context')
-        insights.insert(0, context)
-        prompts = insights[0:4]
+
         API_URL = "https://api-inference.huggingface.co/models/tiiuae/falcon-7b-instruct"
         headers = {"Authorization": "Bearer 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"}
         
@@ -476,23 +609,42 @@ class hypothesis:
             history = []
         data = []
 
-        
-        for prompt in prompts:
+        # Check if context is not empty
+        if context:
+            # make API call to generate hypothesis with the context
             output = query_ai({
-                "inputs": "Respond to the Current Input using the past user inputs below.\nUser Inputs: " + str(history) + "\nCurrent Input: " + prompt + "Why is this the case?" + "\nAnswer:",
+                "inputs": "Respond to the Current Input using the past user inputs below if needed.\nUser Inputs: " + str(history) + "\nCurrent Input: " + context + "Why is this the case?" + "\nAnswer:",
                 "parameters": {
                     "return_full_text": False,
                     "max_time": 2.0
                     }
             })
-            history.insert(0, prompt)
+            history.insert(0, context)
             if len(history) > 100:
                 history.pop()
             try:
                 data.append(output[0]['generated_text'])
             except KeyError as e:
-                data.append("Error with following prompt: " + prompt)
+                pass
         
+        # iterate through insights
+        for insight in insights:
+            output = query_ai({
+                "inputs": "Respond to the Current Input using the past user inputs below if needed.\nUser Inputs: " + str(history) + "\nCurrent Input: " + insight + "Why is this the case?" + "\nAnswer:",
+                "parameters": {
+                    "return_full_text": False,
+                    "max_time": 2.0
+                    }
+            })
+            history.insert(0, insight)
+            if len(history) > 100:
+                history.pop()
+            try:
+                data.append(output[0]['generated_text'])
+            except KeyError as e:
+                pass
+        
+        # create/update history variable
         self.create_history (column_name, dataset_name, user_id, history)
         
         return jsonify({'data' : data})
