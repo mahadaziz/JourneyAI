@@ -56,8 +56,23 @@ def delete_session():
         return 'session never existed', 400
     
     
-
-
+@app.route("/get_topics", methods=['POST'])
+@cross_origin()
+@login_required
+def get_topics():
+    user_id = request.json.get('user_id')
+    title = request.json.get('title')
+    query = {'title' : title, 'user_id' : user_id }
+    if db['datasets'].find_one(query):
+        try:
+            if db['datasets'].find_one(query)['column_names']:
+                doc = db['datasets'].find_one(query)['column_names']
+                return jsonify ({'title' : doc['title'],'column_names' : doc['column_names']}), 200
+        except:
+            return jsonify({'message' : 'column_names not populated in database for specified dataset'}), 400
+    else:
+        return jsonify({'message' : f'The dataset with {title} does not exist for user {user_id}'}), 400
+    
 @app.route("/get_column_names", methods=['POST'])
 @cross_origin()
 @login_required
@@ -110,6 +125,16 @@ def get_hypothesis():
 
 #     return f'User {name} added to the database.'
 
+# @app.route("/save_document", methods = ['POST'])
+# @cross_origin()
+# @login_required
+# def save_document():
+#     query = {'user_id': request.json.get('user_id'), 
+#              'title': request.json.get('title')}
+    
+    
+#     db['documents'].replace_one(query, )
+   
 @app.route("/upload_dataset", methods = ['POST'])
 @cross_origin()
 @login_required
@@ -120,21 +145,40 @@ def input_dataset():
         file.filename = secure_filename(file.filename)
         if file.filename.endswith('.csv'):
             df = pd.read_csv(file).to_dict(orient='records')
+            names = list(df[0].keys())
+            column_names = [ name for name in  names if name != '_id' ]
             db['datasets'].insert_one({'title': request.form['title'], 'user_id': request.form['user_id'], 'data': df, 'created_date': datetime.utcnow(),
-            'last_update_time': datetime.utcnow() })
+            'last_update_time': datetime.utcnow(), 'column_names' : column_names  })
         
         elif file.filename.endswith('.xlsx'):
             df = pd.read_excel(file).to_dict(orient='records')
+            names = list(df[0].keys())
+            column_names = [ name for name in  names if name != '_id' ]
             db['datasets'].insert_one({'title': request.form['title'], 'user_id': request.form['user_id'], 'data': df, 'created_date': datetime.utcnow(),
-            'last_update_time': datetime.utcnow() })
+            'last_update_time': datetime.utcnow(), 'column_names' : column_names  })
         
         elif file.filename.endswith('.json'):
             df = pd.read_json(file).to_dict(orient='records')
+            names = list(df[0].keys())
+            column_names = [ name for name in  names if name != '_id' ]
             db['datasets'].insert_one({'title':request.form['title'], 'user_id': request.form['user_id'], 'data': df, 'created_date': datetime.utcnow(),
-            'last_update_time': datetime.utcnow() })
-        
+            'last_update_time': datetime.utcnow(), 'column_names' : column_names })
+             
         else:
             return jsonify({"message" : 'Unsupported file format'}), 400
+        
+        
+        document = {
+            'user_id': request.form('user_id'),
+            'title' : request.form('title'),
+            'text' : '',
+            'text_description' : '',
+            'current-hypothesis' : [],
+            'current_insights' : [],
+            'graph_state' : [],
+            'favorites' : {'insights' : [], 'hypothesis' : [], 'graphs' : []}
+}
+        db['documents'].insert_one(document)
         
         try:
             names = list(df[0].keys())
