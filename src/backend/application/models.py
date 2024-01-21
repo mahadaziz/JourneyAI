@@ -616,7 +616,9 @@ class hypothesis:
                 "inputs": "User Inputs: " + str(history) + "\nCurrent Input: " + insight + "\nGenerate an answer for why this is the case in the form of a hypothesis. Make sure to reference the current input in the hypothesis." + "\nAnswer:",
                 "parameters": {
                     "return_full_text": False,
-                    "max_time": 2.0
+                    "max_time": 2.0,
+                    "temperature": 0.5,
+                    "repetition_penalty": 1.03
                     }
             })
             history.insert(0, context)
