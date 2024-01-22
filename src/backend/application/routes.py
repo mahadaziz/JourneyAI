@@ -169,8 +169,8 @@ def input_dataset():
         
         
         document = {
-            'user_id': request.form('user_id'),
-            'title' : request.form('title'),
+            'user_id': request.form['user_id'],
+            'title' : request.form['title'],
             'text' : '',
             'text_description' : '',
             'current-hypothesis' : [],
