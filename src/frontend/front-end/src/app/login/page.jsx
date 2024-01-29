@@ -25,6 +25,7 @@ export default function page() {
       callbackUrl: '/',
     });
     if (res?.error) {
+      console.log(res);
       setError('Invalid Credentials');
       setLoading(false); // Set loading to false
       return;
@@ -33,6 +34,20 @@ export default function page() {
       setLoading(false);
       router.push('/homepage');
     }
+
+    // const resFlask = await fetch(`${process.env.NEXT_PUBLIC_LOCAL_URL}/login`, {
+    //   method: 'POST',
+    //   headers: {
+    //     'Content-Type': 'application/json',
+    //   },
+    //   body: JSON.stringify({ session_id: sessionId }),
+    // });
+
+    // if (resFlask.ok) {
+    //   console.log('Backend authorization successful');
+    // } else {
+    //   throw new Error('There was an error authenticating the back-end');
+    // }
 
     // fetching login API to authenticate with backend Flask aswell.
     // await fetch("http://127.0.0.1:5000/login", {
