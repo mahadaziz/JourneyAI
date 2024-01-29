@@ -49,7 +49,6 @@ function OptionsMenu({ sessionId }) {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            session_id: sessionId,
           }),
         });
         const data = await response.json();

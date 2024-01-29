@@ -49,7 +49,7 @@ function InsightsBox({ userId, sessionId }) {
   const itemsTab = 6;
 
   useEffect(() => {
-    if (!selectedColumn || !sessionId) {
+    if (!selectedColumn) {
       setError(true);
       return;
     }
@@ -66,7 +66,6 @@ function InsightsBox({ userId, sessionId }) {
             column_name: selectedColumn,
             prev_insights,
             insight_count,
-            session_id: sessionId,
           }),
         });
         const data = await response.json();

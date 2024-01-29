@@ -64,7 +64,6 @@ function HypothesisBox({ userId, sessionId }) {
           insights: insightsData,
           context: editorText,
           user_id: userId,
-          session_id: sessionId,
         }),
       });
       const data = await response.json();

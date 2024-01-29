@@ -6,7 +6,7 @@ import { UploadIcon } from './Icons';
 import '../app/globals.css';
 
 function UploadForm({
-  isVisible, toggleVisibility, sessionId, userId,
+  isVisible, toggleVisibility, userId,
 }) {
   const [selectedFile, setSelectedFile] = useState(null);
   const [title, setTitle] = useState('');
@@ -34,7 +34,6 @@ function UploadForm({
     }
     const formData = new FormData();
     formData.append('file', selectedFile);
-    formData.append('session_id', sessionId);
     formData.append('user_id', userId);
     formData.append('title', title);
     try {

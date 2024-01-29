@@ -67,7 +67,6 @@ function UserCard({
           <UploadForm
             isVisible={isUpload}
             toggleVisibility={toggleUploadForm}
-            sessionId={sessionId}
             userId={userId}
           />
         </div>
