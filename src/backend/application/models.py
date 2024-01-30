@@ -60,6 +60,7 @@ class insights:
 
     cursor = db['cars'].find()
     df = pd.DataFrame(iter(cursor))
+    df = df.drop(['_id'], axis=1)
 
     #global NUMERICAL_COLUMNS, CATEGORICAL_COLUMNS, DATE_LIKE_COLUMNS
 
