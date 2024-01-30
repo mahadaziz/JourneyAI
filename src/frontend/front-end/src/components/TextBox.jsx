@@ -1,110 +1,121 @@
+/* eslint-disable func-names */
+
 'use client';
-import React, { useState, useEffect } from 'react';
-import dynamic from 'next/dynamic';
-import 'react-quill/dist/quill.snow.css';
-import '../app/globals.css'
-import EditorPlaceholder from './EditorPlaceholder';
-import { Tooltip } from 'react-tooltip'
 
+import React, {
+  useState, useEffect, useRef, useCallback, useContext,
+} from 'react';
+// import dynamic from 'next/dynamic';
+import { Tooltip } from 'react-tooltip';
+import { useEditor, EditorContent } from '@tiptap/react';
+import StarterKit from '@tiptap/starter-kit';
+import Underline from '@tiptap/extension-underline';
+import Placeholder from '@tiptap/extension-placeholder';
+import {
+  Bold, Italic, UnderlineIcon, Strike,
+} from './Icons';
+import { EditorDataContext } from '../context/EditorDataContext';
+import SaveButton from './SaveButton';
+import '../app/globals.css';
 
+function TextBox({ userId, sessionId }) {
+  const { editorText, setEditorText } = useContext(EditorDataContext);
+  // Configure the Placeholder extension separately
+  const placeholderExtension = Placeholder.configure({
+    placeholder: 'Start typing your text here.',
+    emptyEditorClass: 'is-editor-empty',
+    emptyNodeClass: 'is-empty',
+  });
+  const editor = useEditor({
+    autoFocus: true,
+    extensions: [
+      StarterKit,
+      placeholderExtension, // Add the configured placeholder extension
+      Underline,
+    ],
+    editorProps: {
+      attributes: {
+        class: 'prose dark:prose-invert prose-sm sm:prose-base lg:prose-lg xl:prose-2xl m-5 focus:outline-none',
+      },
+    },
+  });
 
-const ReactQuill = dynamic(
-    () => import('react-quill'),
-    {
-      ssr: false, // This line is important. It's what prevents server-side render
-      // loading: () => <p className='text-black'>Loading...</p>, // Optional loading component
-      loading: () => <EditorPlaceholder/>
+  useEffect(() => {
+    if (editor) {
+      console.log('Editor loaded');
+      editor.commands.focus('start');
     }
-  );
-  
-  const TextBox = () => {
-    const [value, setValue] = useState('');
-    const [wordCount, setWordCount] = useState(0);
-    const quillRef = React.useRef();
+  }, [editor]); // Dependency array ensures this effect runs only when the editor is initialized
 
-    // Function to count words
-    const countWords = (text) => {
-      return text.split(/\s+/).filter(Boolean).length;
+  // Debounce function
+  const debounce = (func, delay) => {
+    let timerId;
+    return function (...args) {
+      if (timerId) {
+        clearTimeout(timerId);
+      }
+      timerId = setTimeout(() => {
+        func.apply(this, args);
+      }, delay);
     };
+  };
 
-    // Handle the text change
-    const handleTextChange = (content, delta, source, editor) => {
-      setValue(content);
-      setWordCount(countWords(editor.getText()));
-    };
+  // Function to extract the last two sentences
+  const extractData = () => {
+    if (editor) {
+      const text = editor.getHTML();
+      const plainText = text.replace(/<[^>]*>?/gm, '');
+      const sentences = plainText.split('.').map((s) => s.trim()).filter((s) => s.length > 0);
+      const extractText = `${sentences.slice(-2).join('. ')}.`;
+      setEditorText(extractText);
+    }
+  };
 
-    // Implement undo and redo functions
-    const undoChange = () => {
-      const editor = quillRef.current.getEditor();
-      editor.history.undo();
-    };
+  // only call the debounce function if the user stops typing for 2 seconds.
+  const debouncedExtraction = useCallback(debounce(extractData, 2000), [editor]);
 
-    const redoChange = () => {
-      const editor = quillRef.current.getEditor();
-      editor.history.redo();
-    };
-    const formats = [
-      'bold',
-      'italic',
-      'underline',
-      'header', 
-      'list',
-      'bullet',
-      'link',
-      'clean', // This format is for removing formatting
-    
-    ];
+  // keeps track of the updates to the editor content
+  useEffect(() => {
+    if (editor) {
+      // Subscribe to the update event
+      const handleUpdate = () => {
+        debouncedExtraction();
+      };
+      editor.on('update', handleUpdate);
+
+      // Return a cleanup function
+      return () => {
+        // Unsubscribe from the update event
+        editor.off('update', handleUpdate);
+      };
+    }
+  }, [editor, debouncedExtraction]);
 
   return (
-    <div className="row-span-3 col-span-2 pl-5 delayAnimation">
-      {/* Quill Editor */}
-      <ReactQuill className="delayAnimation"
-        theme="snow"
-        value={value}
-        onChange={handleTextChange}
-        modules={{
-          toolbar: '#toolbar', // Selector for the custom toolbar
-        }}
-        formats={formats}
-        placeholder="Start typing..."
-
-      />
-      {/* Custom Toolbar */}
-      <div id="toolbar" className="delayAnimation">
+    <div className="editor-container border border-gray-700 flex flex-col flex-grow mx-6 rounded-xl mb-10 overflow-hidden">
       <Tooltip id="my-tooltip" />
-        {/* Bold, Italic, and Underline buttons */}
-        <div className='toolbar-group border-r-2'>
-          <button className="ql-bold" data-tooltip-id="my-tooltip" data-tooltip-content="Bold" data-tooltip-place="top" title="Bold"></button>
-          <button className="ql-italic" data-tooltip-id="my-tooltip" data-tooltip-content="Italic" data-tooltip-place="top" title="Italic"></button>
-          <button className="ql-underline" data-tooltip-id="my-tooltip" data-tooltip-content="Underline" data-tooltip-place="top" title="Underline"></button>
-        </div>
 
-        <div className='toolbar-group border-r-2'>
-          <button className="ql-header" data-tooltip-id="my-tooltip" data-tooltip-content="Header 1" data-tooltip-place="top" value="1" title="Heading 1">H1</button>
-          <button className="ql-header" data-tooltip-id="my-tooltip" data-tooltip-content="Header 2" data-tooltip-place="top" value="2" title="Heading 2">H2</button>
-        </div>
+      {/* Editor content */}
+      <EditorContent editor={editor} className="flex-grow overflow-auto" />
 
-        {/* Lists */}
-        <div className='toolbar-group border-r-2'>
-          <button className="ql-list" data-tooltip-id="my-tooltip" data-tooltip-content="Ordered List" data-tooltip-place="top" value="ordered" title="Ordered List"></button>
-          <button className="ql-list" data-tooltip-id="my-tooltip" data-tooltip-content="Bullet List" data-tooltip-place="top" value="bullet" title="Bullet List"></button>
-        </div>
-
-        {/* Link */}
-        <div className='toolbar-group'>
-          <button className="ql-link" data-tooltip-id="my-tooltip" data-tooltip-content="Link" data-tooltip-place="top" title="Insert Link"></button>
-        </div>
-
-        <div className='toolbar-group'>
-          {/* Clear formatting */}
-          <button className="ql-clean" data-tooltip-id="my-tooltip" data-tooltip-content="Remove Format" data-tooltip-place="top" title="Clear Formatting"></button>
-        </div>
-
-        {/* Word Count */}
-        <div className="ml-12 mr-5 text-gray-400 dark:text-white">{wordCount} words</div>
+      {/* Toolbar */}
+      <div className="toolbar flex relative justify-center mb-3 space-x-8">
+        <button type="button" aria-label="bold button" data-tooltip-id="my-tooltip" data-tooltip-content="Bold" data-tooltip-place="top" onClick={() => editor.chain().focus().toggleBold().run()}>
+          <Bold />
+        </button>
+        <button type="button" aria-label="italic button" data-tooltip-id="my-tooltip" data-tooltip-content="Italic" data-tooltip-place="top" onClick={() => editor.chain().focus().toggleItalic().run()}>
+          <Italic />
+        </button>
+        <button type="button" aria-label="underline button" data-tooltip-id="my-tooltip" data-tooltip-content="Underline" data-tooltip-place="top" onClick={() => editor.chain().focus().toggleUnderline().run()}>
+          <UnderlineIcon />
+        </button>
+        <button type="button" aria-label="strike button" data-tooltip-id="my-tooltip" data-tooltip-content="Strike" data-tooltip-place="top" onClick={() => editor.chain().focus().toggleStrike().run()}>
+          <Strike />
+        </button>
+        <SaveButton />
       </div>
     </div>
   );
-};
+}
 
 export default TextBox;

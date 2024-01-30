@@ -3,24 +3,47 @@
 @tailwind utilities;
 
 .insightScroll {
-    max-height: 250px;
+    max-height: 150px;
     overflow: auto;
 }
 
+
 .insightScrollFull {
-    min-height: 450px;
-    max-height: none;
-    overflow: visible;
-  }
+    min-height: 400px;
+    max-height: 100%;
+    overflow: auto;
+}
+
+@media  (min-height: 650px) {
+    .insightScroll {
+        max-height: 150px;
+    }
+
+    .insightScrollFull {
+        min-height: 200px;
+        max-height: 350px;
+    }
+}
+
+@media  (min-height: 750px) {
+    .insightScroll {
+        max-height: 150px;
+    }
+
+    .insightScrollFull {
+        max-height: 400px;
+    }
+    
+}
 
 @media  (min-height: 850px) {
-    .insightScroll {
-        max-height: 400px;
+    .insightScroll { 
+        max-height: 300px;
         overflow: auto;
     }
     .insightScrollFull {
         min-height: 400px;
-        max-height: 600px;
+        max-height: 500px;
         overflow: auto;
     }
     .insightScrollFull::-webkit-scrollbar {
@@ -37,6 +60,19 @@
     .insightScrollFull::-webkit-scrollbar-thumb:hover {
         background: #555; /* color when hovering over the scroll thumb */
     }
+}
+
+@media  (min-height: 900px) {
+    .insightScroll {
+        max-height: 400px;
+    }
+}
+
+@media  (min-height: 1000px) {
+    .insightScroll {
+        max-height: 450px;
+    }
+    
 }
 
 /* Custom scrollbar styles */
@@ -56,4 +92,25 @@ border: 3px solid #f1f1f1; /* creates padding around scroll thumb */
 
 .insightScroll::-webkit-scrollbar-thumb:hover {
 background: #555; /* color when hovering over the scroll thumb */
+}
+
+/* Custom scrollbar styles */
+.dark .insightScroll::-webkit-scrollbar {
+    width: 11px; /* width of the entire scrollbar */
+    background-color: rgb(23, 23, 23);
+    background:none;
+}
+
+.dark .insightScroll::-webkit-scrollbar-track {
+    background-color: rgb(23, 23, 23);
+}
+
+.dark .insightScroll::-webkit-scrollbar-thumb {
+    background-color:rgb(138, 141, 225);
+    border-radius: 5px;
+    border: 2px solid #000000; 
+}
+
+.dark .insightScroll::-webkit-scrollbar-thumb:hover {
+    background-color: #555; /* color when hovering over the scroll thumb */
 }

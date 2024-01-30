@@ -1,0 +1,30 @@
+services:
+  nextapp:
+    container_name: nextapp
+    build:
+      context: ./frontend/front-end
+      dockerfile: next.dockerfile
+    image: nextapp:1.0.0
+    environment:
+      - NEXTAUTH_SECRET=vVTTYRya+N969dBKFCOdsjnxrFC3Owe4I0AaT3W8iPcnw9+JXlng01QNQ+j2FOrJRoD47b9TcWwNiw40RgxwzdG/V3uEBfJB4ylLgruYhOcoF6HZo/UEAvDO0nyGjYRBlZZYgMlgiiZi0sTKr23mt9MEmduWmRtjwuo+R9upWWJz5PqP2EScghlR9tPwwhlprgnJk+iVD2hIGAGD6dccp7sDBjy4hC16kJQX/8JG4WNS7nq17H0sHJNRHWKfdmwQijNi3P2bJ1M=
+      - NEXT_PUBLIC_LOCAL_URL=http://127.0.0.1:8080
+      - MONGODB_URI=mongodb+srv://lostm:RlT5ix66d7jcajHr@cluster0.26a1r0n.mongodb.net/db
+      - NEXTAUTH_URL=http://127.0.0.1:3000
+    ports:
+      - 3000:3000
+    depends_on:
+      - flaskapp
+      
+  flaskapp:
+    container_name: flaskapp
+    image: flaskapp:1.0.0
+    build:
+      context: ./backend
+      dockerfile: flask.dockerfile
+    ports:
+      - 8080:8080
+    environment:
+      - MONGO_URI=mongodb+srv://lostm:RlT5ix66d7jcajHr@cluster0.26a1r0n.mongodb.net/?retryWrites=true&w=majority
+      - SECRET_KEY=5957450d7a3e437980bc3566be2baf65
+  
+  

@@ -9,7 +9,16 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@fortawesome/fontawesome-svg-core": "^6.5.1",
+    "@fortawesome/free-solid-svg-icons": "^6.5.1",
     "@heroicons/react": "^2.0.18",
+    "@tiptap/extension-highlight": "^2.1.13",
+    "@tiptap/extension-placeholder": "^2.1.13",
+    "@tiptap/extension-text-style": "^2.1.13",
+    "@tiptap/extension-underline": "^2.1.13",
+    "@tiptap/pm": "^2.1.13",
+    "@tiptap/react": "^2.1.13",
+    "@tiptap/starter-kit": "^2.1.13",
     "bcrypt": "^5.1.1",
     "d3": "^7.8.5",
     "framer-motion": "^10.16.9",
@@ -37,6 +46,7 @@
     "eslint-plugin-react": "^7.33.2",
     "eslint-plugin-react-hooks": "^4.6.0",
     "postcss": "^8",
+    "postcss-nesting": "^12.0.2",
     "tailwindcss": "^3"
   }
 }

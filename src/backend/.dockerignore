@@ -1,0 +1,8 @@
+
+flask.dockerfile
+__pycache__
+    .Python
+    .env
+    .tox
+    .cache
+    .git

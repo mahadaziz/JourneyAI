@@ -1,23 +1,33 @@
-'use client';
-import React from "react";
-import { useState } from "react";
+/* eslint-disable no-sequences */
+/* eslint-disable max-len */
 
+'use client';
+
+import React, { useState } from 'react';
 
 export const HypothesisDataContext = React.createContext({
-    selectedColumn: '',
-    setSelectedColumn: () => {}
+  hasHypothesisData: '',
+  setHasHypothesisData: () => {},
+  hypothesisData: [],
+  setHypothesisData: () => {},
 });
 
-export const HypothesisDataProvider  = ({ children }) => {
-    const [hasHypothesisData, setHasHypothesisData] = useState(false);
+export function HypothesisDataProvider({ children }) {
+  const [hasHypothesisData, setHasHypothesisData] = useState(false);
+  const [hypothesisData, setHypothesisData] = useState([]);
 
-    const updateHypothesisData = (status) => {
-        setHasHypothesisData(status);
-    };
+  const updateHypothesisData = (status) => {
+    setHasHypothesisData(status);
+  };
 
-    return (
-      <HypothesisDataContext.Provider value={{ hasHypothesisData, updateHypothesisData }}>
-        {children}
-      </HypothesisDataContext.Provider>
-    );
-};
+  return (
+    <HypothesisDataContext.Provider value={
+      {
+        hasHypothesisData, hypothesisData, updateHypothesisData, setHypothesisData,
+      }
+}
+    >
+      {children}
+    </HypothesisDataContext.Provider>
+  );
+}
