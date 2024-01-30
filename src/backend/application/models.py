@@ -594,7 +594,9 @@ class hypothesis:
         user_id = request.json.get('user_id')
         insights = request.json.get('insights')
         context = request.json.get('context')
+        data = []
 
+        # HuggingFace credentials
         API_URL = "https://api-inference.huggingface.co/models/tiiuae/falcon-7b-instruct"
         headers = {"Authorization": "Bearer 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"}
         
@@ -602,18 +604,18 @@ class hypothesis:
             response = requests.post(API_URL, headers=headers, json=payload)
             return response.json()
         
+        # get history variable if it exists, else make new history
         query = {'column_name': column_name, 'dataset_name' : dataset_name, 'user_id': user_id}
         if db['hypothesis_history'].find_one(query) is not None:
             history = db['hypothesis_history'].find_one(query)['history']
         else : 
             history = []
-        data = []
 
         # check if context is not empty
         if context and context != ".":
             # make API call to generate hypothesis with the context
             output = query_ai({
-                "inputs": "User Inputs: " + str(history) + "\nCurrent Input: " + insight + "\nGenerate an answer for why this is the case in the form of a hypothesis. Make sure to reference the current input in the hypothesis." + "\nAnswer:",
+                "inputs": "User Inputs: " + str(history) + "\nCurrent Input: " + context + "\nGenerate an answer for why this is the case in the form of a hypothesis. Make sure to reference the current input in the hypothesis." + "\nAnswer:",
                 "parameters": {
                     "return_full_text": False,
                     "max_time": 2.0,
@@ -621,16 +623,19 @@ class hypothesis:
                     "repetition_penalty": 1.03
                     }
             })
+            # insert context to history
             history.insert(0, context)
             if len(history) > 100:
                 history.pop()
             try:
+                # add output to dictionary
                 data.append(output[0]['generated_text'])
             except KeyError as e:
                 pass
         
-        # iterate through insights
+        # look at first 2 insights
         for insight in insights[:2]:
+            # generate hypothesis with insights
             output = query_ai({
                 "inputs": "User Inputs: " + str(history) + "\nCurrent Input: " + insight + "\nGenerate an answer for why this is the case in the form of a hypothesis. Make sure to reference the current input in the hypothesis." + "\nAnswer:",
                 "parameters": {
