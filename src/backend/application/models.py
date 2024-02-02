@@ -513,9 +513,9 @@ class insights:
     def generate_insights(self, column_name, prev_insights, insight_count):
         insights = {
              'outliers' : self.get_outliers(column_name),
-            # 'derived values' : self.get_derived_values(column_name),
+            'derived values' : self.get_derived_values(column_name),
              'associations' : self.get_associations(column_name),
-            # 'differences' : self.get_differences(column_name),
+            'differences' : self.get_differences(column_name),
              'trends' : self.get_trends(column_name),
              'distribution' : self.get_distributions(column_name),
              'basic_stats' : self.get_basic_stats(column_name),
