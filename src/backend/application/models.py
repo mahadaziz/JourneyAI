@@ -524,25 +524,27 @@ class insights:
                                         }        
 
         
+        
         #Make sure that each returned insight is unvisited
-        all_values = ([value for values in insights.values() for value in values])
-        if len(all_values) <= insight_count:
-            return jsonify({'insights' :all_values})
-        
-        new_insights_count = min(insight_count,len(all_values) - len(prev_insights))
+        output = {}
+        for insight in insights.keys():
+            if len(insights[insight]) <= insight_count:
+                 output[insight] = insights[insight]
+            else:
+                new_insights_count = min(insight_count,len(insights[insight]) - len([i for i in insights[insight] if i in prev_insights]))
+                        
+                current_insights = random.sample([v for v in insights[insight] if v not in prev_insights], new_insights_count)
                 
-        current_insights = random.sample([v for v in all_values if v not in prev_insights], new_insights_count)
-        
-        if new_insights_count >= insight_count:
-            prev_insights.extend(current_insights)
-        if new_insights_count < insight_count:
-            print (current_insights)
-            if prev_insights != []:
-                current_insights.extend(random.sample(prev_insights, insight_count - len(current_insights)))
-                prev_insights = []
-        
-        
-        return jsonify({'insights' : current_insights, 'prev_insights' : prev_insights, 'count' : new_insights_count})
+                if new_insights_count >= insight_count:
+                    prev_insights.extend(current_insights)
+                if new_insights_count < insight_count:
+                    print (current_insights)
+                    if prev_insights != []:
+                        current_insights.extend(random.sample([i for i in prev_insights if i in insights[insight]], insight_count - len(current_insights)))
+                        prev_insights = [v for v in prev_insights if v not in insights[insight]]
+                output[insight] = current_insights
+                
+        return jsonify({'insights' : output, 'prev_insights' : prev_insights, 'count' : new_insights_count})
             
         
             #Make it a fair portion of all_insights and take care of errors when there isn't enough of certain number of insight-types
