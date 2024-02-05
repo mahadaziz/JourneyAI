@@ -45,8 +45,10 @@ function InsightsBox({ userId, sessionId }) {
   const [error, setError] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [refresh, setRefresh] = useState(false);
-  const [activeTab, setActiveTab] = useState(0);
-  const itemsTab = 6;
+  const [selectedOption, setSelectedOption] = useState(insightsData[0]);
+  const [options, setOptions] = useState([]);
+  const [selectedData, setSelectedData] = useState([]);
+  const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
     if (!selectedColumn) {
@@ -70,10 +72,16 @@ function InsightsBox({ userId, sessionId }) {
         });
         const data = await response.json();
         if (response.ok) {
+          setOptions(Object.keys(data.insights));
           setIsLoading(false); // Stop loading after API call is complete
+          // setOptions(data.insights.keys);
           const previousData = data.prev_insights;
           updateInsightsData(data.insights);
           setPreviousInsights(previousData);
+          // Set the default selected option here, after data is fetched
+          if (!selectedOption && Object.keys(data.insights).length > 0) {
+            setSelectedOption(Object.keys(data.insights)[0]);
+          }
         } else {
           console.error('Failed to fetch insightsData: ', data);
         }
@@ -85,21 +93,34 @@ function InsightsBox({ userId, sessionId }) {
     getInsightsData(previousInsights, 18);
   }, [selectedColumn, refresh]);
 
-  // insightsData is an array of strings
-  const insightsDataSplit = [];
-  for (let i = 0; i < insightsData.length; i += itemsTab) {
-    insightsDataSplit.push(insightsData.slice(i, i + itemsTab));
-  }
+  useEffect(() => {
+    // Check if the selectedOption is valid and exists in insightsData
+    if (selectedOption && insightsData[selectedOption]) {
+      // Update the state with the data associated with the selected option
+      setSelectedData(insightsData[selectedOption]);
+    } else {
+      setSelectedData(insightsData[0]);
+    }
+  }, [selectedOption, insightsData]);
 
-  const handleTabClick = (index) => {
-    setActiveTab(index);
+  useEffect(() => {
+    if (selectedColumn && insightsData) {
+      setOptions(Object.keys(insightsData));
+    }
+  }, [selectedColumn, insightsData]);
+
+  const toggleDropdown = () => setIsOpen(!isOpen);
+
+  const handleSelect = (option) => {
+    setSelectedOption(option);
+    setIsOpen(false); // Close dropdown after selection
   };
 
   const handleRefresh = () => {
     setRefresh((prev) => !prev); // Flip the state to trigger re-fetch
   };
 
-  const getKey = (index) => `${selectedColumn}-${activeTab}-${index}`;
+  // const getKey = (index) => `${selectedColumn}-${activeTab}-${index}`;
   return (
     <div className="flex flex-col px-6 w-full">
       <div className="flex justify-between items-center bg-neutral-900 border border-gray-200 rounded-lg shadow dark:border-gray-700 dark:bg-[#030712]">
@@ -109,37 +130,40 @@ function InsightsBox({ userId, sessionId }) {
           </h5>
         </div>
         <div className="border-gray-200 dark:border-gray-700">
-          {/* Dropdown visible on medium screens and below */}
-          <div className="lg:hidden ">
-            <select
-              className="bg-white border rounded-lg text-black font-medium text-md p-1"
-              onChange={(e) => handleTabClick(e.target.value)}
-              value={activeTab}
+          <div>
+            <button
+              type="button"
+              onClick={toggleDropdown}
+              className="relative focus:outline-none
+              font-medium rounded-2xl px-3 py-2 border border-gray-700 text-center inline-flex items-center
+              md:min-w-[100px] md:text-md lg:min-w-[200px]
+              text-black bg-white hover:bg-gray-100 dark:bg-[#030712] dark:text-gray-200 dark:hover:bg-gray-800"
             >
-              {insightsDataSplit.map((_, index) => (
-                <option key={index} value={index}>
-                  {`Item ${index + 1}`}
-                </option>
-              ))}
-            </select>
+              {selectedOption || 'Choose a category'}
+
+              <svg className="w-2.5 h-2.5 ms-auto" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6">
+                <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="m1 1 4 4 4-4" />
+              </svg>
+            </button>
+
+            {isOpen && (
+            <div className="absolute z-10 w-[200px] bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800">
+              <ul className="py-1">
+                {Object.keys(insightsData).map((key, index) => (
+                  <li key={key}>
+                    <button
+                      type="button"
+                      onClick={() => handleSelect(key)}
+                      className="flex w-full justify-start px-4 py-2 rounded-lg text-sm hover:bg-gray-100 dark:hover:bg-gray-700 dark:text-gray-200"
+                    >
+                      {key}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+            )}
           </div>
-          <ul className="hidden lg:flex flex-wrap -mb-px text-md font-medium text-center " id="default-tab" role="tablist">
-            {insightsDataSplit.map((_, index) => (
-              <li className="me-6" key={index} role="presentation">
-                <motion.button
-                  className={`flex justify-center items-center h-[40px] w-[20px] p-4 rounded-lg text-black bg-white hover:bg-gray-400 ${activeTab === index ? 'active-styles' : ''}`}
-                  onClick={() => handleTabClick(index)}
-                  variants={buttonVariants}
-                  whileHover="hover"
-                  whileTap="clicked" // This applies the 'clicked' variant while the button is being tapped/clicked
-                  initial="normal"
-                  transition={{ duration: 0.2 }}
-                >
-                  {index + 1}
-                </motion.button>
-              </li>
-            ))}
-          </ul>
         </div>
         <motion.button
           onClick={handleRefresh}
@@ -168,11 +192,10 @@ function InsightsBox({ userId, sessionId }) {
           </div>
         ) : (
           <div>
-
-            {insightsData.length > 0 ? (
+            {selectedData && selectedData.length > 0 ? (
               <div className={hasHypothesisData ? 'insightScroll' : 'insightScrollFull insightScrollWheel'}>
-                {insightsDataSplit[activeTab].map((header, index) => (
-                  <div className="insightButton" key={`${getKey(index)}-${refresh}`}>
+                {selectedData.map((header, index) => (
+                  <div className="insightButton" key={index}>
                     <InsightButton header={header} />
                   </div>
                 ))}

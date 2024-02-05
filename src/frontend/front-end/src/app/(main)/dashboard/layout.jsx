@@ -21,9 +21,7 @@ export default async function RootLayout({ children }) {
             <SelectedColumnProvider>
               <InsightsDataProvider>
                 <HypothesisDataProvider>
-                  <EditorDataProvider>
-                    {children}
-                  </EditorDataProvider>
+                  {children}
                 </HypothesisDataProvider>
               </InsightsDataProvider>
             </SelectedColumnProvider>

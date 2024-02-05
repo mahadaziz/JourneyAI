@@ -30,7 +30,7 @@ function HypothesisBox({ userId, sessionId }) {
   const { updateHypothesisData, hypothesisData, setHypothesisData } = useContext(HypothesisDataContext);
   // const [hypothesisData, setHypothesisData] = useState([]);
   const { insightsData } = useContext(InsightsDataContext);
-  const { editorText } = useContext(EditorDataContext);
+  const { contextText } = useContext(EditorDataContext);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const openModal = () => setIsModalOpen(true);
@@ -40,11 +40,6 @@ function HypothesisBox({ userId, sessionId }) {
   const [error, setError] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  // column_name = request.json.get('column_name')
-  //       dataset_name = request.json.get('dataset_name')
-  //       user_id = request.json.get('user_id')
-  //       insights = request.json.get('insights')
-  //       context = request.json.get('context')
   const getHypothesisData = async () => {
     const storedDataString = localStorage.getItem('dataSetInfo');
     const storedData = JSON.parse(storedDataString);
@@ -55,6 +50,7 @@ function HypothesisBox({ userId, sessionId }) {
 
     setIsLoading(true); // Set loading to true before API call
     try {
+      console.log(insightsData);
       const response = await fetch(`${process.env.NEXT_PUBLIC_LOCAL_URL}/get_hypothesis`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -62,7 +58,7 @@ function HypothesisBox({ userId, sessionId }) {
           column_name: selectedColumn,
           dataset_name: storedData.title,
           insights: insightsData,
-          context: editorText,
+          context: contextText,
           user_id: userId,
         }),
       });

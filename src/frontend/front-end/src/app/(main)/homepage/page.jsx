@@ -14,7 +14,6 @@ export default async function Page() {
   // Array simulating data from the database
   const cardsData = [
     { title: 'The Consumption of Cars during the years', description: 'Here are the biggest enterprise technology acquisitions of 2021 so far, in reverse chronological order. Here are the biggest enterprise technology acquisitions of 2021 so far, in reverse chronological order. Here are the biggest enterprise technology acquisitions of 2021 so far, in reverse chronological order.', isUploadCard: false },
-    { title: 'The Consumption', description: 'Here are the biggest enterprise technology acquisitions of 2021 so far, in reverse chronological order. Here are the biggest enterprise technology acquisitions of 2021 so far, in reverse chronological order. Here are the biggest enterprise technology acquisitions of 2021 so far, in reverse chronological order.', isUploadCard: false },
   ];
 
   return (
@@ -26,12 +25,9 @@ export default async function Page() {
       <div className="col-span-5 md:col-span-4 lg:col-span-4 p-12 overflow-auto">
         <div className="flex flex-row justify-start items-center pb-5">
           <SearchBar />
-          {/* <UserMenu/> */}
         </div>
 
         <div className="flex flex-col md:grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          <UserCard title="Upload Dataset" description="" isUploadCard sessionId={session.sessionId} userId={session.userId} />
-
           {cardsData.map((card) => (
             <UserCard
               key={card.title}
@@ -42,6 +38,7 @@ export default async function Page() {
               userId={card.userId}
             />
           ))}
+          <UserCard title="Upload Dataset" description="" isUploadCard sessionId={session.sessionId} userId={session.userId} />
         </div>
       </div>
     </section>

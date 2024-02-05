@@ -1,7 +1,9 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useContext, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { UploadIcon, ViewIcon } from './Icons';
+import { EditorDataContext } from '../context/EditorDataContext';
 import UploadForm from './UploadForm';
 import '../app/globals.css';
 
@@ -10,19 +12,24 @@ function UserCard({
 }) {
   const [isHovered, setIsHovered] = useState(false);
   const [isUpload, setIsUpload] = useState(false);
+  const { setEditorText } = useContext(EditorDataContext);
+  const router = useRouter();
 
   const toggleUploadForm = () => {
     setIsUpload(!isUpload);
   };
 
-  const handleUserCard = () => {
-    console.log(title);
+  const handleUserCard = async (title, description) => {
+    localStorage.setItem('dataSetInfo', JSON.stringify({ title })); // Store the data in localStorage
+    setEditorText(description);
+    console.log(description);
+    router.push('/dashboard');
   };
 
   return (
     <div className="me-6 bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
       {isUploadCard ? (
-      // Render upload button for the first card
+        // Render upload button for the first card
         <div className="p-8 h-[250px] flex flex-col justify-between items-center hover:shadow-xl">
           <div href="#" className="self-start">
             <h5 className="text-xl font-bold tracking-tight text-gray-900 dark:text-white">{title}</h5>
@@ -41,7 +48,7 @@ function UserCard({
           className="relative p-8 h-[250px] flex flex-col justify-between items-center hover:shadow-xl cursor-pointer"
           onMouseEnter={() => setIsHovered(true)}
           onMouseLeave={() => setIsHovered(false)}
-          onClick={handleUserCard}
+          onClick={() => handleUserCard(title, description)}
           onKeyDown={(e) => e.key === 'Enter' && handleUserCard()}
           role="button"
           tabIndex="0"

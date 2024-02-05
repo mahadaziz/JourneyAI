@@ -19,7 +19,9 @@ import SaveButton from './SaveButton';
 import '../app/globals.css';
 
 function TextBox({ userId, sessionId }) {
-  const { editorText, setEditorText } = useContext(EditorDataContext);
+  const {
+    editorText, setEditorText, contextText, setContextText,
+  } = useContext(EditorDataContext);
   // Configure the Placeholder extension separately
   const placeholderExtension = Placeholder.configure({
     placeholder: 'Start typing your text here.',
@@ -33,12 +35,23 @@ function TextBox({ userId, sessionId }) {
       placeholderExtension, // Add the configured placeholder extension
       Underline,
     ],
+    content: editorText, // Initialize editor with editorText if not empty
+    onUpdate: ({ editor }) => {
+      // Update editorText in context with every change
+      setEditorText(editor.getText());
+    },
     editorProps: {
       attributes: {
         class: 'prose dark:prose-invert prose-sm sm:prose-base lg:prose-lg xl:prose-2xl m-5 focus:outline-none',
       },
     },
   });
+
+  useEffect(() => {
+    if (editor && editorText !== editor.getHTML()) {
+      editor.commands.setContent(editorText);
+    }
+  }, [editorText, editor]);
 
   useEffect(() => {
     if (editor) {
@@ -60,16 +73,19 @@ function TextBox({ userId, sessionId }) {
     };
   };
 
-  // Function to extract the last two sentences
   const extractData = () => {
     if (editor) {
       const text = editor.getHTML();
       const plainText = text.replace(/<[^>]*>?/gm, '');
       const sentences = plainText.split('.').map((s) => s.trim()).filter((s) => s.length > 0);
       const extractText = `${sentences.slice(-2).join('. ')}.`;
-      setEditorText(extractText);
+      setContextText(extractText);
     }
   };
+
+  useEffect(() => {
+    extractData();
+  }, [editor]); // Run `extractData` when `editor` changes.
 
   // only call the debounce function if the user stops typing for 2 seconds.
   const debouncedExtraction = useCallback(debounce(extractData, 2000), [editor]);
