@@ -624,7 +624,8 @@ class hypothesis:
         data = []
 
         if isinstance(insights, dict):
-            insights = [value for value in insights.values()]
+            insights = [value for list_value in insights.values() for value in list_value]
+            print(insights)
         # HuggingFace credentials
         API_URL = "https://api-inference.huggingface.co/models/tiiuae/falcon-7b-instruct"
         headers = {"Authorization": "Bearer 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"}
