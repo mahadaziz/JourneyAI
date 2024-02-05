@@ -22,6 +22,7 @@ function TextBox({ userId, sessionId }) {
   const {
     editorText, setEditorText, contextText, setContextText,
   } = useContext(EditorDataContext);
+
   // Configure the Placeholder extension separately
   const placeholderExtension = Placeholder.configure({
     placeholder: 'Start typing your text here.',
@@ -35,7 +36,6 @@ function TextBox({ userId, sessionId }) {
       placeholderExtension, // Add the configured placeholder extension
       Underline,
     ],
-    content: editorText, // Initialize editor with editorText if not empty
     onUpdate: ({ editor }) => {
       // Update editorText in context with every change
       setEditorText(editor.getText());
@@ -49,7 +49,8 @@ function TextBox({ userId, sessionId }) {
 
   useEffect(() => {
     if (editor && editorText !== editor.getHTML()) {
-      editor.commands.setContent(editorText);
+      const cleanText = editorText; // Assuming editorText is the text you want to set
+      editor.commands.setContent(cleanText, false, { preserveWhitespace: 'full' });
     }
   }, [editorText, editor]);
 
