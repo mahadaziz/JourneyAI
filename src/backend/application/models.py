@@ -623,6 +623,8 @@ class hypothesis:
         context = request.json.get('context')
         data = []
 
+        if isinstance(insights, dict):
+            insights = [value for value in insights.values()]
         # HuggingFace credentials
         API_URL = "https://api-inference.huggingface.co/models/tiiuae/falcon-7b-instruct"
         headers = {"Authorization": "Bearer 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"}
