@@ -6,6 +6,7 @@ import requests
 from scipy.stats import zscore, skew, stats
 from sklearn.cluster import KMeans
 import numpy as np
+import random
 
 class User:
     
@@ -626,6 +627,11 @@ class hypothesis:
         if isinstance(insights, dict):
             insights = [value for list_value in insights.values() for value in list_value]
             print(insights)
+
+        # select any two random insights
+        if len(insights) >= 2:
+            insights = random.sample(insights, 2)
+        
         # HuggingFace credentials
         API_URL = "https://api-inference.huggingface.co/models/tiiuae/falcon-7b-instruct"
         headers = {"Authorization": "Bearer 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"}
@@ -664,7 +670,7 @@ class hypothesis:
                 pass
         
         # look at first 2 insights
-        for insight in insights[:2]:
+        for insight in insights:
             # generate hypothesis with insights
             output = query_ai({
                 "inputs": "User Inputs: " + str(history) + "\nCurrent Input: " + insight + "\nGenerate an answer for why this is the case in the form of a hypothesis. Make sure to reference the current input in the hypothesis." + "\nAnswer:",
