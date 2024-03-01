@@ -623,6 +623,7 @@ class hypothesis:
         insights = request.json.get('insights')
         context = request.json.get('context')
         data = []
+        insights_used = []
 
         if isinstance(insights, dict):
             insights = [value for list_value in insights.values() for value in list_value]
@@ -654,9 +655,9 @@ class hypothesis:
                 "inputs": "User Inputs: " + str(history) + "\nCurrent Input: " + context + "\nGenerate an answer for why this is the case in the form of a hypothesis. Make sure to reference the current input in the hypothesis." + "\nAnswer:",
                 "parameters": {
                     "return_full_text": False,
-                    "max_time": 2.0,
-                    "temperature": 0.5,
-                    "repetition_penalty": 1.03
+                    "repetition_penalty": 1.5,
+                    "temperature": 0.6,
+                    "max_time": 1.5
                     }
             })
             # insert context to history
@@ -666,6 +667,7 @@ class hypothesis:
             try:
                 # add output to dictionary
                 data.append(output[0]['generated_text'])
+                insights_used.append(context)
             except KeyError as e:
                 pass
         
@@ -676,20 +678,22 @@ class hypothesis:
                 "inputs": "User Inputs: " + str(history) + "\nCurrent Input: " + insight + "\nGenerate an answer for why this is the case in the form of a hypothesis. Make sure to reference the current input in the hypothesis." + "\nAnswer:",
                 "parameters": {
                     "return_full_text": False,
-                    "max_time": 2.0,
-                    "temperature": 0.5,
-                    "repetition_penalty": 1.03
+                    "repetition_penalty": 1.5,
+                    "temperature": 0.6,
+                    "max_time": 1.5
                     }
             })
             history.insert(0, insight)
-            if len(history) > 100:
+            if len(history) > 10:
                 history.pop()
             try:
                 data.append(output[0]['generated_text'])
+                insights_used.append(insight)
             except KeyError as e:
                 pass
         
         # create/update history variable
         self.create_history (column_name, dataset_name, user_id, history)
         
-        return jsonify({'data' : data})
+        return jsonify({'data' : data,
+                        'insights_used': insights_used})
