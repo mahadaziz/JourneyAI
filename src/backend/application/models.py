@@ -3,7 +3,7 @@ from application import db
 import bcrypt, datetime, uuid, json, random
 import pandas as pd
 import requests
-from scipy.stats import zscore, skew, stats
+from scipy.stats import zscore, skew, stats, linregress
 from sklearn.cluster import KMeans
 import numpy as np
 import random
@@ -114,6 +114,121 @@ class insights:
                         insights.append(f'{most_common} is the {col} with the most outliers in {column_name} at {percentage_in_outliers:.2f}% of the outliers.')
         return insights
 
+    # Function to get graphable insights
+    def graph_insights(self, column_name, prev_insights, insight_count):
+        import random
+        insights = {}
+        insight_count = min(insight_count, len(self.NUMERICAL_COLUMNS)*3)
+        while len(insights) < insight_count:
+            
+                
+            
+            if column_name in self.DATE_LIKE_COLUMNS:
+                for col in self.NUMERICAL_COLUMNS:
+                    if random.randint(1,2) == 1 and len(insights) < insight_count :
+                        cursor = (db.cars.find({col : {'$gt': 0}},{'_id': 0, column_name: 1, col: 1}))
+                        df = pd.DataFrame(iter(cursor))
+                        df.sort_values(by=column_name, inplace=True)
+                        if random.randint(1,2) == 1 and len(insights) < insight_count and f'total "{col}"' not in ''.join(insights.keys()) :
+                            
+                            asum = df.groupby(column_name)[col].sum().reset_index()
+                            slope, intercept, r_value, p_value, std_err = linregress(asum[column_name], asum[col])                
+                            if np.abs(slope) < 0.05:  
+                                insights[f'The total "{col}" is relatively constant across most {column_name}'] = ['line',column_name ,f'Total {col}', asum.to_dict('records')]
+                            elif slope >= 0.05:
+                                opposite_trend = []
+                                for i in range(1, len(asum)):
+                                    adate, value = asum.loc[i, [column_name, col]]
+                                    prev_adate, prev_value = asum.loc[i-1, [column_name, col]]
+                                    if value < prev_value:
+                                        opposite_trend += [adate]
+                                if len(opposite_trend) > len(asum)/3:
+                                    insights[f'There is a notable level of variability in total "{col}". This variability is characterized by alternating increases and decreases in value from one {column_name} to another'] = ['line',column_name ,f'Total {col}', asum.to_dict('records')]
+                                elif len(opposite_trend) == 0:
+                                    insights[f'In general, the overarching trend in total "{col}" indicates a positive growth trajectory, with the majority of {column_name} showcasing an upward movement in values'] = ['line',column_name ,f'Total {col}', asum.to_dict('records')]
+                                else:
+                                    insights[f'In general, the overarching trend in total "{col}" indicates a positive growth trajectory, with the majority of {column_name} showcasing an upward movement in values. However, this upward trend is punctuated by notable exceptions in specific {column_name}, where we observe unexpected dips. Those {column_name} are {", ".join(map(str, opposite_trend))}'] = ['line',column_name ,f'Total {col}', asum.to_dict('records')]
+                            else:
+                                opposite_trend = []
+                                for i in range(1, len(asum)):
+                                    adate, value = asum.loc[i, [column_name, col]]
+                                    prev_adate, prev_value = asum.loc[i-1, [column_name, col]]
+                                    if value > prev_value:
+                                        opposite_trend += [adate]
+                                if len(opposite_trend) > len(asum)/3:
+                                    insights[f'There is a notable level of variability in total "{col}". This variability is characterized by alternating increases and decreases in value from one {column_name} to another'] = ['line',column_name ,f'Total {col}', asum.to_dict('records')]
+                                elif len(opposite_trend) == 0:
+                                    insights[f'In general, the overarching trend in total "{col}" indicates a negative growth trajectory, with the majority of {column_name} showcasing a downward movement in values'] = ['line',column_name ,f'Total {col}', asum.to_dict('records')]
+                                else:
+                                    insights[f'In general, the overarching trend in total "{col}" indicates a negative growth trajectory, with the majority of {column_name} showcasing an downward movement in values. However, this downward trend is punctuated by notable exceptions in specific {column_name}, where we observe unexpected increase in value. Those {column_name} are {", ".join(map(str, opposite_trend))}'] = ['line',column_name ,f'Total {col}', asum.to_dict('records')]
+                        
+                        if random.randint(1,2) == 1 and len(insights) < insight_count and f'average "{col}"' not in ''.join(insights.keys()) :
+                            aavg = df.groupby(column_name)[col].mean().reset_index()
+                            slope, intercept, r_value, p_value, std_err = linregress(aavg[column_name], aavg[col])                
+                            if np.abs(slope) < 0.05:  
+                                insights[f'The average "{col}" is relatively constant across most {column_name}'] = ['line',column_name ,f'Average {col}', aavg.to_dict('records')]
+                            elif slope >= 0.05:
+                                opposite_trend = []
+                                for i in range(1, len(aavg)):
+                                    adate, value = aavg.loc[i, [column_name, col]]
+                                    prev_adate, prev_value = aavg.loc[i-1, [column_name, col]]
+                                    if value < prev_value:
+                                        opposite_trend += [adate]
+                                if len(opposite_trend) > len(aavg)/3:
+                                    insights[f'There is a notable level of variability in average "{col}". This variability is characterized by alternating increases and decreases in value from one {column_name} to another'] = ['line',column_name ,f'Average {col}', aavg.to_dict('records')]
+                                elif len(opposite_trend) == 0:
+                                    insights[f'In general, the overarching trend in average "{col}" indicates a positive growth trajectory, with the majority of {column_name} showcasing an upward movement in values'] = ['line',column_name ,f'Average {col}', aavg.to_dict('records')]
+                                else:
+                                    insights[f'In general, the overarching trend in average "{col}" indicates a positive growth trajectory, with the majority of {column_name} showcasing an upward movement in values. However, this upward trend is punctuated by notable exceptions in specific {column_name}, where we observe unexpected dips. Those {column_name} are {", ".join(map(str, opposite_trend))}'] = ['line',column_name ,f'Average {col}', aavg.to_dict('records')]
+                            else:
+                                opposite_trend = []
+                                for i in range(1, len(aavg)):
+                                    adate, value = aavg.loc[i, [column_name, col]]
+                                    prev_adate, prev_value = aavg.loc[i-1, [column_name, col]]
+                                    if value > prev_value:
+                                        opposite_trend += [adate]
+                                if len(opposite_trend) > len(aavg)/3:
+                                    insights[f'There is a notable level of variability in average "{col}". This variability is characterized by alternating increases and decreases in value from one {column_name} to another'] = ['line',column_name ,f'Average {col}', aavg.to_dict('records')]
+                                elif len(opposite_trend) == 0:
+                                    insights[f'In general, the overarching trend in average "{col}" indicates a negative growth trajectory, with the majority of {column_name} showcasing a downward movement in values'] = ['line',column_name ,f'Average {col}', aavg.to_dict('records')]
+                                else:
+                                    insights[f'In general, the overarching trend in average "{col}" indicates a negative growth trajectory, with the majority of {column_name} showcasing an downward movement in values. However, this downward trend is punctuated by notable exceptions in specific {column_name}, where we observe unexpected increase in value. Those {column_name} are {", ".join(map(str, opposite_trend))}'] = ['line',column_name ,f'Average {col}', aavg.to_dict('records')]
+                            
+                        if random.randint(1,2) == 1 and len(insights) < insight_count and f'frequency of recorded entries for "{col}"' not in ''.join(insights.keys()) :
+                            asize = df.groupby(column_name)[col].size().reset_index()
+                            slope, intercept, r_value, p_value, std_err = linregress(asize[column_name], asize[col])                
+                            if np.abs(slope) < 0.05:  
+                                insights[f'The frequency of recorded entries for "{col}" is relatively constant across most {column_name}'] = ['line',column_name ,'Frequency of recorded entries for {col}', asize.to_dict('records')]
+                            elif slope >= 0.05:
+                                opposite_trend = []
+                                for i in range(1, len(asize)):
+                                    adate, value = asize.loc[i, [column_name, col]]
+                                    prev_adate, prev_value = asize.loc[i-1, [column_name, col]]
+                                    if value < prev_value:
+                                        opposite_trend += [adate]
+                                if len(opposite_trend) > len(asize)/3:
+                                    insights[f'There is a notable level of variability in the frequency of recorded entries for "{col}" greater than zero. This variability is characterized by alternating increases and decreases in value from one {column_name} to another'] = ['line',column_name ,'Frequency of recorded entries for {col}', asize.to_dict('records')]
+                                elif len(opposite_trend) == 0:
+                                    insights[f'In general, the overarching trend in frequency of recorded entries for "{col}" greater than zero indicates a positive growth trajectory, with the majority of {column_name} showcasing an upward movement in values'] = ['line',column_name ,'Frequency of recorded entries for {col}', asize.to_dict('records')]
+                                else:
+                                    insights[f'In general, the overarching trend in the frequency of recorded entries for "{col}" greater than zero indicates a positive growth trajectory, with the majority of {column_name} showcasing an upward movement in values. However, this upward trend is punctuated by notable exceptions in specific  {column_name} , where we observe unexpected dips. Those {column_name} are {", ".join(map(str, opposite_trend))}'] = ['line',column_name ,'Frequency of recorded entries for {col}', asize.to_dict('records')]
+                            else:
+                                opposite_trend = []
+                                for i in range(1, len(asize)):
+                                    adate, value = asize.loc[i, [column_name, col]]
+                                    prev_adate, prev_value = asize.loc[i-1, [column_name, col]]
+                                    if value > prev_value:
+                                        opposite_trend += [adate]
+                                if len(opposite_trend) > len(asize)/3:
+                                    insights[f'There is a notable level of variability in the frequency of recorded entries for "{col}" greater than zero. This variability is characterized by alternating increases and decreases in value from one {column_name} to another'] = ['line',column_name ,'Frequency of recorded entries for {col}', asize.to_dict('records')]
+                                elif len(opposite_trend) == 0:
+                                    insights[f'In general, the overarching trend in the frequency of recorded entries for "{col}" greater than zero indicates a negative growth trajectory, with the majority of {column_name} showcasing a downward movement in values'] = ['line',column_name ,'Frequency of recorded entries for {col}', asize.to_dict('records')]
+                                else:
+                                    insights[f'In general, the overarching trend in the frequency of recorded entries for "{col}" greater than zero indicates a negative growth trajectory, with the majority of {column_name} showcasing an downward movement in values. However, this downward trend is punctuated by notable exceptions in specific {column_name}, where we observe unexpected increase in value. Those {column_name} are {", ".join(map(str, opposite_trend))}'] = ['line',column_name ,'Frequency of recorded entries for {col}', asize.to_dict('records')]
+        return insights                    
+        
+        
+    
     # Function to get trends templates
 
     def get_trends(self, column_name):
@@ -244,7 +359,6 @@ class insights:
 
             except:
                 pass
-        print(categorical_columns, numerical_columns)        
 
         insights = []
         if column_name in numerical_columns:
@@ -544,7 +658,8 @@ class insights:
              'distribution' : self.get_distributions(column_name),
              'basic_stats' : self.get_basic_stats(column_name),
              'clusters' : self.get_clusters(column_name),
-             'rank' : self.get_rank(column_name)
+             'rank' : self.get_rank(column_name),
+             'graphs' : self.graph_insights(column_name,prev_insights,insight_count)
                                         }        
 
         
@@ -563,7 +678,6 @@ class insights:
                 if new_insights_count >= insight_count:
                     prev_insights.extend(current_insights)
                 if new_insights_count < insight_count:
-                    print (current_insights)
                     if prev_insights != []:
                         current_insights.extend(random.sample([i for i in prev_insights if i in insights[insight]], insight_count - len(current_insights)))
                         prev_insights = [v for v in prev_insights if v not in insights[insight]]
@@ -627,7 +741,6 @@ class hypothesis:
 
         if isinstance(insights, dict):
             insights = [value for list_value in insights.values() for value in list_value]
-            print(insights)
 
         # select any two random insights
         if len(insights) >= 2:
