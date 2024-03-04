@@ -307,17 +307,21 @@ class insights:
     def get_basic_stats(self, column_name):
         cursor = db['cars'].find()
         df = pd.DataFrame(iter(cursor))
-        numerical_columns = df.select_dtypes(include=['int64', 'float64']).columns
-        categorical_columns = df.select_dtypes(include=['object', 'category', 'datetime64']).columns
-        date_columns = df.select_dtypes(include=['datetime64']).columns
+        numerical_columns = df.select_dtypes(include=['int64', 'float64']).columns.tolist()
+        categorical_columns = df.select_dtypes(include=['object', 'category', 'datetime64']).columns.tolist()
+        categorical_columns = [ name for name in  categorical_columns if name != '_id' ]
+        numerical_columns = [ name for name in  numerical_columns if name != '_id' ]
+        # date_columns = df.select_dtypes(include=['datetime64']).columns
         units = {}
-        insights = []
         for column in numerical_columns:
         ## TODO: fix the logic to change dates that are misflagged as ints or objects to datetime (include years, months, days,...) 
-            # if df[column].dtype == 'int64' and 1400 <= df[column].min() <= df[column].max() <= 2100 and 'year' in column.lower():
-            #     numerical_columns = numerical_columns[numerical_columns != column]
-            #     date_columns.append(pd.Index([column]))
-            #     pass
+            if df[column].dtype == 'int64' and 1400 <= df[column].min() <= df[column].max() <= 2100 and 'year' in column.lower():
+                numerical_columns = [name for name in numerical_columns if name != column]
+                categorical_columns.append(column)
+                df[column] = df[column].astype(int)
+               
+                pass
+        ## The above should be commented out and date_columns should be created (I uncommented it for now because it will remove some bogus results)
             try:
                 tempUnits = column.split('(')[-1]
                 if tempUnits[-1] == ')':
@@ -325,46 +329,91 @@ class insights:
 
             except:
                 pass
-                
+        print(categorical_columns, numerical_columns)        
+
+        insights = []
         if column_name in numerical_columns:
-            stats = df.describe()[column_name]
-            
-            col_unit = ""
-            for i in range(len(column_name)):
-                if column_name[i] == "(":
-                    col_unit = column_name[i:]
-            # if column_name in units.keys():
-            insights.append(f'The mean of {column_name} is equal to {stats["mean"]} {col_unit}')
-            insights.append(f'The standard deviation of {column_name} is equal to {stats["std"]} {col_unit}')
-            insights.append(f'The minimum of {column_name} is equal to {stats["min"]} {col_unit}')
-            insights.append(f'The {column_name} at the 25th percentile is recorded as {stats["25%"]} {col_unit}')
-            insights.append(f'The {column_name} at the 50th percentile is recorded as {stats["50%"]} {col_unit}')
-            insights.append(f'The {column_name} at the 75th percentile is recorded as {stats["75%"]} {col_unit}')
-            insights.append(f'The maximum of {column_name} is equal to {stats["max"]} {col_unit}')
-            insights.append(f'The total {column_name} in this dataset is equal to {df[column_name].sum()} {col_unit}')
+            stats = df.describe()[column_name].round(2)    
+            if column_name in units.keys():
+                insights += ['The mean of ' + column_name + ' is equal to ' + str(stats['mean']) + ' ' + units[column_name]]
+                insights += ['The standard deviation of ' + column_name + ' is equal to ' + str(stats['std']) + ' ' + units[column_name]]
+                insights += ['The minimum of ' + column_name + ' is equal to ' + str(stats['min']) + ' ' + units[column_name]]
+                insights += ['The ' + column_name + ' at the 25th percentile is recorded as ' + str(stats['25%']) + ' ' + units[column_name]]
+                insights += ['The ' + column_name + ' at the 50th percentile is recorded as ' + str(stats['50%']) + ' ' + units[column_name]]
+                insights += ['The ' + column_name + ' at the 75th percentile is recorded as ' + str(stats['75%']) + ' ' + units[column_name]]
+                insights += ['The maximum of ' + column_name + ' is equal to ' + str(stats['max']) + ' ' + units[column_name]]
+                insights += ['The total ' + column_name + ' in this dataset, is equal to ' + str(df[column_name].sum()) + ' ' + units[column_name]]
+            else:
+                insights += ['The mean of ' + column_name + ' is equal to ' + str(stats['mean'])]
+                insights += ['The standard deviation of ' + column_name + ' is equal to ' + str(stats['std'])]
+                insights += ['The minimum of ' + column_name + ' is equal to ' + str(stats['min'])]
+                insights += ['The ' + column_name + ' at the 25th percentile is recorded as ' + str(stats['25%'])]
+                insights += ['The ' + column_name + ' at the 50th percentile is recorded as ' + str(stats['50%'])]
+                insights += ['The ' + column_name + ' at the 75th percentile is recorded as ' + str(stats['75%'])]
+                insights += ['The maximum of ' + column_name + ' is equal to ' + str(stats['max'])]
+                insights += ['The total ' + column_name + ' in this dataset, is equal to ' + str(df[column_name].sum())]
+
         if column_name in categorical_columns:
-            if column_name not in self.DATE_LIKE_COLUMNS:
-                for numerical_column in numerical_columns:
-                    col_unit = ""
-                    if column_name in numerical_columns:
-                        for i in range(len(column_name)):
-                            if column_name[i] == "(":
-                                col_unit = column_name[i:]
-                    insights.append(f'The highest value of {numerical_column} happens when the {column_name} is {df.loc[df[numerical_column].idxmax()][column_name]}, specifically {df.loc[df[numerical_column].idxmax()][numerical_column]}')
-                    insights.append(f'The lowest value of {numerical_column} happens when the {column_name} is {df.loc[df[numerical_column].idxmin()][column_name]}, specifically {df.loc[df[numerical_column].idxmin()][numerical_column]}')
+            for numerical_column in numerical_columns:
+                # avg = df[numerical_column].mean()
+                if numerical_column in units.keys():
+                    category = df.loc[df[numerical_column].idxmax()][column_name]
+                    insights += [f'The insident with maximum {numerical_column} happens when the {column_name} is {int(category) if isinstance(category, float) else category}, in this case the {numerical_column} is equal to {df.loc[df[numerical_column].idxmax()][numerical_column]} {units[numerical_column]}']
+                    category = df.loc[df[numerical_column].idxmin()][column_name]
+                    insights += [f'The insident with minimum {numerical_column} happens when the {column_name} is {int(category) if isinstance(category, float) else category}, in this case the {numerical_column} is equal to {df.loc[df[numerical_column].idxmin()][numerical_column]} {units[numerical_column]}']
 
                     asum = df.groupby(column_name)[numerical_column].sum().reset_index()
-                    insights.append(f'The {column_name} with the most {numerical_column} is {asum.loc[asum[numerical_column].idxmax()][column_name]}, at {asum.loc[asum[numerical_column].idxmax()][numerical_column]}')
-                    insights.append(f'The {column_name} with the least {numerical_column} is {asum.loc[asum[numerical_column].idxmin()][column_name]}, at {asum.loc[asum[numerical_column].idxmin()][numerical_column]}')
+                    
+                    category = asum.loc[asum[numerical_column].idxmax()][column_name]
+                    insights += [f'The {column_name} with the most {numerical_column} is {int(category) if isinstance(category, float) else category}, the sum of {numerical_column} is {asum.loc[asum[numerical_column].idxmax()][numerical_column]} {units[numerical_column]}']
+                    
+                    category = asum.loc[asum[numerical_column].idxmin()][column_name]
+                    insights += [f'The {column_name} with the least {numerical_column} is {int(category) if isinstance(category, float) else category}, the sum of {numerical_column} is {asum.loc[asum[numerical_column].idxmin()][numerical_column]} {units[numerical_column]}']
 
                     amean = df.groupby(column_name)[numerical_column].mean().reset_index()
-                    insights.append(f'The {column_name} with the highest average {numerical_column} is {amean.loc[amean[numerical_column].idxmax()][column_name]}, at {amean.loc[amean[numerical_column].idxmax()][numerical_column]} {col_unit}')
-                    insights.append(f'The {column_name} with the lowest average {numerical_column} is {amean.loc[amean[numerical_column].idxmin()][column_name]}, at {amean.loc[amean[numerical_column].idxmin()][numerical_column]}')
+                    
+                    category = amean.loc[amean[numerical_column].idxmax()][column_name]
+                    insights += [f'The {column_name} with the highest average {numerical_column} is {int(category) if isinstance(category, float) else category}, the highest average is {amean.loc[amean[numerical_column].idxmax()][numerical_column]:.2f} {units[numerical_column]}']
+
+                    category = amean.loc[amean[numerical_column].idxmin()][column_name]
+                    insights += [f'The {column_name} with the lowest average {numerical_column} is {int(category) if isinstance(category, float) else category}, the lowest average is {amean.loc[amean[numerical_column].idxmin()][numerical_column]} {units[numerical_column]}']
 
                     std = df.groupby(column_name)[numerical_column].std().reset_index()
-                    insights.append(f'The {column_name} with the highest standard deviation in {numerical_column} is {std.loc[std[numerical_column].idxmax()][column_name]}, at {std.loc[std[numerical_column].idxmax()][numerical_column]}')
-                    insights.append(f'The {column_name} with the lowest standard deviation in {numerical_column} is {std.loc[std[numerical_column].idxmin()][column_name]}, at {std.loc[std[numerical_column].idxmin()][numerical_column]}')
-        return insights 
+                    category = std.loc[std[numerical_column].idxmax()][column_name]
+                    insights += [f'The {column_name} with the highest standard deviation in {numerical_column} is {int(category) if isinstance(category, float) else category}, the standard deviation is {std.loc[std[numerical_column].idxmax()][numerical_column]:.2f} {units[numerical_column]}']
+
+                    category = std.loc[std[numerical_column].idxmin()][column_name]
+                    insights += [f'The {column_name} with the lowest standard deviation in {numerical_column} is {int(category) if isinstance(category, float) else category}, the standard deviation is {std.loc[std[numerical_column].idxmin()][numerical_column]:.2f} {units[numerical_column]}']
+                else:
+                    category = df.loc[df[numerical_column].idxmax()][column_name]
+                    insights += [f'The insident with maximum {numerical_column} happens when the {column_name} is {int(category) if isinstance(category, float) else category}, in this case the {numerical_column} is equal to {df.loc[df[numerical_column].idxmax()][numerical_column]}']
+
+                    category = df.loc[df[numerical_column].idxmin()][column_name]
+                    insights += [f'The insident with minimum {numerical_column} happens when the {column_name} is {int(category) if isinstance(category, float) else category}, in this case the {numerical_column} is equal to {df.loc[df[numerical_column].idxmin()][numerical_column]}']
+
+                    asum = df.groupby(column_name)[numerical_column].sum().reset_index()
+                    
+                    category =  asum.loc[asum[numerical_column].idxmax()][column_name]                   
+                    insights += [f'The {column_name} with the most {numerical_column} is {int(category) if isinstance(category, float) else category}, the sum of {numerical_column} is {asum.loc[asum[numerical_column].idxmax()][numerical_column]}']
+
+                    category = asum.loc[asum[numerical_column].idxmin()][column_name]
+                    insights += [f'The {column_name} with the least {numerical_column} is {int(category) if isinstance(category, float) else category}, the sum of {numerical_column} is {asum.loc[asum[numerical_column].idxmin()][numerical_column]}']
+
+                    amean = df.groupby(column_name)[numerical_column].mean().reset_index()
+                    category = amean.loc[amean[numerical_column].idxmax()][column_name]
+                    insights += [f'The {column_name} with the highest average {numerical_column} is {int(category) if isinstance(category, float) else category}, the highest average is {amean.loc[amean[numerical_column].idxmax()][numerical_column]:.2f}']
+                    category = amean.loc[amean[numerical_column].idxmin()][column_name]
+                    insights += [f'The {column_name} with the lowest average {numerical_column} is {int(category) if isinstance(category, float) else category}, the lowest average is {amean.loc[amean[numerical_column].idxmin()][numerical_column]}']
+
+                    std = df.groupby(column_name)[numerical_column].std().reset_index()
+                    category = std.loc[std[numerical_column].idxmax()][column_name]
+                    insights += [f'The {column_name} with the highest standard deviation in {numerical_column} is {int(category) if isinstance(category, float) else category}, the standard deviation is {std.loc[std[numerical_column].idxmax()][numerical_column]:.2f}']
+
+                    category = std.loc[std[numerical_column].idxmin()][column_name]
+                    insights += [f'The {column_name} with the lowest standard deviation in {numerical_column} is {int(category) if isinstance(category, float) else category}, the standard deviation is {std.loc[std[numerical_column].idxmin()][numerical_column]:.2f}']
+
+        return insights
+ 
 
     # [
     #         f'The mean value of {column_name} is {round(random.uniform(30, 40),2)}. This indicates the central tendency of the data.',
