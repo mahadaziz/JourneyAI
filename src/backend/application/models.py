@@ -708,7 +708,7 @@ class insights:
                         current_insights.extend(random.sample([i for i in prev_insights if i in insights[insight]], insight_count - len(current_insights)))
                         prev_insights = [v for v in prev_insights if v not in insights[insight]]
                 output[insight] = current_insights
-                
+        output =  {k: v for k, v in output.items() if v != [] and v != {}}      
         return jsonify({'insights' : output, 'prev_insights' : prev_insights, 'count' : new_insights_count})
             
         
