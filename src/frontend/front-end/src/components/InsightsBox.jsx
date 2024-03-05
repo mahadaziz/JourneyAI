@@ -1,7 +1,11 @@
+/* eslint-disable max-len */
+
 'use client';
 
 import React, { useState, useContext, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import { ChartBarIcon } from '@heroicons/react/24/solid';
+import PopupModal from './PopupModal';
 import { SelectedColumnContext } from '../context/SelectedColumnContext';
 import { HypothesisDataContext } from '../context/HypothesisDataContext';
 import { InsightsDataContext } from '../context/InsightsDataContext';
@@ -18,7 +22,26 @@ const buttonVariants = {
   normal: { scale: 1, backgroundColor: '#FFFFFF' },
 };
 
-function InsightButton({ header }) {
+function InsightButton({ option, header, array }) {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalData, setModalData] = useState(null);
+
+  const openModal = () => {
+    setModalData(array);
+    setIsModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+  };
+
+  // Effect to handle cleanup or immediate actions upon modal closing
+  useEffect(() => {
+    if (!isModalOpen) {
+      // Clear modal data immediately or after a delay if needed
+      setModalData(null);
+    }
+  }, [isModalOpen]);
   return (
     <motion.div
       className="px-4 py-1"
@@ -27,11 +50,27 @@ function InsightButton({ header }) {
       variants={variants} // Animation variants
       transition={{ duration: 0.5 }}
     >
-      <button type="button" className="flex flex-col p-3 items-center w-full bg-white border border-gray-200 rounded-lg shadow hover:bg-gray-100 dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700">
-        <h5 className="text-lg text-left tracking-tight text-gray-900 dark:text-white">
-          {header}
-        </h5>
-        <p className="mb-3 font-normal text-gray-700 dark:text-gray-400" />
+      <button type="button" className="relative flex-col p-3 items-center w-full bg-white border border-gray-200 rounded-lg shadow hover:bg-gray-100 dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700">
+        <div className="flex flex-col items-center w-full">
+          <h5 className="text-lg text-left tracking-tight text-gray-900 dark:text-white">
+            {header}
+          </h5>
+          <p className="mb-3 font-normal text-gray-700 dark:text-gray-400" />
+        </div>
+        {option === 'graphs' && (
+          <div className="absolute bottom-0 right-0 p-6">
+            <ChartBarIcon
+              onClick={openModal}
+              className="h-6 w-6 cursor-pointer text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+              aria-label="Open modal"
+              data-tooltip-id="my-tooltip"
+              data-tooltip-content="View Graph"
+              data-tooltip-place="left"
+            />
+          </div>
+        )}
+        {isModalOpen && <PopupModal isModalOpen={isModalOpen} closeModal={closeModal} array={modalData} />}
+
       </button>
     </motion.div>
   );
@@ -46,6 +85,7 @@ function InsightsBox({ userId, sessionId }) {
   const [isLoading, setIsLoading] = useState(false);
   const [refresh, setRefresh] = useState(false);
   const [selectedOption, setSelectedOption] = useState(insightsData[0]);
+  const [graphData, setGraphData] = useState([]);
   const [options, setOptions] = useState([]);
   const [selectedData, setSelectedData] = useState([]);
   const [isOpen, setIsOpen] = useState(false);
@@ -74,7 +114,6 @@ function InsightsBox({ userId, sessionId }) {
         if (response.ok) {
           setOptions(Object.keys(data.insights));
           setIsLoading(false); // Stop loading after API call is complete
-          // setOptions(data.insights.keys);
           const previousData = data.prev_insights;
           updateInsightsData(data.insights);
           setPreviousInsights(previousData);
@@ -104,6 +143,17 @@ function InsightsBox({ userId, sessionId }) {
   }, [selectedOption, insightsData]);
 
   useEffect(() => {
+    console.log('This was called');
+    if (selectedOption === 'graphs' && insightsData[selectedOption]) {
+      const graphData = Object.entries(insightsData[selectedOption]).map(([description, array]) => ({
+        description,
+        array,
+      }));
+      setGraphData(graphData);
+    }
+  }, [selectedOption, insightsData]);
+
+  useEffect(() => {
     if (selectedColumn && insightsData) {
       setOptions(Object.keys(insightsData));
     }
@@ -120,7 +170,6 @@ function InsightsBox({ userId, sessionId }) {
     setRefresh((prev) => !prev); // Flip the state to trigger re-fetch
   };
 
-  // const getKey = (index) => `${selectedColumn}-${activeTab}-${index}`;
   return (
     <div className="flex flex-col px-6 w-full">
       <div className="flex justify-between items-center bg-neutral-900 border border-gray-200 rounded-lg shadow dark:border-gray-700 dark:bg-[#030712]">
@@ -192,13 +241,21 @@ function InsightsBox({ userId, sessionId }) {
           </div>
         ) : (
           <div>
-            {selectedData && selectedData.length > 0 ? (
+            {(selectedData || graphData) && (selectedData?.length > 0 || graphData?.length > 0) ? (
               <div className={hasHypothesisData ? 'insightScroll' : 'insightScrollFull insightScrollWheel'}>
-                {selectedData.map((header, index) => (
-                  <div className="insightButton" key={index}>
-                    <InsightButton header={header} />
-                  </div>
-                ))}
+                {selectedOption === 'graphs' ? (
+                  graphData.map((header, index) => (
+                    <div className="insightButton" key={index}>
+                      <InsightButton option={selectedOption} header={header.description} array={header.array} />
+                    </div>
+                  ))
+                ) : (
+                  selectedData.map((header, index) => (
+                    <div className="insightButton" key={index}>
+                      <InsightButton header={header} />
+                    </div>
+                  ))
+                )}
               </div>
             ) : (
               <div className="text-center p-4 font-medium">
