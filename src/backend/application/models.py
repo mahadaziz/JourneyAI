@@ -810,16 +810,10 @@ class hypothesis:
         dataset_name = request.json.get('dataset_name')
         user_id = request.json.get('user_id')
         insights = request.json.get('insights')
+        selected_insights = request.json.get('selected_insights')
         context = request.json.get('context')
         data = []
         insights_used = []
-
-        if isinstance(insights, dict):
-            insights = [value for list_value in insights.values() for value in list_value]
-
-        # select any two random insights
-        if len(insights) >= 2:
-            insights = random.sample(insights, 2)
         
         # HuggingFace credentials
         API_URL = "https://api-inference.huggingface.co/models/tiiuae/falcon-7b-instruct"
@@ -859,26 +853,54 @@ class hypothesis:
             except KeyError as e:
                 pass
         
-        # look at first 2 insights
-        for insight in insights:
-            # generate hypothesis with insights
-            output = query_ai({
-                "inputs": "User Inputs: " + str(history) + "\nCurrent Input: " + insight + "\nGenerate an answer for why this is the case in the form of a hypothesis. Make sure to reference the current input in the hypothesis." + "\nAnswer:",
-                "parameters": {
-                    "return_full_text": False,
-                    "repetition_penalty": 1.5,
-                    "temperature": 0.6,
-                    "max_time": 1.5
-                    }
-            })
-            history.insert(0, insight)
-            if len(history) > 10:
-                history.pop()
-            try:
-                data.append(output[0]['generated_text'])
-                insights_used.append(insight)
-            except KeyError as e:
-                pass
+        # if user selected insights
+        if selected_insights:
+            for insight in selected_insights:
+                # generate hypothesis with selected insights
+                output = query_ai({
+                    "inputs": "User Inputs: " + str(history) + "\nCurrent Input: " + insight + "\nGenerate an answer for why this is the case in the form of a hypothesis. Make sure to reference the current input in the hypothesis." + "\nAnswer:",
+                    "parameters": {
+                        "return_full_text": False,
+                        "repetition_penalty": 1.5,
+                        "temperature": 0.6,
+                        "max_time": 1.5
+                        }
+                })
+                history.insert(0, insight)
+                if len(history) > 10:
+                    history.pop()
+                try:
+                    data.append(output[0]['generated_text'])
+                    insights_used.append(insight)
+                except KeyError as e:
+                    pass
+        else:
+            if isinstance(insights, dict):
+                insights = [value for list_value in insights.values() for value in list_value]
+
+            # select any two random insights
+            if len(insights) >= 2:
+                insights = random.sample(insights, 2)            
+
+            for insight in insights:
+                # generate hypothesis with insights
+                output = query_ai({
+                    "inputs": "User Inputs: " + str(history) + "\nCurrent Input: " + insight + "\nGenerate an answer for why this is the case in the form of a hypothesis. Make sure to reference the current input in the hypothesis." + "\nAnswer:",
+                    "parameters": {
+                        "return_full_text": False,
+                        "repetition_penalty": 1.5,
+                        "temperature": 0.6,
+                        "max_time": 1.5
+                        }
+                })
+                history.insert(0, insight)
+                if len(history) > 10:
+                    history.pop()
+                try:
+                    data.append(output[0]['generated_text'])
+                    insights_used.append(insight)
+                except KeyError as e:
+                    pass
         
         # create/update history variable
         self.create_history (column_name, dataset_name, user_id, history)
