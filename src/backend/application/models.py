@@ -850,6 +850,15 @@ class hypothesis:
                 # add output to dictionary
                 data.append(output[0]['generated_text'])
                 insights_used.append(context)
+                hypoSummary = {
+                    '_id' : str(uuid.uuid4()),
+                    'hypothesis' : output[0]['generated_text'],
+                    'context_used' : context,
+                    'insight_used' : None,
+                    'Thumbs_Up' : False,
+                    'Thumbs_Down': False
+                }
+                db['Hypothesis_logs'].insert_one(hypoSummary)
             except KeyError as e:
                 pass
         
@@ -872,6 +881,15 @@ class hypothesis:
                 try:
                     data.append(output[0]['generated_text'])
                     insights_used.append(insight)
+                    hypoSummary = {
+                        '_id' : str(uuid.uuid4()),
+                        'hypothesis' : output[0]['generated_text'],
+                        'context_used' : None,
+                        'insight_used' : insight,
+                        'Thumbs_Up' : False,
+                        'Thumbs_Down': False
+                    }
+                    db['Hypothesis_logs'].insert_one(hypoSummary)
                 except KeyError as e:
                     pass
         else:
@@ -899,21 +917,20 @@ class hypothesis:
                 try:
                     data.append(output[0]['generated_text'])
                     insights_used.append(insight)
+                    hypoSummary = {
+                        '_id' : str(uuid.uuid4()),
+                        'hypothesis' : output[0]['generated_text'],
+                        'context_used' : None,
+                        'insight_used' : insight,
+                        'Thumbs_Up' : False,
+                        'Thumbs_Down': False
+                    }
+                    db['Hypothesis_logs'].insert_one(hypoSummary)
                 except KeyError as e:
                     pass
         
         # create/update history variable
         self.create_history (column_name, dataset_name, user_id, history)
-        hypoSummary = {
-            '_id' : str(uuid.uuid4()),
-            'hypothesis' : 'HYPO',
-            'context_used' : 'CONTEXT',
-            'insights_used' : ['insight1', '2'],
-            'Thumbs_Up' : False,
-            'Thumbs_Down': False
-        }
-        
-        db['Hypothesis_logs'].insert_one(hypoSummary)
         
         return jsonify({'data' : data,
                         'insights_used': insights_used})
