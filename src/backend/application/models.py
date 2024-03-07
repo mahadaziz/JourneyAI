@@ -904,6 +904,18 @@ class hypothesis:
         
         # create/update history variable
         self.create_history (column_name, dataset_name, user_id, history)
+        hypoSummary = {
+            '_id' : str(uuid.uuid4()),
+            'hypothesis' : 'HYPO',
+            'context_used' : 'CONTEXT',
+            'insights_used' : ['insight1', '2'],
+            'Thumbs_Up' : False,
+            'Thumbs_Down': False
+        }
+        
+        db['Hypothesis_logs'].insert_one(hypoSummary)
         
         return jsonify({'data' : data,
                         'insights_used': insights_used})
+
+    
