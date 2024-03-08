@@ -814,7 +814,7 @@ class hypothesis:
         context = request.json.get('context')
         data = []
         insights_used = []
-        
+        hypo_id = {}
         # HuggingFace credentials
         API_URL = "https://api-inference.huggingface.co/models/tiiuae/falcon-7b-instruct"
         headers = {"Authorization": "Bearer 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"}
@@ -850,15 +850,22 @@ class hypothesis:
                 # add output to dictionary
                 data.append(output[0]['generated_text'])
                 insights_used.append(context)
+                tempid = str(uuid.uuid4())
                 hypoSummary = {
-                    '_id' : str(uuid.uuid4()),
+                    '_id' : tempid,
                     'hypothesis' : output[0]['generated_text'],
                     'context_used' : context,
                     'insight_used' : None,
                     'Thumbs_Up' : False,
-                    'Thumbs_Down': False
-                }
+                    'Thumbs_Down': False,
+                    'column_name' : column_name,
+                    'user_id' : user_id,
+                    'dataset_name' : dataset_name,
+                    'date_created' : datetime.datetime.utcnow()
+                } 
                 db['Hypothesis_logs'].insert_one(hypoSummary)
+                hypo_id[output[0]['generated_text']] = tempid
+                
             except KeyError as e:
                 pass
         
@@ -881,15 +888,21 @@ class hypothesis:
                 try:
                     data.append(output[0]['generated_text'])
                     insights_used.append(insight)
+                    tempid = str(uuid.uuid4())
                     hypoSummary = {
-                        '_id' : str(uuid.uuid4()),
+                        '_id' : tempid,
                         'hypothesis' : output[0]['generated_text'],
-                        'context_used' : None,
-                        'insight_used' : insight,
+                        'context_used' : context,
+                        'insight_used' : None,
                         'Thumbs_Up' : False,
-                        'Thumbs_Down': False
+                        'Thumbs_Down': False,
+                        'column_name' : column_name,
+                        'user_id' : user_id,
+                        'dataset_name' : dataset_name,
+                        'date_created' : datetime.datetime.utcnow()
                     }
                     db['Hypothesis_logs'].insert_one(hypoSummary)
+                    hypo_id[output[0]['generated_text']] = tempid
                 except KeyError as e:
                     pass
         else:
@@ -917,15 +930,21 @@ class hypothesis:
                 try:
                     data.append(output[0]['generated_text'])
                     insights_used.append(insight)
+                    tempid = str(uuid.uuid4())
                     hypoSummary = {
-                        '_id' : str(uuid.uuid4()),
+                        '_id' : tempid,
                         'hypothesis' : output[0]['generated_text'],
-                        'context_used' : None,
-                        'insight_used' : insight,
+                        'context_used' : context,
+                        'insight_used' : None,
                         'Thumbs_Up' : False,
-                        'Thumbs_Down': False
+                        'Thumbs_Down': False,
+                        'column_name' : column_name,
+                        'user_id' : user_id,
+                        'dataset_name' : dataset_name,
+                        'date_created' : datetime.datetime.utcnow()
                     }
                     db['Hypothesis_logs'].insert_one(hypoSummary)
+                    hypo_id[output[0]['generated_text']] = tempid
                 except KeyError as e:
                     pass
         
@@ -933,6 +952,6 @@ class hypothesis:
         self.create_history (column_name, dataset_name, user_id, history)
         
         return jsonify({'data' : data,
-                        'insights_used': insights_used})
+                        'insights_used': insights_used, 'hypothesis_ids' : hypo_id})
 
     

@@ -62,7 +62,34 @@ def signup():
 #         return 'session never existed', 400
 #####################################################################    
   
-  
+@app.route("/good_hypothesis", methods=['POST'])
+@cross_origin()
+#@login_required
+def good_hypothesis():
+    hypo_id = request.json.get('hypothesis_id')
+    modified = db['Hypothesis_logs'].update_one(
+        {'_id': hypo_id},
+        {'$set': {'Thumbs_Up': True, 'Thumbs_Down': False}}
+    )
+    if modified.modified_count:
+        return jsonify({'message': 'Thumps Up Successful'}), 200
+    else:
+        return jsonify({'message': 'Thumps Up Failed'}), 404
+
+
+@app.route("/bad_hypothesis", methods=['POST'])
+@cross_origin()
+#@login_required
+def bad_hypothesis():
+    hypo_id = request.json.get('hypothesis_id')
+    modified = db['Hypothesis_logs'].update_one(
+        {'_id': hypo_id},
+        {'$set': {'Thumbs_Up': False, 'Thumbs_Down': True}}
+    )
+    if modified.modified_count:
+        return jsonify({'message': 'Thumps Down Successful'}), 200
+    else:
+        return jsonify({'message': 'Thumps Down Failed'}), 404
  # Get list of topics   
 @app.route("/get_topics", methods=['POST'])
 @cross_origin()
