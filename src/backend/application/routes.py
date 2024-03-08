@@ -67,14 +67,28 @@ def signup():
 #@login_required
 def good_hypothesis():
     hypo_id = request.json.get('hypothesis_id')
-    modified = db['Hypothesis_logs'].update_one(
-        {'_id': hypo_id},
-        {'$set': {'Thumbs_Up': True, 'Thumbs_Down': False}}
-    )
-    if modified.modified_count:
-        return jsonify({'message': 'Thumps Up Successful'}), 200
-    else:
-        return jsonify({'message': 'Thumps Up Failed'}), 404
+    curr = db['Hypothesis_logs'].find_one({'_id': hypo_id})
+    
+    if not curr['Thumbs_Up']:
+        
+        modified = db['Hypothesis_logs'].update_one(
+            {'_id': hypo_id},
+            {'$set': {'Thumbs_Up': False, 'Thumbs_Up': True}}
+        )
+        if modified.modified_count:
+            return jsonify({'message': 'Thumps Up Successful'}), 200
+        else:
+            return jsonify({'message': 'Thumps Up Failed'}), 404
+    if curr['Thumbs_Up']:
+        
+        modified = db['Hypothesis_logs'].update_one(
+            {'_id': hypo_id},
+            {'$set': {'Thumbs_Up': False, 'Thumbs_Up': False}}
+        )
+        if modified.modified_count:
+            return jsonify({'message': 'Undoing Thumps Up Successful'}), 200
+        else:
+            return jsonify({'message': 'Undoing Thumps Up Failed'}), 404
 
 
 @app.route("/bad_hypothesis", methods=['POST'])
@@ -82,15 +96,30 @@ def good_hypothesis():
 #@login_required
 def bad_hypothesis():
     hypo_id = request.json.get('hypothesis_id')
-    modified = db['Hypothesis_logs'].update_one(
-        {'_id': hypo_id},
-        {'$set': {'Thumbs_Up': False, 'Thumbs_Down': True}}
-    )
-    if modified.modified_count:
-        return jsonify({'message': 'Thumps Down Successful'}), 200
-    else:
-        return jsonify({'message': 'Thumps Down Failed'}), 404
- # Get list of topics   
+    curr = db['Hypothesis_logs'].find_one({'_id': hypo_id})
+    
+    if not curr['Thumbs_Down']:
+        
+        modified = db['Hypothesis_logs'].update_one(
+            {'_id': hypo_id},
+            {'$set': {'Thumbs_Up': False, 'Thumbs_Down': True}}
+        )
+        if modified.modified_count:
+            return jsonify({'message': 'Thumps Down Successful'}), 200
+        else:
+            return jsonify({'message': 'Thumps Down Failed'}), 404
+    if curr['Thumbs_Down']:
+        
+        modified = db['Hypothesis_logs'].update_one(
+            {'_id': hypo_id},
+            {'$set': {'Thumbs_Up': False, 'Thumbs_Down': False}}
+        )
+        if modified.modified_count:
+            return jsonify({'message': 'Undoing Thumps Down Successful'}), 200
+        else:
+            return jsonify({'message': 'Undoing Thumps Down Failed'}), 404
+
+# Get list of topics   
 @app.route("/get_topics", methods=['POST'])
 @cross_origin()
 #@login_required
