@@ -73,7 +73,7 @@ def good_hypothesis():
         
         modified = db['Hypothesis_logs'].update_one(
             {'_id': hypo_id},
-            {'$set': {'Thumbs_Up': False, 'Thumbs_Up': True}}
+            {'$set': {'Thumbs_Up': True, 'Thumbs_Down': False}}
         )
         if modified.modified_count:
             return jsonify({'message': 'Thumps Up Successful'}), 200
@@ -83,7 +83,7 @@ def good_hypothesis():
         
         modified = db['Hypothesis_logs'].update_one(
             {'_id': hypo_id},
-            {'$set': {'Thumbs_Up': False, 'Thumbs_Up': False}}
+            {'$set': {'Thumbs_Up': False, 'Thumbs_Down': False}}
         )
         if modified.modified_count:
             return jsonify({'message': 'Undoing Thumps Up Successful'}), 200
