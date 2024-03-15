@@ -2,6 +2,7 @@
 
 import React, { useContext, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { motion } from 'framer-motion';
 import { UploadIcon, ViewIcon } from './Icons';
 import { EditorDataContext } from '../context/EditorDataContext';
 import UploadForm from './UploadForm';
@@ -54,12 +55,12 @@ function UserCard({
           role="button"
           tabIndex="0"
         >
-          <div href="#" className="w-full">
+          <div className="w-full">
             <h5 className="mb-2 text-xl font-bold tracking-tight text-gray-900 dark:text-white overflow-ellipsis overflow-hidden whitespace-nowrap">
               {title}
             </h5>
           </div>
-          <div href="#" className="w-full flex-grow font-normal truncate tracking-tight text-gray-700 dark:text-gray-400 overflow-ellipsis overflow-hidden whitespace-pre-wrap">
+          <div className="w-full flex-grow font-normal truncate tracking-tight text-gray-700 dark:text-gray-400 overflow-ellipsis overflow-hidden whitespace-pre-wrap">
             {description}
           </div>
           {isLoading ? (

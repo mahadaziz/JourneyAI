@@ -2,13 +2,16 @@
 
 'use client';
 
-import React, { useState, useContext, useEffect } from 'react';
+import React, {
+  useState, useContext, useEffect, useRef,
+} from 'react';
 import { motion } from 'framer-motion';
 import { ChartBarIcon } from '@heroicons/react/24/solid';
 import PopupModal from './PopupModal';
 import { SelectedColumnContext } from '../context/SelectedColumnContext';
 import { HypothesisDataContext } from '../context/HypothesisDataContext';
 import { InsightsDataContext } from '../context/InsightsDataContext';
+import { ThumbsUp, ThumbsDown } from './Icons';
 import '../styles/insights.css';
 
 const variants = {
@@ -23,6 +26,7 @@ const buttonVariants = {
 };
 
 function InsightButton({ option, header, array }) {
+  const { selectedInsights, updateSelectedInsights } = useContext(InsightsDataContext);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalData, setModalData] = useState(null);
 
@@ -42,6 +46,11 @@ function InsightButton({ option, header, array }) {
       setModalData(null);
     }
   }, [isModalOpen]);
+
+  const handleSelectedInsights = (newInsight) => {
+    updateSelectedInsights(newInsight);
+  };
+
   return (
     <motion.div
       className="px-4 py-1"
@@ -50,28 +59,37 @@ function InsightButton({ option, header, array }) {
       variants={variants} // Animation variants
       transition={{ duration: 0.5 }}
     >
-      <button type="button" className="relative flex-col p-3 items-center w-full bg-white border border-gray-200 rounded-lg shadow hover:bg-gray-100 dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700">
-        <div className="flex flex-col items-center w-full">
-          <h5 className="text-lg text-left tracking-tight text-gray-900 dark:text-white">
-            {header}
-          </h5>
-          <p className="mb-3 font-normal text-gray-700 dark:text-gray-400" />
-        </div>
-        {option === 'graphs' && (
-          <div className="absolute bottom-0 right-0 p-6">
-            <ChartBarIcon
-              onClick={openModal}
-              className="h-6 w-6 cursor-pointer text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
-              aria-label="Open modal"
-              data-tooltip-id="my-tooltip"
-              data-tooltip-content="View Graph"
-              data-tooltip-place="left"
-            />
+      <div className="flex items-center">
+        <button
+          onClick={(() => handleSelectedInsights(header))}
+          type="button"
+          className={`relative flex-col p-3 items-center w-full border border-gray-200 rounded-lg shadow
+          hover:bg-gray-200 dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700 
+          ${selectedInsights.includes(header) ? 'bg-violet-200 hover:bg-violet-300' : 'bg-white'
+          }`}
+        >
+          <div className="flex flex-col items-center w-full">
+            <h5 className="text-lg text-left tracking-tight text-gray-900 dark:text-white">
+              {header}
+            </h5>
+            <p className="mb-3 font-normal text-gray-700 dark:text-gray-400" />
           </div>
-        )}
-        {isModalOpen && <PopupModal isModalOpen={isModalOpen} closeModal={closeModal} array={modalData} />}
+          {option === 'graphs' && (
+            <div className="absolute bottom-0 right-0 p-6">
+              <ChartBarIcon
+                onClick={openModal}
+                className="h-6 w-6 cursor-pointer text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+                aria-label="Open modal"
+                data-tooltip-id="my-tooltip"
+                data-tooltip-content="View Graph"
+                data-tooltip-place="left"
+              />
+            </div>
+          )}
+          {isModalOpen && <PopupModal isModalOpen={isModalOpen} closeModal={closeModal} array={modalData} />}
 
-      </button>
+        </button>
+      </div>
     </motion.div>
   );
 }
@@ -89,6 +107,7 @@ function InsightsBox({ userId, sessionId }) {
   const [options, setOptions] = useState([]);
   const [selectedData, setSelectedData] = useState([]);
   const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef(null);
 
   useEffect(() => {
     if (!selectedColumn) {
@@ -133,17 +152,27 @@ function InsightsBox({ userId, sessionId }) {
   }, [selectedColumn, refresh]);
 
   useEffect(() => {
-    // Check if the selectedOption is valid and exists in insightsData
-    if (selectedOption && insightsData[selectedOption]) {
-      // Update the state with the data associated with the selected option
+    if (selectedOption === 'graphs' && insightsData[selectedOption]) {
+      const graphData = Object.entries(insightsData[selectedOption]).map(([description, array]) => ({
+        description,
+        array,
+      }));
+      setGraphData(graphData);
+    }
+    if (selectedOption && Array.isArray(insightsData[selectedOption])) {
       setSelectedData(insightsData[selectedOption]);
-    } else {
-      setSelectedData(insightsData[0]);
+    } else if (selectedOption !== 'graphs') {
+      const isKey = Object.keys(insightsData).find((key) => Array.isArray(insightsData));
+      console.log(isKey);
+      if (!isKey) {
+        setSelectedOption(Object.keys(insightsData)[0]);
+      } else {
+        setSelectedData([]);
+      }
     }
   }, [selectedOption, insightsData]);
 
   useEffect(() => {
-    console.log('This was called');
     if (selectedOption === 'graphs' && insightsData[selectedOption]) {
       const graphData = Object.entries(insightsData[selectedOption]).map(([description, array]) => ({
         description,
@@ -170,6 +199,19 @@ function InsightsBox({ userId, sessionId }) {
     setRefresh((prev) => !prev); // Flip the state to trigger re-fetch
   };
 
+  // Function to handle click outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [dropdownRef]);
+
   return (
     <div className="flex flex-col px-6 w-full">
       <div className="flex justify-between items-center bg-neutral-900 border border-gray-200 rounded-lg shadow dark:border-gray-700 dark:bg-[#030712]">
@@ -179,7 +221,7 @@ function InsightsBox({ userId, sessionId }) {
           </h5>
         </div>
         <div className="border-gray-200 dark:border-gray-700">
-          <div>
+          <div ref={dropdownRef}>
             <button
               type="button"
               onClick={toggleDropdown}
@@ -245,13 +287,13 @@ function InsightsBox({ userId, sessionId }) {
               <div className={hasHypothesisData ? 'insightScroll' : 'insightScrollFull insightScrollWheel'}>
                 {selectedOption === 'graphs' ? (
                   graphData.map((header, index) => (
-                    <div className="insightButton" key={index}>
+                    <div key={index}>
                       <InsightButton option={selectedOption} header={header.description} array={header.array} />
                     </div>
                   ))
                 ) : (
                   selectedData.map((header, index) => (
-                    <div className="insightButton" key={index}>
+                    <div key={index}>
                       <InsightButton header={header} />
                     </div>
                   ))
