@@ -7,22 +7,6 @@ from datetime import datetime, timedelta
 import pandas as pd
 from werkzeug.utils import secure_filename
 
-############################
-# def login_required(f):
-#     @wraps(f)
-#     def wrap (*args, **kwargs):
-#         try:
-#             session_id = request.json.get('session_id')
-#         except:
-#             session_id = request.form['session_id']
-            
-#         query = {'session_id': session_id}
-#         if db['logged_in'].find_one(query) is not None and session_id is not None:
-#             return f(*args, **kwargs)
-#         else:
-#             return jsonify ({"error": 'User is not logged in'}), 400
-#     return wrap
-###############################
 
 # Home Route, doesn't do much
 @app.route("/")
@@ -30,41 +14,16 @@ def home():
     return "home"
 
 
-############# Login is happening in the frontend using json tokens (NEXTAUTH) ##################
-# @app.route("/login", methods=['POST'])
-# def login():
-    
-#     document = {
-#         'session_id' : request.json.get('session_id')
-#         }
-#     db['logged_in'].insert_one(document)
-#     return "home"
-################################################################################################
-
 # Route for signing in 
 @app.route("/signup", methods=['POST'])
 @cross_origin()
 def signup():
     return User().signup()
 
-#############  Backend session are no longer used ##################
-# @app.route("/delete_session", methods=['POST'])
-# @cross_origin()
-# #@login_required
-# def delete_session():
-#     session_id = request.json.get('session_id'),
-#     query = {'session_id' : session_id }
-#     if query is not None and session_id is not None:
-#         db['logged_in'].delete_many(query)
-        
-#         return 'Session was deleted', 200
-#     else:
-#         return 'session never existed', 400
-#####################################################################    
+
   
 @app.route("/good_hypothesis", methods=['POST'])
 @cross_origin()
-#@login_required
 def good_hypothesis():
     hypo_id = request.json.get('hypothesis_id')
     curr = db['Hypothesis_logs'].find_one({'_id': hypo_id})
@@ -93,7 +52,6 @@ def good_hypothesis():
 
 @app.route("/bad_hypothesis", methods=['POST'])
 @cross_origin()
-#@login_required
 def bad_hypothesis():
     hypo_id = request.json.get('hypothesis_id')
     curr = db['Hypothesis_logs'].find_one({'_id': hypo_id})
@@ -122,7 +80,6 @@ def bad_hypothesis():
 # Get list of topics   
 @app.route("/get_topics", methods=['POST'])
 @cross_origin()
-#@login_required
 def get_topics():
     user_id = request.json.get('user_id')
     title = request.json.get('title')
@@ -142,7 +99,6 @@ def get_topics():
 # Get the column names for the cars dataset
 @app.route("/get_column_names", methods=['POST'])
 @cross_origin()
-#@login_required
 def get_column_names():
     names = list(db.cars.find_one().keys())
     # column_names = [ name.capitalize() for name in  names if name != '_id' ]
@@ -154,7 +110,6 @@ def get_column_names():
 # Get some data from the graphs dataset
 @app.route("/get_data", methods=['POST'])
 @cross_origin()
-#@login_required
 def get_data():
     column_name = request.json.get('column_name')
     if 'Fuel consumption inside cities (l/100km)'.lower() in column_name.lower():
@@ -171,7 +126,6 @@ def get_data():
 # Route to call the get_insights functions in the insights class in models.py
 @app.route("/get_insights", methods=['POST'])
 @cross_origin()
-#@login_required
 def get_insights():
     return insights().get_insights()
 
@@ -179,27 +133,13 @@ def get_insights():
 # Route to call the get_hypothesis function in the hypothesis class in models.py
 @app.route("/get_hypothesis", methods=['POST'])
 @cross_origin()
-#@login_required
 def get_hypothesis():
     return hypothesis().get_hypothesis()
 
-### Testing that the database was connected ############
-# @app.route("/<name>")
-# def name(name):
-       
-#     users_collection = db['users']
-
-#     # Insert the user data into the 'users' collection
-#     users_collection.insert_one({'name': name, 'password': '123', 'DOB' : '1969-06-09'})
-    
-
-#     return f'User {name} added to the database.'
-###########################################################   
 
 # Route to upload dataset  
 @app.route("/upload_dataset", methods = ['POST'])
 @cross_origin()
-#@login_required
 def input_dataset():
     file = request.files['file']
     df = None
@@ -251,11 +191,5 @@ def input_dataset():
     else:
         return jsonify({'message' :  'The file is undefined'}), 400
     
-    # TODO :: Generate All Insights
 
 
-########## Route for one time indexing of mongodb database ############
-# @app.route("/index_table")
-# def index_table():
-#     db['datasets'].create_index([('user_id', 1), ('title', 1)])
-#######################################################################
