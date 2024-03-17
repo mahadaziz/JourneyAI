@@ -43,7 +43,7 @@ function NavBar({ userId, sessionId }) {
   return (
     <div className="bg-neutral-900 w-screen p-3">
       <div className="flex flex-row justify-between items-center w-full">
-        <div className="flex flex-row justify-content items-center align-center border border-gray-700 ml-2 pl-2 pr-2 rounded-2xl bg-white dark:bg-neutral-900">
+        <div className="flex flex-row justify-center items-center align-center border border-gray-700 ml-2 pl-2 pr-2 rounded-2xl bg-white dark:bg-neutral-900">
           <a href="/homepage">
             <button type="button" className="p-2 rounded-lg hover:text-bgLight hover:bg-gray-200 dark:hover:bg-gray-700">
               <HomeIcon className="w-7 h-7" aria-label="Home" />
@@ -57,7 +57,7 @@ function NavBar({ userId, sessionId }) {
         </div>
 
         {/* DropDown Menu */}
-        <div className="flex justify-center lg:justify-end lg:pl-4 mr-3 w-full">
+        <div className="flex justify-center lg:justify-end lg:pl-4 mr-3 lg:ml-9 w-full">
           <OptionsMenu columns={columns} sessionId={sessionId} />
         </div>
 

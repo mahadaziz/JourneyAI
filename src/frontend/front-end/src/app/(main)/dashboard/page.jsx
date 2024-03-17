@@ -14,8 +14,8 @@ export default async function page() {
     redirect('/login');
   }
   return (
-    <div className="grid grid-rows-[auto_1fr] grid-cols-5 w-screen h-screen bg-bgGrey delayAnimation transition-colors duration-500 ease-in-out dark:bg-neutral-900">
-      <div className="col-span-5 md:col-span-5 pb-2">
+    <div className="grid grid-rows-[auto_1fr] grid-cols-6 w-screen h-screen bg-bgGrey delayAnimation transition-colors duration-500 ease-in-out dark:bg-neutral-900">
+      <div className="col-span-5 md:col-span-6 pb-2">
         <div className="flex flex-row justify-between items-center w-full">
           <NavBar userId={session.userId} sessionId={session.sessionId} />
         </div>
@@ -25,7 +25,7 @@ export default async function page() {
         <TextBox userId={session.userId} sessionId={session.sessionId} />
       </div>
 
-      <div className="hidden md:flex md:flex-col md:col-span-2 pt-4">
+      <div className="hidden md:flex md:flex-col md:col-span-3 pt-4">
         <div className="w-full overflow-y-auto">
           <HypothesisBox userId={session.userId} sessionId={session.sessionId} />
         </div>

@@ -19,7 +19,10 @@ import SaveButton from './SaveButton';
 import '../app/globals.css';
 
 function TextBox({ userId, sessionId }) {
-  const { editorText, setEditorText } = useContext(EditorDataContext);
+  const {
+    editorText, setEditorText, contextText, setContextText,
+  } = useContext(EditorDataContext);
+
   // Configure the Placeholder extension separately
   const placeholderExtension = Placeholder.configure({
     placeholder: 'Start typing your text here.',
@@ -40,13 +43,6 @@ function TextBox({ userId, sessionId }) {
     },
   });
 
-  useEffect(() => {
-    if (editor) {
-      console.log('Editor loaded');
-      editor.commands.focus('start');
-    }
-  }, [editor]); // Dependency array ensures this effect runs only when the editor is initialized
-
   // Debounce function
   const debounce = (func, delay) => {
     let timerId;
@@ -60,19 +56,23 @@ function TextBox({ userId, sessionId }) {
     };
   };
 
-  // Function to extract the last two sentences
   const extractData = () => {
     if (editor) {
       const text = editor.getHTML();
       const plainText = text.replace(/<[^>]*>?/gm, '');
       const sentences = plainText.split('.').map((s) => s.trim()).filter((s) => s.length > 0);
       const extractText = `${sentences.slice(-2).join('. ')}.`;
-      setEditorText(extractText);
+      setContextText(extractText);
+      setEditorText(editor.getText());
     }
   };
 
-  // only call the debounce function if the user stops typing for 2 seconds.
-  const debouncedExtraction = useCallback(debounce(extractData, 2000), [editor]);
+  useEffect(() => {
+    extractData();
+  }, [editor]); // Run `extractData` when `editor` changes.
+
+  // only call the debounce function if the user stops typing for 2 milliseconds.
+  const debouncedExtraction = useCallback(debounce(extractData, 500), [editor]);
 
   // keeps track of the updates to the editor content
   useEffect(() => {
@@ -112,7 +112,14 @@ function TextBox({ userId, sessionId }) {
         <button type="button" aria-label="strike button" data-tooltip-id="my-tooltip" data-tooltip-content="Strike" data-tooltip-place="top" onClick={() => editor.chain().focus().toggleStrike().run()}>
           <Strike />
         </button>
-        <SaveButton />
+        <div
+          aria-label="save button"
+          tabIndex="0"
+          role="button"
+          onClick={() => editor.commands.focus('end')}
+        >
+          <SaveButton />
+        </div>
       </div>
     </div>
   );
