@@ -2,145 +2,134 @@
 import React, { useEffect, useRef } from 'react'
 import * as d3 from 'd3'
 
-const LineGraph = ({ chartData, xField, yField }) => {
+const LineGraph = ({ chartData, xField, yField, title }) => {
     const d3Container = useRef(null)
     const tooltipRef = useRef(null)
 
     useEffect(() => {
         if (chartData && d3Container.current) {
-            const data = chartData.map(item => {
+
+            const data = chartData[4].map(item => {
                 return {
-                    xValue: item[yField],
-                    yValue: item[xField]
+                    xValue: item[xField],
+                    yValue: item[yField]
                 }
             })
-            console.log('chartdata',chartData,data)
+
             const svg = d3.select(d3Container.current)
-            // Set the dimensions and margins of the graph
-            const margin = { top: 30, right: 30, bottom: 30, left: 40 },
+            const margin = { top: 15, right: 0, bottom: 25, left: 30 },
                 width = 700 - margin.left - margin.right,
                 height = 400 - margin.top - margin.bottom
 
-            // Add an SVG element
-            // svg.selectAll("*").remove()
-            // svg.append("svg")
             svg.attr("width", width + margin.left + margin.right)
                 .attr("height", height + margin.top + margin.bottom)
                 .append("g")
                 .attr("transform", `translate(${margin.left},${margin.top})`)
 
-            // Add X axis
             const x = d3.scaleLinear()
-                .domain(d3.extent(data, d => d.xValue))
+                .domain([d3.min(data, (d) => d.xValue) - 2, d3.max(data, (d) => d.xValue) + 1])
                 .range([ 0, width ])
             svg.append("g")
-                // .attr("class", "xAxis")
                 .attr("transform", `translate(0,${height})`)
-                .call(d3.axisBottom(x))
+                .call(d3.axisBottom(x).tickFormat(d3.format("d")))
 
-            // Add Y axis
+            const yPadding = (d3.max(data, (d) => d.yValue) - d3.min(data, (d) => d.yValue)) * 0.1
+            
             const y = d3.scaleLinear()
-                .domain([0, d3.max(data, d => d.yValue)])
+                .domain([d3.min(data, (d) => d.yValue) - yPadding, d3.max(data, (d) => d.yValue) + yPadding])
                 .range([ height, 0])
             svg.append("g")
-                .attr("transform", `translate(${margin.left},0)`)
+                .attr("transform", `translate(${margin.left+30},0)`)
                 .call(d3.axisLeft(y))
 
             const line = d3.line()
                 .x(d => x(d.xValue))
                 .y(d => y(d.yValue))
-    
-            const tooltip = d3.select(tooltipRef.current)
+
+            const bisect = d3.bisector(d => d.xValue).left
+
+            const focus = svg
+                .append('g')
+                .append('circle')
+                .style("fill", "none")
+                .attr("stroke", "black")
+                .attr('r', 8.5)
                 .style("opacity", 0)
-                .attr("class", "tooltip")
-                .style("position", "absolute")
-                .style("background-color", "white")
-                .style("border", "solid")
-                .style("border-width", "2px")
-                .style("border-radius", "5px")
-                .style("padding", "5px")
-                .style("pointer-events", "none")
 
-            // Function to show the tooltip on mouseover
-            const mouseover = function(event, d) {
-                tooltip.style("opacity", 1)
-            }
+            const focusText = svg
+                .append('g')
+                .append('text')
+                .style("opacity", 0)
+                .attr("text-anchor", "left")
+                .attr("alignment-baseline", "middle")
 
-            // Function to update the tooltip's position and content
-            const mousemove = function(event, d) {
-                tooltip
-                    .html(`${yField}: ${d.xValue}<br>${xField}: ${d.yValue}`)
-                    .style("left", (event.pageX - 600) + "px")
-                    .style("top", (event.pageY - 25) + "px")
-            }
-
-            // Function to hide the tooltip on mouseout
-            const mouseleave = function(event, d) {
-                tooltip.style("opacity", 0)
-            }
-
-            // Add dots
-            // svg.append('g')
             svg.append("path")
                 .datum(data)
                 .attr("fill", "none")
                 .attr("stroke", "steelblue")
                 .attr("stroke-width", 1.5)
                 .attr("d", line)
-                .on("mouseover", mouseover)
-                .on("mousemove", mousemove)
-                .on("mouseleave", mouseleave)
-            // svg.selectAll("dot")
-            //     .data(data)
-            //     .enter()
-            //     .append("circle")
-            //     .attr("class", "dot")
-            //     .attr("cx", d => x(d.xValue))
-            //     .attr("cy", d => y(d.yValue))
-            //     .attr("r", 5)
-            //     .attr("fill", "#69b3a2")
-            //     .on("mouseover", mouseover)
-            //     .on("mousemove", mousemove)
-            //     .on("mouseleave", mouseleave)
 
-            // x.domain([d3.min(data, d => d.year) - 1, d3.max(data, d => d.year)])
-            // svg.select("xAxis")
-            //     .transition()
-            //     .duration(2000)
-            //     .attr("opacity", "1")
-            //     .call(d3.axisBottom(x))
+            const mouseover = () => {
+                focus.style("opacity", 1)
+                focusText.style("opacity",1)
+            }
 
-            // svg.selectAll("circle")
-            //     .transition()
-            //     .delay(function(d,i){return(i*3)})
-            //     .duration(2000)
-            //     .attr("cx", d => x(d.year))
-            //     .attr("cy", d => y(d.consumption))
-            
+            const mousemove = (event) => {
+                const [xPos] = d3.pointer(event)
+                const x0 = x.invert(xPos)
+                const i = bisect(data, x0)
+                if (data[i]) {
+                    const tooltipWidth = focusText.node().getBBox().width
+                    const offset = 15
+                    let xPosition = x(data[i].xValue) + offset
+                    if (xPosition + tooltipWidth > width) {
+                        xPosition = xPosition - tooltipWidth * 1.2
+                    }
+                    focus
+                        .attr("cx", x(data[i].xValue))
+                        .attr("cy", y(data[i].yValue))
+                    focusText
+                        .html("x:" + data[i].xValue + "  -  " + "y:" + data[i].yValue.toFixed(3))
+                        .attr("x", xPosition)
+                        .attr("y", y(data[i].yValue))
+                }
+            }
+
+            const mouseout = () => {
+                focus.style("opacity", 0)
+                focusText.style("opacity", 0)
+            }
+
+            svg.append('rect')
+                .style("fill", "none")
+                .style("pointer-events", "all")
+                .attr('width', width)
+                .attr('height', height)
+                .on('mouseover', mouseover)
+                .on('mousemove', mousemove)
+                .on('mouseout', mouseout)
 
             svg.append("text")
                 .attr("text-anchor", "end")
-                .attr("x", width/2 + margin.left)
+                .attr("x", width/2 + margin.left + 20)
                 .attr("y", height + margin.top + 20)
-                .text(yField)
+                .text(xField)
     
-            // Add Y axis title
             svg.append("text")
                 .attr("text-anchor", "end")
                 .attr("transform", "rotate(-90)")
-                .attr("y", -margin.left + 52)
-                .attr("x", -margin.top - 20)
-                .text(xField)
+                .attr("y", -margin.left + 47)
+                .attr("x", -margin.top + 10)
+                .text(yField)
     
-            // Add graph title
             svg.append("text")
-                .attr("x", (width / 2))             
+                .attr("x", ((width + 30)  / 2))             
                 .attr("y", margin.top)
                 .attr("text-anchor", "middle")  
                 .style("font-size", "16px") 
                 .style("text-decoration", "underline")  
-                .text(`${xField} vs. ${yField}`)
-    
+                .text(title)
         }
     }, [chartData])
 

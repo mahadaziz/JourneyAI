@@ -1,13 +1,12 @@
 'use client';
 
-import React, { useState, useEffect, useContext } from 'react';
-import { SelectedColumnContext } from '../context/SelectedColumnContext';
+import React, { useState, useEffect } from 'react';
 import ScatterPlot from './ScatterPlot';
+import BarGraph from './BarGraph';
+import LineGraph from './LineGraph';
 
-function PopupModal({ isModalOpen, closeModal }) {
-  const { selectedColumn } = useContext(SelectedColumnContext);
+function PopupModal({ isModalOpen, closeModal, array }) {
   const [visibility, setVisibility] = useState('hidden');
-  const [chartData, setChartData] = useState(null);
 
   useEffect(() => {
     let timeoutId;
@@ -16,37 +15,11 @@ function PopupModal({ isModalOpen, closeModal }) {
       timeoutId = setTimeout(() => {
         setVisibility('hidden');
       }, 300);
-      setChartData(null);
     } else {
       setVisibility('visible');
-
-      const getChartData = async (column_name) => {
-        try {
-          const response = await fetch(`${process.env.NEXT_PUBLIC_LOCAL_URL}/get_data`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ column_name }),
-          });
-          const data = await response.json();
-
-          // Check if the response is ok
-          if (response.ok) {
-            setChartData(data.data);
-          } else {
-            // Handle HTTP errors
-            console.error('Failed to fetch chart data: ', data);
-          }
-        } catch (error) {
-          // Handle network errors
-          console.error('Network error:', error);
-        }
-      };
-      getChartData(selectedColumn);
     }
     return () => clearTimeout(timeoutId);
-  }, [isModalOpen, selectedColumn]);
+  }, [isModalOpen]);
 
   const modalBackgroundStyle = isModalOpen
     ? {
@@ -67,16 +40,38 @@ function PopupModal({ isModalOpen, closeModal }) {
     e.stopPropagation();
   };
 
-  const getFieldMapping = () => {
-    if (chartData && chartData.length > 0) {
-      const keys = Object.keys(chartData[0]);
+  const getAdditionalProps = () => {
+    if (array.length > 0 && array[0] == 'scatter') {
       return {
-        xField: keys[0],
-        yField: keys[1],
+        xField: array[1],
+        yField: array[2]
+      };
+    }
+    else if (array.length > 0) {
+      return {
+        xField: array[1],
+        yField: array[2],
+        title: array[3]
       };
     }
     return {};
   };
+
+  const renderChart = () => {
+    const chartType = array.length > 0 ? array[0] : null;
+  
+    switch (chartType) {
+      case 'line':
+        return <LineGraph chartData={array} {...getAdditionalProps()} />;
+      case 'bar':
+        return <BarGraph chartData={array} {...getAdditionalProps()} />;
+      case 'scatter':
+        return <ScatterPlot chartData={array} {...getAdditionalProps()} />;
+      default:
+        return <div>Loading chart data...</div>;
+    }
+  }
+  
 
   return (
     <div
@@ -91,16 +86,14 @@ function PopupModal({ isModalOpen, closeModal }) {
         role="button"
         id="modalClick"
         tabIndex={0}
-        className="relative p-4 w-max h-full max-w-[90vw] max-h-[90vh]"
+        className="relative p-4 w-max h-max max-w-[90vw] max-h-[90vh]"
         onClick={handleModalClick}
       >
         <div className="relative flex justify-center items-center bg-white rounded-lg shadow dark:bg-gray-700">
           <div className="flex justify-center items-center overflow-auto p-4 md:p-5">
-            {chartData ? (
-              <ScatterPlot chartData={chartData} {...getFieldMapping()} />
-            ) : (
-              <div>Loading chart data...</div>
-            )}
+            <div>
+              {array ? renderChart() : <div>Loading chart data...</div>}
+            </div>
           </div>
         </div>
       </div>

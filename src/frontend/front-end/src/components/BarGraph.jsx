@@ -2,41 +2,41 @@
 import React, { useEffect, useRef } from 'react'
 import * as d3 from 'd3'
 
-const BarGraph = ({ chartData, xField, yField }) => {
+const BarGraph = ({ chartData, xField, yField, title }) => {
     const d3Container = useRef(null)
     const tooltipRef = useRef(null)
 
     useEffect(() => {
         if (chartData && d3Container.current) {
-            const data = d3.rollups(chartData, v => d3.sum(v, leaf => leaf[xField]), d => d[yField]).map(([key, value]) => ({ xValue: key, yValue: value }))
-            console.log('chartdata',chartData,data)
+            const data = chartData[4].map(item => {
+                return {
+                    xValue: item[xField],
+                    yValue: item[yField]
+                }
+            })
             const svg = d3.select(d3Container.current)
-            // Set the dimensions and margins of the graph
-            const margin = { top: 30, right: 30, bottom: 30, left: 40 },
+
+            const margin = { top: 15, right: 0, bottom: 25, left: 50 },
                 width = 700 - margin.left - margin.right,
                 height = 400 - margin.top - margin.bottom
 
-            // Add an SVG element
-            // svg.selectAll("*").remove()
-            // svg.append("svg")
             svg.attr("width", width + margin.left + margin.right)
                 .attr("height", height + margin.top + margin.bottom)
                 .append("g")
                 .attr("transform", `translate(${margin.left},${margin.top})`)
 
-            // Add X axis
             const x = d3.scaleBand()
                 .domain(data.map(d => d.xValue))
-                .range([ 0, width ])
-                .padding(0.1)
+                .range([ margin.left, width + margin.left])
+                .padding(0.2)
             svg.append("g")
-                // .attr("class", "xAxis")
                 .attr("transform", `translate(0,${height})`)
                 .call(d3.axisBottom(x))
 
-            // Add Y axis
+            const yPadding = (d3.max(data, (d) => d.yValue) - d3.min(data, (d) => d.yValue)) * 0.1
+
             const y = d3.scaleLinear()
-                .domain([0, d3.max(data, d => d.yValue)])
+                .domain([0, d3.max(data, d => d.yValue) + yPadding])
                 .range([ height, 0])
             svg.append("g")
                 .attr("transform", `translate(${margin.left},0)`)
@@ -53,26 +53,21 @@ const BarGraph = ({ chartData, xField, yField }) => {
                 .style("padding", "5px")
                 .style("pointer-events", "none")
 
-            // Function to show the tooltip on mouseover
-            const mouseover = function(event, d) {
+            const mouseover = () => {
                 tooltip.style("opacity", 1)
             }
 
-            // Function to update the tooltip's position and content
-            const mousemove = function(event, d) {
+            const mousemove = (event, d) => {
                 tooltip
-                    .html(`${yField}: ${d.xValue}<br>${xField}: ${d.yValue}`)
+                    .html(`${xField}: ${d.xValue}<br>${yField}: ${d.yValue.toFixed(3)}`)
                     .style("left", (event.pageX - 600) + "px")
                     .style("top", (event.pageY - 25) + "px")
             }
 
-            // Function to hide the tooltip on mouseout
-            const mouseleave = function(event, d) {
+            const mouseleave = () => {
                 tooltip.style("opacity", 0)
             }
 
-            // Add dots
-            // svg.append('g')
             svg.selectAll("mybar")
                 .data(data)
                 .enter()
@@ -95,26 +90,24 @@ const BarGraph = ({ chartData, xField, yField }) => {
 
             svg.append("text")
                 .attr("text-anchor", "end")
-                .attr("x", width/2 + margin.left)
+                .attr("x", width/2 + margin.left + 20)
                 .attr("y", height + margin.top + 20)
-                .text(yField)
+                .text(xField)
     
-            // Add Y axis title
             svg.append("text")
                 .attr("text-anchor", "end")
                 .attr("transform", "rotate(-90)")
-                .attr("y", -margin.left + 52)
-                .attr("x", -margin.top - 20)
-                .text(xField)
+                .attr("y", -margin.left + 65)
+                .attr("x", -margin.top + 10)
+                .text(yField)
     
-            // Add graph title
             svg.append("text")
-                .attr("x", (width / 2))             
+                .attr("x", ((width + 30)  / 2))             
                 .attr("y", margin.top)
                 .attr("text-anchor", "middle")  
                 .style("font-size", "16px") 
                 .style("text-decoration", "underline")  
-                .text(`${xField} vs. ${yField}`)
+                .text(title)
         }
     }, [chartData])
 
