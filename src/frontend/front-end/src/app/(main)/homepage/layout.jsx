@@ -2,6 +2,7 @@ import React from 'react';
 import { ThemeProvider } from '../theme-provider';
 import { AuthProvider } from '../../Providers';
 import '../../globals.css';
+import { EditorDataProvider } from '../../../context/EditorDataContext';
 
 export const metadata = {
   title: 'Data Driven Stories',

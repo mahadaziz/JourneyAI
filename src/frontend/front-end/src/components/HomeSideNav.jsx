@@ -39,7 +39,6 @@ export default function HomeSideNav({ session }) {
         </svg>
       </button>
       <aside ref={sidebarRef} className={`relative z-40 h-screen w-full transition-transform ${isOpen ? 'translate-x-0 w-[300px]' : '-translate-x-full'} lg:translate-x-0`} aria-label="Sidebar">
-
         <div className="flex h-full flex-col overflow-y-auto bg-black py-4">
           <span
             onClick={toggleSidebar}
@@ -67,7 +66,7 @@ export default function HomeSideNav({ session }) {
 
           </div>
 
-          <ul className="flex flex-col space-y-3 font-medium overflow-hidden">
+          <ul className="flex flex-col space-y-6 font-medium overflow-hidden">
             <li>
               <div className="flex justify-center items-center flex-col md:flex-col w-full group p-4 mx-5 space-y-3">
                 <span className="block text-md md:text-lg font-bold text-white dark:text-white">
@@ -135,6 +134,12 @@ export default function HomeSideNav({ session }) {
                   </div>
                 </div>
               </button>
+            </li>
+
+            <li>
+              <div className="absolute flex justify-center items-center bottom-0 flex-col md:flex-col w-full group p-4">
+                <span className="block text-sm md:text-md text-white dark:text-white">©Journey AI 2024</span>
+              </div>
             </li>
           </ul>
         </div>

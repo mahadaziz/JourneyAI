@@ -1,53 +1,44 @@
-/* eslint-disable func-names */
-
-'use client';
-
-import React, { useEffect, useRef } from 'react';
-import * as d3 from 'd3';
-
-function ScatterPlot({ chartData, xField, yField }) {
-  const d3Container = useRef(null);
-  const tooltipRef = useRef(null);
+'use client'
+import React, { useEffect, useRef } from 'react'
+import * as d3 from 'd3'
+  
+const ScatterPlot = ({ chartData, xField, yField }) => {
+  const d3Container = useRef(null)
+  const tooltipRef = useRef(null)
 
   useEffect(() => {
     if (chartData && d3Container.current) {
-      const data = chartData.map((item) => ({
-        xValue: item[yField],
-        yValue: item[xField],
-      }));
-      console.log('chartdata', chartData, data);
-      const svg = d3.select(d3Container.current);
-      // Set the dimensions and margins of the graph
-      const margin = {
-        top: 30, right: 30, bottom: 30, left: 40,
-      };
-      const width = 700 - margin.left - margin.right;
-      const height = 400 - margin.top - margin.bottom;
+      const data = chartData[5].map(item => {
+        return {
+            xValue: item[xField],
+            yValue: item[yField]
+        }
+      })
+      const svg = d3.select(d3Container.current)
 
-      // Add an SVG element
-      // svg.selectAll("*").remove()
-      // svg.append("svg")
+      const margin = { top: 15, right: 0, bottom: 25, left: 50 }
+      const width = 700 - margin.left - margin.right
+      const height = 400 - margin.top - margin.bottom
+
       svg.attr('width', width + margin.left + margin.right)
         .attr('height', height + margin.top + margin.bottom)
         .append('g')
-        .attr('transform', `translate(${margin.left},${margin.top})`);
+        .attr('transform', `translate(${margin.left},${margin.top})`)
 
-      // Add X axis
       const x = d3.scaleLinear()
-        .domain([d3.min(data, (d) => d.xValue) - 1, d3.max(data, (d) => d.xValue)])
-        .range([0, width]);
+        .domain([d3.min(data, (d) => d.xValue) - 2, d3.max(data, (d) => d.xValue) + 1])
+        .range([margin.left, width + margin.left])
       svg.append('g')
-      // .attr("class", "xAxis")
         .attr('transform', `translate(0,${height})`)
-        .call(d3.axisBottom(x));
+        .call(d3.axisBottom(x).tickFormat(d3.format("d")))
 
-      // Add Y axis
+      const yPadding = (d3.max(data, (d) => d.yValue) - d3.min(data, (d) => d.yValue)) * 0.1
       const y = d3.scaleLinear()
-        .domain([0, d3.max(data, (d) => d.yValue)])
-        .range([height, 0]);
+        .domain([d3.min(data, (d) => d.yValue) - yPadding, d3.max(data, (d) => d.yValue) + yPadding])
+        .range([height, 0])
       svg.append('g')
         .attr('transform', `translate(${margin.left},0)`)
-        .call(d3.axisLeft(y));
+        .call(d3.axisLeft(y))
 
       const tooltip = d3.select(tooltipRef.current)
         .style('opacity', 0)
@@ -58,28 +49,23 @@ function ScatterPlot({ chartData, xField, yField }) {
         .style('border-width', '2px')
         .style('border-radius', '5px')
         .style('padding', '5px')
-        .style('pointer-events', 'none');
+        .style('pointer-events', 'none')
 
-      // Function to show the tooltip on mouseover
-      const mouseover = function (event, d) {
-        tooltip.style('opacity', 1);
-      };
+      const mouseover = (event, d) => {
+        tooltip.style('opacity', 1)
+      }
 
-      // Function to update the tooltip's position and content
-      const mousemove = function (event, d) {
+      const mousemove = (event, d) => {
         tooltip
-          .html(`${yField}: ${d.xValue}<br>${xField}: ${d.yValue}`)
+          .html(`${xField}: ${d.xValue.toFixed(3)}<br>${yField}: ${d.yValue.toFixed(3)}`)
           .style('left', `${event.pageX - 600}px`)
-          .style('top', `${event.pageY - 25}px`);
-      };
+          .style('top', `${event.pageY - 100}px`)
+      }
 
-      // Function to hide the tooltip on mouseout
-      const mouseleave = function (event, d) {
-        tooltip.style('opacity', 0);
-      };
+      const mouseleave = (event, d) => {
+        tooltip.style('opacity', 0)
+      }
 
-      // Add dots
-      // svg.append('g')
       svg.selectAll('dot')
         .data(data)
         .enter()
@@ -91,53 +77,29 @@ function ScatterPlot({ chartData, xField, yField }) {
         .attr('fill', '#69b3a2')
         .on('mouseover', mouseover)
         .on('mousemove', mousemove)
-        .on('mouseleave', mouseleave);
-
-      // x.domain([d3.min(data, d => d.year) - 1, d3.max(data, d => d.year)])
-      // svg.select("xAxis")
-      //     .transition()
-      //     .duration(2000)
-      //     .attr("opacity", "1")
-      //     .call(d3.axisBottom(x))
-
-      // svg.selectAll("circle")
-      //     .transition()
-      //     .delay(function(d,i){return(i*3)})
-      //     .duration(2000)
-      //     .attr("cx", d => x(d.year))
-      //     .attr("cy", d => y(d.consumption))
+        .on('mouseleave', mouseleave)
 
       svg.append('text')
         .attr('text-anchor', 'end')
-        .attr('x', width / 2 + margin.left)
-        .attr('y', height + margin.top + 20)
-        .text(yField);
+        .attr("x", width/2 + margin.left + 140)
+        .attr("y", height + margin.top + 20)
+        .text(xField)
 
-      // Add Y axis title
       svg.append('text')
         .attr('text-anchor', 'end')
         .attr('transform', 'rotate(-90)')
-        .attr('y', -margin.left + 52)
-        .attr('x', -margin.top - 20)
-        .text(xField);
-
-      // Add graph title
-      svg.append('text')
-        .attr('x', (width / 2))
-        .attr('y', margin.top)
-        .attr('text-anchor', 'middle')
-        .style('font-size', '16px')
-        .style('text-decoration', 'underline')
-        .text(`${xField} vs. ${yField}`);
+        .attr('y', -margin.left + 62)
+        .attr('x', -margin.top - 10)
+        .text(yField)
     }
-  }, [chartData]);
+  }, [chartData])
 
   return (
     <>
       <svg ref={d3Container} />
       <div ref={tooltipRef} />
     </>
-  );
+  )
 }
 
-export default ScatterPlot;
+export default ScatterPlot

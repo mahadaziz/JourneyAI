@@ -5,7 +5,7 @@ import '../app/globals.css';
 
 function SearchBar() {
   return (
-    <div className="w-full sm:w-2/3">
+    <div className="w-[300px] sm:w-2/3">
       <form>
         <label htmlFor="default-search" className="mb-2 text-sm font-medium text-gray-900 sr-only dark:text-white">Search</label>
         <div className="relative">

@@ -17,7 +17,7 @@ function SaveButton() {
     console.log(hypothesisData);
   };
   return (
-    <button type="button" className="text-black font-bold" onClick={handleSave}>
+    <button type="button" aria-label="save button" className="text-black font-bold" onClick={handleSave}>
       Save
     </button>
   );
