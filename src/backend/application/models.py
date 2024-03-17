@@ -67,7 +67,7 @@ class insights:
 
     NUMERICAL_COLUMNS = df.select_dtypes(include=['int64', 'float64']).columns.tolist()
     CATEGORICAL_COLUMNS = df.select_dtypes(include=['object', 'category']).columns.tolist()
-    DATE_LIKE_COLUMNS = ['model year']
+    DATE_LIKE_COLUMNS = []
 
     for col in df.columns:
         if is_year_or_date_column(df[col], col):
@@ -212,6 +212,9 @@ class insights:
                     curr_seg_val = df_sorted[df_sorted[date_col] == curr_segment][column_name].iloc[0]
                     next_seg_value = df_sorted[df_sorted[date_col] == next_segment][column_name].iloc[0]
                     
+                    if pd.isna(curr_seg_val) or pd.isna(next_seg_value):
+                        continue
+
                     if next_seg_value > curr_seg_val:
                         segment_trend = "upward"  
                     else: 
@@ -274,15 +277,6 @@ class insights:
                 skew_type = "very positively (right)"
                 insights.append(f"{column_name} was found to be {skew_type} skewed, indicating that few unusually large values above the average may be having a large impact.")
                 threshold = non_null_data.mean() + 2 * non_null_data.std()   
-            # elif column_skewness > 0.5:
-            #     skew_type = "slightly positively (right)"
-            #     insights.append(f"{column_name} was found to be {skew_type} skewed, indicating that few unusually large values above the average may be having a small impact.")
-            # elif column_skewness <= 0.5 and column_skewness >= -0.5:
-            #     skew_type = "normally"
-            #     insights.append(f"{column_name} was found to be {skew_type} skewed, indicating most values are around the mean, as expected.")
-            # elif column_skewness < -0.5:
-            #     skew_type = "slightly negatively (left)"
-            #     insights.append(f"{column_name} was found to be {skew_type} skewed, indicating that few unusually small values below the average may be having a small impact.")
             elif column_skewness < 0.5: 
                 skew_type = "very negatively (left)"
                 insights.append(f"{column_name} was found to be {skew_type} skewed, indicating that few unusually small values below the average may be having a large impact.")
@@ -412,90 +406,7 @@ class insights:
                     insights += [f'The {column_name} with the lowest standard deviation in {numerical_column} is {int(category) if isinstance(category, float) else category}, the standard deviation is {std.loc[std[numerical_column].idxmin()][numerical_column]:.2f}']
 
         return insights
- 
 
-    # [
-    #         f'The mean value of {column_name} is {round(random.uniform(30, 40),2)}. This indicates the central tendency of the data.',
-    #         f'The standard deviation of {column_name} is {round(random.uniform(10, 15),2)}. A lower standard deviation suggests less variability in the data.'
-    #     ]
-
-    # Function to get clusters templates
-    
-    # #TODO:REMOVE ALL CLUSTER
-    # def get_clusters(self, column_name):
-    #     cursor = db['cars'].find()
-    #     df = pd.DataFrame(iter(cursor))
-    #     if column_name not in self.NUMERICAL_COLUMNS:
-    #         return []
-
-    #     # Remove NaN values from the column
-    #     clean_df = df.dropna(subset=[column_name])
-
-    #     # Determine the optimal number of clusters using the Elbow Method
-    #     optimal_k = self.find_optimal_clusters(clean_df[[column_name]])
-    #     if optimal_k is None:
-    #         return []
-
-    #     # Perform clustering with the optimal number of clusters
-    #     kmeans = KMeans(n_clusters=optimal_k)
-    #     kmeans.fit(clean_df[[column_name]])
-    #     clean_df['cluster'] = kmeans.labels_
-
-    #     # Generate insights
-    #     insights = self.generate_cluster_insights(clean_df, column_name, optimal_k)
-
-    #     return insights
-
-    # def find_optimal_clusters(self, data):
-    #     distortions = []
-    #     K = range(1, 10)  # Testing 1 to 9 clusters
-    #     for k in K:
-    #         kmeanModel = KMeans(n_clusters=k)
-    #         kmeanModel.fit(data)
-    #         distortions.append(kmeanModel.inertia_)
-
-    #     # Find the elbow point
-    #     k_distances = np.diff(distortions)
-    #     second_derivative = np.diff(k_distances)
-    #     elbow_point = np.argmax(second_derivative) + 2  # +2 due to double differencing
-    #     if elbow_point > 0 and elbow_point < len(K):
-    #         return elbow_point
-    #     return None
-    
-    # def generate_cluster_insights(self, df, column_name, num_clusters):
-    #     insights = []
-
-    #     # Characteristics of Clusters in the Chosen Column
-    #     for cluster in sorted(df['cluster'].unique()):
-    #         cluster_mean = df[df['cluster'] == cluster][column_name].mean()
-    #         insights.append(f'{num_clusters} clusters found in {column_name}. Cluster {cluster} has an average value of {cluster_mean:.2f}.')
-
-    #     # Correlation with Other Numerical Columns
-    #     for other_col in self.NUMERICAL_COLUMNS:
-    #         if other_col != column_name:
-    #             for cluster in sorted(df['cluster'].unique()):
-    #                 cluster_mean = df[df['cluster'] == cluster][column_name].mean()
-    #                 mean_value = df[df['cluster'] == cluster][other_col].mean()
-    #                 insights.append(f'Cluster {cluster} (avg {column_name}: {cluster_mean:.2f}) correlates with an average {other_col} value of {mean_value:.2f}')
-
-    #     # Interaction with Categorical Columns
-    #     for cat_col in self.CATEGORICAL_COLUMNS:
-    #         for cluster in sorted(df['cluster'].unique()):
-    #             cluster_mean = df[df['cluster'] == cluster][column_name].mean()
-    #             most_common_category = df[df['cluster'] == cluster][cat_col].mode()[0]
-    #             insights.append(f'In Cluster {cluster} (avg {column_name}: {cluster_mean:.2f}), the most common category in {cat_col} is {most_common_category}')
-
-    #     # Insights on Outliers Within Clusters
-    #     for cluster in sorted(df['cluster'].unique()):
-    #         cluster_data = df[df['cluster'] == cluster][column_name]
-    #         cluster_mean = cluster_data.mean()
-    #         std_dev = cluster_data.std()
-    #         lower_bound = cluster_mean - 2 * std_dev
-    #         upper_bound = cluster_mean + 2 * std_dev
-    #         outliers = df[(df['cluster'] == cluster) & ((df[column_name] < lower_bound) | (df[column_name] > upper_bound))]
-    #         insights.append(f'Cluster {cluster} (avg {column_name}: {cluster_mean:.2f}) has {len(outliers)} outliers. This might indicate special cases or anomalies within this group.')
-
-    #     return insights
 
     #TODO: MODIFY
     # Function to get rank templates
@@ -587,33 +498,6 @@ class insights:
                     insights.append(f"Certain combinations of categories from '{column_name}' and '{cat_col}' occur more frequently than others, especially between '{top_combination[0]}' and '{top_combination[1]}'.")
 
         return insights
-
-    # #TODO: REMOVE
-    # # Function to get differences templates
-    # def get_differences(self, column_name):
-    #     cursor = db['cars'].find()
-    #     df = pd.DataFrame(iter(cursor))
-
-    #     insights = []
-    #     if column_name in df.columns and df[column_name].dtype in ['int64', 'float64']:
-    #         categorical_columns = df.select_dtypes(include=['object', 'category']).columns
-
-        
-    #         # 2. Differences in Relation to Categorical Columns
-    #         for cat_column in categorical_columns:
-    #             if cat_column != column_name:
-    #                 grouped_diff = df.groupby(cat_column)[column_name].mean()
-    #                 #insights.append(f'Differences in {column_name} are observed when grouped by {cat_column}. Average values per group: {grouped_diff.to_dict()}.')
-
-    #         # 3. Specific Examples
-    #         for cat_column in categorical_columns:
-    #             if cat_column != column_name:
-    #                 sample_groups = df.groupby(cat_column).apply(lambda x: x.sample(1)).reset_index(drop=True).head(3)
-    #                 for _, row in sample_groups.iterrows():
-    #                     example_insight = f'For example, in the {cat_column} group "{row[cat_column]}", the value of {column_name} is {row[column_name]:.2f}.'
-    #                     #insights.append(example_insight)
-
-    #     return insights
     
     # Function to get graphable insights
     def graph_insights(self, column_name, insight_count):
@@ -1105,16 +989,6 @@ class insights:
         output =  {k: v for k, v in output.items() if v != [] and v != {}}      
         return jsonify({'insights' : output, 'prev_insights' : prev_insights, 'count' : new_insights_count})
             
-        
-            #Make it a fair portion of all_insights and take care of errors when there isn't enough of certain number of insight-types
-        ###################
-        # Add to session variables the index of each insight-type that was added to current_insights 
-        # Add to session variables the maximum index possible so that we know when to refresh for each type 
-        
-        ####################
-    
-
-            
     def get_insights(self):
         column_name = request.json.get('column_name')
         prev_insights = request.json.get('prev_insights')
@@ -1122,15 +996,8 @@ class insights:
         
         if not prev_insights:
             prev_insights = []
-        # column_name = json.loads(request.args.get('json_data')).get('column_name')
-        # Check if column_name already has insights in the session/db
-        ########
-        #IF BLOCK
-        ########
-        #ELSE BLOCK 
   
         return self.generate_insights(column_name, prev_insights, insight_count)
-        ########
         
         
 class hypothesis:
