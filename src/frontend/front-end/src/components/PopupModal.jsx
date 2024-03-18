@@ -41,17 +41,17 @@ function PopupModal({ isModalOpen, closeModal, array }) {
   };
 
   const getAdditionalProps = () => {
-    if (array.length > 0 && array[0] == 'scatter') {
-      return {
-        xField: array[1],
-        yField: array[2]
-      };
-    }
-    else if (array.length > 0) {
+    if (array.length > 0 && array[0] === 'scatter') {
       return {
         xField: array[1],
         yField: array[2],
-        title: array[3]
+      };
+    }
+    if (array.length > 0) {
+      return {
+        xField: array[1],
+        yField: array[2],
+        title: array[3],
       };
     }
     return {};
@@ -59,7 +59,7 @@ function PopupModal({ isModalOpen, closeModal, array }) {
 
   const renderChart = () => {
     const chartType = array.length > 0 ? array[0] : null;
-  
+
     switch (chartType) {
       case 'line':
         return <LineGraph chartData={array} {...getAdditionalProps()} />;
@@ -70,8 +70,7 @@ function PopupModal({ isModalOpen, closeModal, array }) {
       default:
         return <div>Loading chart data...</div>;
     }
-  }
-  
+  };
 
   return (
     <div
