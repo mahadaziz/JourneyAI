@@ -1056,7 +1056,7 @@ class hypothesis:
             })
             # insert context to history
             history.insert(0, context)
-            if len(history) > 100:
+            if len(history) > 10:
                 history.pop()
             try:
                 # add output to dictionary
