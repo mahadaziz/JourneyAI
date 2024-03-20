@@ -30,12 +30,14 @@ function InsightButton({ option, header, array }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalData, setModalData] = useState(null);
 
-  const openModal = () => {
+  const openModal = (e) => {
     setModalData(array);
+    e.stopPropagation();
     setIsModalOpen(true);
   };
 
-  const closeModal = () => {
+  const closeModal = (e) => {
+    e.stopPropagation();
     setIsModalOpen(false);
   };
 
@@ -66,7 +68,7 @@ function InsightButton({ option, header, array }) {
           className={`relative flex-col p-3 items-center w-full border border-gray-200 rounded-lg shadow
           hover:bg-gray-200 dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700 
           ${selectedInsights.includes(header) ? 'bg-violet-200 hover:bg-violet-300' : 'bg-white'
-          }`}
+            }`}
         >
           <div className="flex flex-col items-center w-full">
             <h5 className="text-lg text-left tracking-tight text-gray-900 dark:text-white">
@@ -238,21 +240,21 @@ function InsightsBox({ userId, sessionId }) {
             </button>
 
             {isOpen && (
-            <div className="absolute z-10 w-[200px] bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800">
-              <ul className="py-1">
-                {Object.keys(insightsData).map((key, index) => (
-                  <li key={key}>
-                    <button
-                      type="button"
-                      onClick={() => handleSelect(key)}
-                      className="flex w-full justify-start px-4 py-2 rounded-lg text-sm hover:bg-gray-100 dark:hover:bg-gray-700 dark:text-gray-200"
-                    >
-                      {key}
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            </div>
+              <div className="absolute z-10 w-[200px] bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800">
+                <ul className="py-1">
+                  {Object.keys(insightsData).map((key, index) => (
+                    <li key={key}>
+                      <button
+                        type="button"
+                        onClick={() => handleSelect(key)}
+                        className="flex w-full justify-start px-4 py-2 rounded-lg text-sm hover:bg-gray-100 dark:hover:bg-gray-700 dark:text-gray-200"
+                      >
+                        {key}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
             )}
           </div>
         </div>

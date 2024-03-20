@@ -351,9 +351,9 @@ class insights:
                 # avg = df[numerical_column].mean()
                 if numerical_column in units.keys():
                     category = df.loc[df[numerical_column].idxmax()][column_name]
-                    insights += [f'The insident with maximum {numerical_column} happens when the {column_name} is {int(category) if isinstance(category, float) else category}, in this case the {numerical_column} is equal to {df.loc[df[numerical_column].idxmax()][numerical_column]} {units[numerical_column]}']
+                    insights += [f'The with maximum {numerical_column} happens when the {column_name} is {int(category) if isinstance(category, float) else category}, in this case the {numerical_column} is equal to {df.loc[df[numerical_column].idxmax()][numerical_column]} {units[numerical_column]}']
                     category = df.loc[df[numerical_column].idxmin()][column_name]
-                    insights += [f'The insident with minimum {numerical_column} happens when the {column_name} is {int(category) if isinstance(category, float) else category}, in this case the {numerical_column} is equal to {df.loc[df[numerical_column].idxmin()][numerical_column]} {units[numerical_column]}']
+                    insights += [f'The with minimum {numerical_column} happens when the {column_name} is {int(category) if isinstance(category, float) else category}, in this case the {numerical_column} is equal to {df.loc[df[numerical_column].idxmin()][numerical_column]} {units[numerical_column]}']
 
                     asum = df.groupby(column_name)[numerical_column].sum().reset_index()
                     
@@ -379,10 +379,10 @@ class insights:
                     insights += [f'The {column_name} with the lowest standard deviation in {numerical_column} is {int(category) if isinstance(category, float) else category}, the standard deviation is {std.loc[std[numerical_column].idxmin()][numerical_column]:.2f} {units[numerical_column]}']
                 else:
                     category = df.loc[df[numerical_column].idxmax()][column_name]
-                    insights += [f'The insident with maximum {numerical_column} happens when the {column_name} is {int(category) if isinstance(category, float) else category}, in this case the {numerical_column} is equal to {df.loc[df[numerical_column].idxmax()][numerical_column]}']
+                    insights += [f'The with maximum {numerical_column} happens when the {column_name} is {int(category) if isinstance(category, float) else category}, in this case the {numerical_column} is equal to {df.loc[df[numerical_column].idxmax()][numerical_column]}']
 
                     category = df.loc[df[numerical_column].idxmin()][column_name]
-                    insights += [f'The insident with minimum {numerical_column} happens when the {column_name} is {int(category) if isinstance(category, float) else category}, in this case the {numerical_column} is equal to {df.loc[df[numerical_column].idxmin()][numerical_column]}']
+                    insights += [f'The with minimum {numerical_column} happens when the {column_name} is {int(category) if isinstance(category, float) else category}, in this case the {numerical_column} is equal to {df.loc[df[numerical_column].idxmin()][numerical_column]}']
 
                     asum = df.groupby(column_name)[numerical_column].sum().reset_index()
                     
@@ -428,8 +428,8 @@ class insights:
                 top_rank_str = ', '.join(f"'{val}'" for val in top_ranks[:min(3, len(ranked))])
                 bottom_rank_str = ', '.join(f"'{val}'" for val in bottom_ranks[-min(3, len(ranked)):])
 
-                insights.append(f"In '{column_name}', {top_rank_str} rank highest based on '{num_col}'.")
-                insights.append(f"In '{column_name}', {bottom_rank_str} rank lowest based on '{num_col}'.")
+                insights.append(f"In column '{column_name}', the values {top_rank_str} rank highest based on '{num_col}'.")
+                insights.append(f"In column '{column_name}', the values {bottom_rank_str} rank lowest based on '{num_col}'.")
 
         elif column_name in self.NUMERICAL_COLUMNS or column_name in self.DATE_LIKE_COLUMNS:
             for cat_col in self.CATEGORICAL_COLUMNS:
@@ -440,8 +440,8 @@ class insights:
                 top_rank_str = ', '.join(f"'{val}'" for val in top_ranks[:min(3, len(ranked))])
                 bottom_rank_str = ', '.join(f"'{val}'" for val in bottom_ranks[-min(3, len(ranked)):])
 
-                insights.append(f"Based on '{column_name}', values {top_rank_str} from '{cat_col}' rank highest.")
-                insights.append(f"Based on '{column_name}', values {bottom_rank_str} from '{cat_col}' rank lowest.")
+                insights.append(f"Based on the column '{column_name}', the values {top_rank_str} from the column '{cat_col}' rank highest.")
+                insights.append(f"Based on the column '{column_name}', the values {bottom_rank_str} from the column '{cat_col}' rank lowest.")
 
         return insights
 
@@ -657,7 +657,7 @@ class insights:
             for col in self.NUMERICAL_COLUMNS:
                 
                 cursor = (db.cars.find({col : {'$ne': 0}},{'_id': 0, column_name: 1, col: 1}))
-                df = pd.DataFrame(iter(cursor))
+                df = pd.DataFrame(iter(cursor)).dropna()
                 asum = df.groupby(column_name)[col].sum().reset_index().sort_values(by=col, ascending=True)
                 med = len(asum) // 2
                 if len(asum) > 11:
@@ -1056,7 +1056,7 @@ class hypothesis:
             })
             # insert context to history
             history.insert(0, context)
-            if len(history) > 100:
+            if len(history) > 10:
                 history.pop()
             try:
                 # add output to dictionary
