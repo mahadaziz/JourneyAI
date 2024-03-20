@@ -657,7 +657,7 @@ class insights:
             for col in self.NUMERICAL_COLUMNS:
                 
                 cursor = (db.cars.find({col : {'$ne': 0}},{'_id': 0, column_name: 1, col: 1}))
-                df = pd.DataFrame(iter(cursor))
+                df = pd.DataFrame(iter(cursor)).dropna()
                 asum = df.groupby(column_name)[col].sum().reset_index().sort_values(by=col, ascending=True)
                 med = len(asum) // 2
                 if len(asum) > 11:
