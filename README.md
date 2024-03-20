@@ -11,6 +11,13 @@ Clone the repository into your local machine. The src folder contains all of the
 
 ### Setting up FRONT END
 
+- Node v20.9.0 and npm version 10.1.0 are required for this application. To check your current versions, execute these commands:
+
+```
+node --version
+npm --version
+```
+
 - In the folder `src/frontend/front-end`, create a file `.env` with the following contents:
 
 ```
@@ -24,7 +31,7 @@ NEXT_PUBLIC_LOCAL_URL=http://127.0.0.1:8080
 MONGODB_URI=mongodb+srv://lostm:RlT5ix66d7jcajHr@cluster0.26a1r0n.mongodb.net/d
 ```
 
-- In the folder `src/frontend/front-end`, execute the following two lines:
+- In the folder `src/frontend/front-end`, execute the following two commands:
 
 ```
 npm install
@@ -46,7 +53,7 @@ MONGO_URI=mongodb+srv://lostm:RlT5ix66d7jcajHr@cluster0.26a1r0n.mongodb.net/?ret
 SECRET_KEY=5957450d7a3e437980bc3566be2baf65
 ```
 
-- In the folder `src/backend`, execute the following two lines:
+- In the folder `src/backend`, execute the following two commands:
 
 ```
 pip install -r requirements.txt
