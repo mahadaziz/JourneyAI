@@ -198,7 +198,6 @@ class insights:
                         trend_relation = "inverse"
                     insights.append(f"Overall, '{column_name}' and '{other_col}' have a {trend_relation} trend.")
 
-            #TODO: Also add this separately outside of the for loop so the function works for date-like
             # Trend Analysis within Date-Like Column Segments
             for date_col in self.DATE_LIKE_COLUMNS:
                 df_sorted = df.sort_values(by=date_col)
@@ -208,7 +207,6 @@ class insights:
                     curr_segment = segments[i]
                     next_segment = segments[i + 1]
                     
-                    # Correcting the references to use df_sorted for consistency
                     curr_seg_val = df_sorted[df_sorted[date_col] == curr_segment][column_name].iloc[0]
                     next_seg_value = df_sorted[df_sorted[date_col] == next_segment][column_name].iloc[0]
                     
@@ -236,7 +234,6 @@ class insights:
                             else: 
                                 trend_relation = "inverse"
                             insights.append(f"In the transition from {curr_segment} to {next_segment}, {column_name} and {other_col} exhibit a {trend_relation} trend.")
-        #TODO: Potentially make this categorical only as you will make date-like separate, see above
         # Trend Analysis for Categorical Columns
         elif column_name in self.CATEGORICAL_COLUMNS:
             for date_col in self.DATE_LIKE_COLUMNS:
@@ -259,7 +256,6 @@ class insights:
 
     # Function to get distributions templates
 
-    #TODO: MODIFY
     def get_distributions(self, column_name):
         cursor = db['cars'].find()
         df = pd.DataFrame(iter(cursor))
@@ -296,7 +292,6 @@ class insights:
                             insights.append(f'The value in {col} that could be leading to a negative skew in {column_name} is {val}.')
         return insights
 
-    #TODO: MODIFY
     # Function to get basic stats templates
     def get_basic_stats(self, column_name):
         cursor = db['cars'].find()
@@ -308,14 +303,12 @@ class insights:
         # date_columns = df.select_dtypes(include=['datetime64']).columns
         units = {}
         for column in numerical_columns:
-        ## TODO: fix the logic to change dates that are misflagged as ints or objects to datetime (include years, months, days,...) 
             if df[column].dtype == 'int64' and 1400 <= df[column].min() <= df[column].max() <= 2100 and 'year' in column.lower():
                 numerical_columns = [name for name in numerical_columns if name != column]
                 categorical_columns.append(column)
                 df[column] = df[column].astype(int)
                
                 pass
-        ## The above should be commented out and date_columns should be created (I uncommented it for now because it will remove some bogus results)
             try:
                 tempUnits = column.split('(')[-1]
                 if tempUnits[-1] == ')':
@@ -408,7 +401,6 @@ class insights:
         return insights
 
 
-    #TODO: MODIFY
     # Function to get rank templates
     def get_rank(self, column_name):
         cursor = db['cars'].find()
@@ -445,7 +437,6 @@ class insights:
 
         return insights
 
-    #TODO:MODIFY
     # Function to get associations templates
     def get_associations(self, column_name):
         cursor = db['cars'].find()
@@ -460,7 +451,6 @@ class insights:
         if column_name in self.NUMERICAL_COLUMNS:
             for other_col in self.NUMERICAL_COLUMNS:
                 if other_col != column_name:
-                    # Synchronize non-null data between the two columns
                     non_null_indices = df[column_name].notnull() & df[other_col].notnull()
                     valid_data = df[non_null_indices][[column_name, other_col]]
 
