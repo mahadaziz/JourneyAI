@@ -344,9 +344,9 @@ class insights:
                 # avg = df[numerical_column].mean()
                 if numerical_column in units.keys():
                     category = df.loc[df[numerical_column].idxmax()][column_name]
-                    insights += [f'The with maximum {numerical_column} happens when the {column_name} is {int(category) if isinstance(category, float) else category}, in this case the {numerical_column} is equal to {df.loc[df[numerical_column].idxmax()][numerical_column]} {units[numerical_column]}']
+                    insights += [f'The record with maximum {numerical_column} happens when the {column_name} is {int(category) if isinstance(category, float) else category}, in this case the {numerical_column} is equal to {df.loc[df[numerical_column].idxmax()][numerical_column]} {units[numerical_column]}']
                     category = df.loc[df[numerical_column].idxmin()][column_name]
-                    insights += [f'The with minimum {numerical_column} happens when the {column_name} is {int(category) if isinstance(category, float) else category}, in this case the {numerical_column} is equal to {df.loc[df[numerical_column].idxmin()][numerical_column]} {units[numerical_column]}']
+                    insights += [f'The record with minimum {numerical_column} happens when the {column_name} is {int(category) if isinstance(category, float) else category}, in this case the {numerical_column} is equal to {df.loc[df[numerical_column].idxmin()][numerical_column]} {units[numerical_column]}']
 
                     asum = df.groupby(column_name)[numerical_column].sum().reset_index()
                     
@@ -372,10 +372,10 @@ class insights:
                     insights += [f'The {column_name} with the lowest standard deviation in {numerical_column} is {int(category) if isinstance(category, float) else category}, the standard deviation is {std.loc[std[numerical_column].idxmin()][numerical_column]:.2f} {units[numerical_column]}']
                 else:
                     category = df.loc[df[numerical_column].idxmax()][column_name]
-                    insights += [f'The with maximum {numerical_column} happens when the {column_name} is {int(category) if isinstance(category, float) else category}, in this case the {numerical_column} is equal to {df.loc[df[numerical_column].idxmax()][numerical_column]}']
+                    insights += [f'The record with maximum {numerical_column} happens when the {column_name} is {int(category) if isinstance(category, float) else category}, in this case the {numerical_column} is equal to {df.loc[df[numerical_column].idxmax()][numerical_column]}']
 
                     category = df.loc[df[numerical_column].idxmin()][column_name]
-                    insights += [f'The with minimum {numerical_column} happens when the {column_name} is {int(category) if isinstance(category, float) else category}, in this case the {numerical_column} is equal to {df.loc[df[numerical_column].idxmin()][numerical_column]}']
+                    insights += [f'The record with minimum {numerical_column} happens when the {column_name} is {int(category) if isinstance(category, float) else category}, in this case the {numerical_column} is equal to {df.loc[df[numerical_column].idxmin()][numerical_column]}']
 
                     asum = df.groupby(column_name)[numerical_column].sum().reset_index()
                     
