@@ -5,16 +5,16 @@ module.exports = {
     './src/components/**/*.{js,ts,jsx,tsx,mdx}',
     './src/app/**/*.{js,ts,jsx,tsx,mdx}',
   ],
-  darkMode: "class",
+  darkMode: 'class',
   theme: {
     extend: {
       colors: {
-        bgLight: "#8A8DE1",
-        bgDark: "#280235",
-        loginBoxLight: "#280235",
-        bgWhite: "#FFFFFF",
-        borderColor: "#4947A7",
-        bgGrey: "#F6F6F6"
+        bgLight: '#8A8DE1',
+        bgDark: '#280235',
+        loginBoxLight: '#280235',
+        bgWhite: '#FFFFFF',
+        borderColor: '#4947A7',
+        bgGrey: '#F6F6F6',
       },
       backgroundImage: {
         'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
@@ -24,4 +24,4 @@ module.exports = {
     },
   },
   plugins: [],
-}
+};
