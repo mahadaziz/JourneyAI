@@ -1,7 +1,5 @@
 /** @type {import('next').NextConfig} */
-const nextConfig = {};
-module.exports = nextConfig;
-module.exports = {
+const nextConfig = {
   async redirects() {
     return [
       {
@@ -12,3 +10,4 @@ module.exports = {
     ];
   },
 };
+module.exports = nextConfig;

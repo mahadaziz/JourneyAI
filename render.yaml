@@ -1,0 +1,16 @@
+# Render Blueprint for the JourneyAI Flask backend.
+# In Render: New + > Blueprint > pick this repo. Render reads this file and creates the service.
+# Set MONGO_URI and SECRET_KEY in the dashboard (they are intentionally NOT stored here).
+services:
+  - type: web
+    name: journeyai-backend
+    runtime: docker
+    dockerfilePath: ./src/backend/flask.dockerfile
+    dockerContext: ./src/backend
+    plan: free
+    healthCheckPath: /
+    envVars:
+      - key: MONGO_URI
+        sync: false   # set in the Render dashboard
+      - key: SECRET_KEY
+        sync: false   # set in the Render dashboard
