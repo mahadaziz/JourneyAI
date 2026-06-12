@@ -64,10 +64,13 @@ export const authOptions = {
     },
     async session({ session, token }) {
       if (session.user) {
-        const user = await User.findOne({ email: session.user.email });
-        session.user = user.name; // Update the session user object
-        session.email = user.email;
-        session.userId = user.id;
+        // Source the session from the JWT, not the DB. This callback runs on
+        // every getServerSession() (e.g. when /homepage renders). Querying Mongo
+        // here fails on serverless when mongoose isn't connected, which made
+        // getServerSession return null and bounce the user back to /login.
+        session.user = token.name;
+        session.email = token.email;
+        session.userId = token._id;
         session.sessionId = token.sessionId;
       }
       return session;
