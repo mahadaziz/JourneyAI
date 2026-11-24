@@ -1,31 +1,27 @@
 'use client';
 
-import React, { useContext, useState } from 'react';
+import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { UploadIcon, ViewIcon } from './Icons';
-import { EditorDataContext } from '../context/EditorDataContext';
 import UploadForm from './UploadForm';
 import '../app/globals.css';
 
 function UserCard({
-  title, description, isUploadCard, sessionId, userId,
+  title, description, isUploadCard, datasetId,
 }) {
   const [isHovered, setIsHovered] = useState(false);
   const [isUpload, setIsUpload] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const { setEditorText } = useContext(EditorDataContext);
   const router = useRouter();
 
   const toggleUploadForm = () => {
     setIsUpload(!isUpload);
   };
 
-  const handleUserCard = async (title, description) => {
-    localStorage.setItem('dataSetInfo', JSON.stringify({ title })); // Store the data in localStorage
-    setEditorText(description);
+  const handleUserCard = () => {
     setIsLoading(true);
-    router.push('/dashboard');
+    router.push(`/dashboard?dataset=${datasetId}`);
   };
 
   return (
@@ -50,7 +46,7 @@ function UserCard({
           className="relative p-8 h-[250px] flex flex-col justify-between items-center hover:shadow-xl cursor-pointer"
           onMouseEnter={() => setIsHovered(true)}
           onMouseLeave={() => setIsHovered(false)}
-          onClick={() => handleUserCard(title, description)}
+          onClick={handleUserCard}
           onKeyDown={(e) => e.key === 'Enter' && handleUserCard()}
           role="button"
           tabIndex="0"
@@ -84,7 +80,6 @@ function UserCard({
           <UploadForm
             isVisible={isUpload}
             toggleVisibility={toggleUploadForm}
-            userId={userId}
           />
         </div>
       )}

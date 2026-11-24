@@ -2,9 +2,7 @@
 
 'use client';
 
-import React, {
-  useState, useEffect, useRef, useCallback, useContext,
-} from 'react';
+import React, { useContext } from 'react';
 // import dynamic from 'next/dynamic';
 import { Tooltip } from 'react-tooltip';
 import { useEditor, EditorContent } from '@tiptap/react';
@@ -18,10 +16,12 @@ import { EditorDataContext } from '../context/EditorDataContext';
 import SaveButton from './SaveButton';
 import '../app/globals.css';
 
-function TextBox({ userId, sessionId }) {
-  const {
-    editorText, setEditorText, contextText, setContextText,
-  } = useContext(EditorDataContext);
+function TextBox({ datasetId, draft }) {
+  const { setContextText } = useContext(EditorDataContext);
+  const updateContext = ({ editor: current }) => {
+    const sentences = current.getText().split('.').map((s) => s.trim()).filter(Boolean);
+    setContextText(sentences.length ? `${sentences.slice(-2).join('. ')}.` : '');
+  };
 
   // Configure the Placeholder extension separately
   const placeholderExtension = Placeholder.configure({
@@ -30,7 +30,9 @@ function TextBox({ userId, sessionId }) {
     emptyNodeClass: 'is-empty',
   });
   const editor = useEditor({
-    autoFocus: true,
+    content: draft.content,
+    onCreate: updateContext,
+    onUpdate: updateContext,
     extensions: [
       StarterKit,
       placeholderExtension, // Add the configured placeholder extension
@@ -43,54 +45,6 @@ function TextBox({ userId, sessionId }) {
     },
   });
 
-  // Debounce function
-  const debounce = (func, delay) => {
-    let timerId;
-    return function (...args) {
-      if (timerId) {
-        clearTimeout(timerId);
-      }
-      timerId = setTimeout(() => {
-        func.apply(this, args);
-      }, delay);
-    };
-  };
-
-  const extractData = () => {
-    if (editor) {
-      const text = editor.getHTML();
-      const plainText = text.replace(/<[^>]*>?/gm, '');
-      const sentences = plainText.split('.').map((s) => s.trim()).filter((s) => s.length > 0);
-      const extractText = `${sentences.slice(-2).join('. ')}.`;
-      setContextText(extractText);
-      setEditorText(editor.getText());
-    }
-  };
-
-  useEffect(() => {
-    extractData();
-  }, [editor]); // Run `extractData` when `editor` changes.
-
-  // only call the debounce function if the user stops typing for 2 milliseconds.
-  const debouncedExtraction = useCallback(debounce(extractData, 500), [editor]);
-
-  // keeps track of the updates to the editor content
-  useEffect(() => {
-    if (editor) {
-      // Subscribe to the update event
-      const handleUpdate = () => {
-        debouncedExtraction();
-      };
-      editor.on('update', handleUpdate);
-
-      // Return a cleanup function
-      return () => {
-        // Unsubscribe from the update event
-        editor.off('update', handleUpdate);
-      };
-    }
-  }, [editor, debouncedExtraction]);
-
   return (
     <div className="editor-container border border-gray-700 flex flex-col flex-grow mx-6 rounded-xl mb-10 overflow-hidden">
       <Tooltip id="my-tooltip" />
@@ -100,26 +54,19 @@ function TextBox({ userId, sessionId }) {
 
       {/* Toolbar */}
       <div className="toolbar flex relative justify-center mb-3 space-x-8">
-        <button type="button" aria-label="bold button" data-tooltip-id="my-tooltip" data-tooltip-content="Bold" data-tooltip-place="top" onClick={() => editor.chain().focus().toggleBold().run()}>
+        <button type="button" aria-label="bold button" data-tooltip-id="my-tooltip" data-tooltip-content="Bold" data-tooltip-place="top" onClick={() => editor?.chain().focus().toggleBold().run()}>
           <Bold />
         </button>
-        <button type="button" aria-label="italic button" data-tooltip-id="my-tooltip" data-tooltip-content="Italic" data-tooltip-place="top" onClick={() => editor.chain().focus().toggleItalic().run()}>
+        <button type="button" aria-label="italic button" data-tooltip-id="my-tooltip" data-tooltip-content="Italic" data-tooltip-place="top" onClick={() => editor?.chain().focus().toggleItalic().run()}>
           <Italic />
         </button>
-        <button type="button" aria-label="underline button" data-tooltip-id="my-tooltip" data-tooltip-content="Underline" data-tooltip-place="top" onClick={() => editor.chain().focus().toggleUnderline().run()}>
+        <button type="button" aria-label="underline button" data-tooltip-id="my-tooltip" data-tooltip-content="Underline" data-tooltip-place="top" onClick={() => editor?.chain().focus().toggleUnderline().run()}>
           <UnderlineIcon />
         </button>
-        <button type="button" aria-label="strike button" data-tooltip-id="my-tooltip" data-tooltip-content="Strike" data-tooltip-place="top" onClick={() => editor.chain().focus().toggleStrike().run()}>
+        <button type="button" aria-label="strike button" data-tooltip-id="my-tooltip" data-tooltip-content="Strike" data-tooltip-place="top" onClick={() => editor?.chain().focus().toggleStrike().run()}>
           <Strike />
         </button>
-        <div
-          aria-label="save button"
-          tabIndex="0"
-          role="button"
-          onClick={() => editor.commands.focus('end')}
-        >
-          <SaveButton />
-        </div>
+        {editor && <SaveButton editor={editor} datasetId={datasetId} initialDraft={draft} />}
       </div>
     </div>
   );

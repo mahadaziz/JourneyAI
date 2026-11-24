@@ -96,99 +96,60 @@ function InsightButton({ option, header, array }) {
   );
 }
 
-function InsightsBox({ userId, sessionId }) {
+function InsightsBox({ datasetId }) {
   const { selectedColumn } = useContext(SelectedColumnContext);
   const { hasHypothesisData } = useContext(HypothesisDataContext);
   const { insightsData, updateInsightsData } = useContext(InsightsDataContext);
-  const [previousInsights, setPreviousInsights] = useState([]);
-  const [error, setError] = useState(false);
+  const history = useRef({ column: null, values: [] });
+  const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [refresh, setRefresh] = useState(false);
-  const [selectedOption, setSelectedOption] = useState(insightsData[0]);
-  const [graphData, setGraphData] = useState([]);
-  const [options, setOptions] = useState([]);
-  const [selectedData, setSelectedData] = useState([]);
+  const [category, setSelectedOption] = useState('');
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
 
-  useEffect(() => {
-    if (!selectedColumn) {
-      setError(true);
-      return;
-    }
+  const options = Object.keys(insightsData);
+  const selectedOption = options.includes(category) ? category : options[0];
+  const selectedData = Array.isArray(insightsData[selectedOption]) ? insightsData[selectedOption] : [];
+  const graphData = selectedOption === 'graphs'
+    ? Object.entries(insightsData.graphs).map(([description, array]) => ({ description, array }))
+    : [];
 
-    setIsLoading(true); // Set loading to true before API call
-    const getInsightsData = async (prev_insights, insight_count) => {
+  useEffect(() => {
+    if (!selectedColumn) return undefined;
+    const controller = new AbortController();
+    const getInsights = async () => {
+      setIsLoading(true);
+      setError('');
       try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_LOCAL_URL}/get_insights`, {
+        const response = await fetch(`/api/datasets/${datasetId}/insights`, {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
+          headers: { 'Content-Type': 'application/json' },
+          signal: controller.signal,
           body: JSON.stringify({
             column_name: selectedColumn,
-            prev_insights,
-            insight_count,
+            prev_insights: history.current.column === selectedColumn ? history.current.values : [],
+            insight_count: 18,
           }),
         });
         const data = await response.json();
-        if (response.ok) {
-          setOptions(Object.keys(data.insights));
-          setIsLoading(false); // Stop loading after API call is complete
-          const previousData = data.prev_insights;
+        if (!response.ok) throw new Error(data.error || 'Could not load insights.');
+        if (!controller.signal.aborted) {
+          history.current = { column: selectedColumn, values: data.prev_insights };
           updateInsightsData(data.insights);
-          setPreviousInsights(previousData);
-          // Set the default selected option here, after data is fetched
-          if (!selectedOption && Object.keys(data.insights).length > 0) {
-            setSelectedOption(Object.keys(data.insights)[0]);
-          }
-        } else {
-          console.error('Failed to fetch insightsData: ', data);
         }
       } catch (err) {
-        console.error('Network error:', err);
-        return error;
+        if (!controller.signal.aborted) {
+          updateInsightsData({});
+          setError(err.message || 'Could not reach the analysis service.');
+        }
+      } finally {
+        if (!controller.signal.aborted) setIsLoading(false);
       }
     };
-    getInsightsData(previousInsights, 18);
-  }, [selectedColumn, refresh]);
-
-  useEffect(() => {
-    if (selectedOption === 'graphs' && insightsData[selectedOption]) {
-      const graphData = Object.entries(insightsData[selectedOption]).map(([description, array]) => ({
-        description,
-        array,
-      }));
-      setGraphData(graphData);
-    }
-    if (selectedOption && Array.isArray(insightsData[selectedOption])) {
-      setSelectedData(insightsData[selectedOption]);
-    } else if (selectedOption !== 'graphs') {
-      const isKey = Object.keys(insightsData).find((key) => Array.isArray(insightsData));
-      console.log(isKey);
-      if (!isKey) {
-        setSelectedOption(Object.keys(insightsData)[0]);
-      } else {
-        setSelectedData([]);
-      }
-    }
-  }, [selectedOption, insightsData]);
-
-  useEffect(() => {
-    if (selectedOption === 'graphs' && insightsData[selectedOption]) {
-      const graphData = Object.entries(insightsData[selectedOption]).map(([description, array]) => ({
-        description,
-        array,
-      }));
-      setGraphData(graphData);
-    }
-  }, [selectedOption, insightsData]);
-
-  useEffect(() => {
-    if (selectedColumn && insightsData) {
-      setOptions(Object.keys(insightsData));
-    }
-  }, [selectedColumn, insightsData]);
+    getInsights();
+    return () => controller.abort();
+  }, [datasetId, selectedColumn, refresh, updateInsightsData]);
 
   const toggleDropdown = () => setIsOpen(!isOpen);
 
@@ -303,7 +264,7 @@ function InsightsBox({ userId, sessionId }) {
               </div>
             ) : (
               <div className="text-center p-4 font-medium">
-                Select a topic to view insights.
+                {error || (selectedColumn ? 'No findings for this column.' : 'Select a column to view insights.')}
               </div>
             )}
           </div>

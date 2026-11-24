@@ -9,7 +9,6 @@ function LineGraph({
   chartData, xField, yField, title,
 }) {
   const d3Container = useRef(null);
-  const tooltipRef = useRef(null);
 
   useEffect(() => {
     if (chartData && d3Container.current) {
@@ -19,40 +18,38 @@ function LineGraph({
       }));
 
       const svg = d3.select(d3Container.current);
+      svg.selectAll('*').remove();
       const margin = {
-        top: 15, right: 0, bottom: 25, left: 30,
+        top: 44, right: 34, bottom: 48, left: 70,
       };
       const width = 700 - margin.left - margin.right;
       const height = 400 - margin.top - margin.bottom;
 
-      svg.attr('width', width + margin.left + margin.right)
-        .attr('height', height + margin.top + margin.bottom)
-        .append('g')
+      const plot = svg.append('g')
         .attr('transform', `translate(${margin.left},${margin.top})`);
 
       const x = d3.scaleLinear()
-        .domain([d3.min(data, (d) => d.xValue) - 2, d3.max(data, (d) => d.xValue) + 1])
+        .domain(d3.extent(data, (d) => d.xValue))
         .range([0, width]);
-      svg.append('g')
+      plot.append('g')
         .attr('transform', `translate(0,${height})`)
-        .call(d3.axisBottom(x).tickFormat(d3.format('d')));
+        .call(d3.axisBottom(x).ticks(Math.min(data.length - 1, 8)).tickFormat(d3.format('d')));
 
-      const yPadding = (d3.max(data, (d) => d.yValue) - d3.min(data, (d) => d.yValue)) * 0.1;
+      const yPadding = (d3.max(data, (d) => d.yValue) - d3.min(data, (d) => d.yValue)) * 0.1 || 1;
 
       const y = d3.scaleLinear()
         .domain([d3.min(data, (d) => d.yValue) - yPadding, d3.max(data, (d) => d.yValue) + yPadding])
         .range([height, 0]);
-      svg.append('g')
-        .attr('transform', `translate(${margin.left + 30},0)`)
+      plot.append('g')
         .call(d3.axisLeft(y));
 
       const line = d3.line()
         .x((d) => x(d.xValue))
         .y((d) => y(d.yValue));
 
-      const bisect = d3.bisector((d) => d.xValue).left;
+      const bisect = d3.bisector((d) => d.xValue).center;
 
-      const focus = svg
+      const focus = plot
         .append('g')
         .append('circle')
         .style('fill', 'none')
@@ -60,14 +57,14 @@ function LineGraph({
         .attr('r', 8.5)
         .style('opacity', 0);
 
-      const focusText = svg
+      const focusText = plot
         .append('g')
         .append('text')
         .style('opacity', 0)
-        .attr('text-anchor', 'left')
+        .attr('text-anchor', 'start')
         .attr('alignment-baseline', 'middle');
 
-      svg.append('path')
+      plot.append('path')
         .datum(data)
         .attr('fill', 'none')
         .attr('stroke', 'steelblue')
@@ -94,7 +91,7 @@ function LineGraph({
             .attr('cx', x(data[i].xValue))
             .attr('cy', y(data[i].yValue));
           focusText
-            .html(`x:${data[i].xValue}  -  y:${data[i].yValue.toFixed(3)}`)
+            .text(`${data[i].xValue}: ${data[i].yValue.toFixed(2)}`)
             .attr('x', xPosition)
             .attr('y', y(data[i].yValue));
         }
@@ -105,7 +102,7 @@ function LineGraph({
         focusText.style('opacity', 0);
       };
 
-      svg.append('rect')
+      plot.append('rect')
         .style('fill', 'none')
         .style('pointer-events', 'all')
         .attr('width', width)
@@ -114,34 +111,31 @@ function LineGraph({
         .on('mousemove', mousemove)
         .on('mouseout', mouseout);
 
-      svg.append('text')
-        .attr('text-anchor', 'end')
-        .attr('x', width / 2 + margin.left + 20)
-        .attr('y', height + margin.top + 20)
+      plot.append('text')
+        .attr('text-anchor', 'middle')
+        .attr('x', width / 2)
+        .attr('y', height + 38)
         .text(xField);
 
-      svg.append('text')
-        .attr('text-anchor', 'end')
+      plot.append('text')
+        .attr('text-anchor', 'middle')
         .attr('transform', 'rotate(-90)')
-        .attr('y', -margin.left + 47)
-        .attr('x', -margin.top + 10)
+        .attr('y', -margin.left + 15)
+        .attr('x', -height / 2)
         .text(yField);
 
-      svg.append('text')
-        .attr('x', ((width + 30) / 2))
-        .attr('y', margin.top)
+      plot.append('text')
+        .attr('x', width / 2)
+        .attr('y', -20)
         .attr('text-anchor', 'middle')
         .style('font-size', '16px')
-        .style('text-decoration', 'underline')
+        .style('font-weight', '600')
         .text(title);
     }
-  }, [chartData]);
+  }, [chartData, xField, yField, title]);
 
   return (
-    <>
-      <svg ref={d3Container} />
-      <div ref={tooltipRef} />
-    </>
+    <svg ref={d3Container} role="img" aria-label={title} viewBox="0 0 700 400" width="700" style={{ maxWidth: '75vw', height: 'auto' }} />
   );
 }
 

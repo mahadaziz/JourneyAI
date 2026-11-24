@@ -4,7 +4,9 @@ import React, { useEffect, useState, useRef } from 'react';
 import HypothesisBox from './HypothesisBox';
 import InsightsBox from './InsightsBox';
 
-function ToggleButton() {
+function ToggleButton({
+  datasetId, datasetName, userId, sessionId,
+}) {
   const [isOpen, setIsOpen] = useState(false);
 
   const toggleDropdown = () => setIsOpen(!isOpen);
@@ -46,10 +48,17 @@ function ToggleButton() {
         <div className="overflow-y-auto">
           <ul className="space-y-2 font-medium">
             <li>
-              <HypothesisBox />
+              {isOpen && (
+                <HypothesisBox
+                  datasetId={datasetId}
+                  datasetName={datasetName}
+                  userId={userId}
+                  sessionId={sessionId}
+                />
+              )}
             </li>
             <li>
-              <InsightsBox />
+              {isOpen && <InsightsBox datasetId={datasetId} />}
             </li>
           </ul>
         </div>

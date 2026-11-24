@@ -1,0 +1,19 @@
+model year,vehicle class,Engine size (L),Fuel consumption inside cities (l/100km)
+2018,Compact,1.6,8.3
+2018,Sedan,2.4,10.2
+2018,SUV,3.5,13.4
+2019,Compact,1.5,8.1
+2019,Sedan,2.3,10.0
+2019,SUV,3.5,13.1
+2020,Compact,1.5,7.7
+2020,Sedan,2.2,9.7
+2020,SUV,3.2,12.8
+2021,Compact,1.4,7.8
+2021,Sedan,2.1,9.3
+2021,SUV,3.0,12.3
+2022,Compact,1.4,7.2
+2022,Sedan,2.0,9.1
+2022,SUV,2.9,12.4
+2023,Compact,1.3,7.0
+2023,Sedan,1.9,8.8
+2023,SUV,2.8,11.8

@@ -5,11 +5,10 @@ import React, {
 } from 'react';
 import { SelectedColumnContext } from '../context/SelectedColumnContext';
 
-function OptionsMenu({ sessionId }) {
+function OptionsMenu({ columns }) {
   // State to keep track of whether the dropdown is open
   const [isOpen, setIsOpen] = useState(false);
   const { selectedColumn, setSelectedColumn } = useContext(SelectedColumnContext);
-  const [dataColumns, setDataColumns] = useState([]);
   const dropdownRef = useRef(null);
 
   // Function to toggle the dropdown state
@@ -38,38 +37,6 @@ function OptionsMenu({ sessionId }) {
     };
   }, [dropdownRef]);
 
-  useEffect(() => {
-    // call API for all options in the dropdown menu
-    // use the setValue function to set the selected column
-    const getColumnNames = async () => {
-      try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_LOCAL_URL}/get_column_names`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-          }),
-        });
-        const data = await response.json();
-
-        // Check if the response is ok
-        if (response.ok) {
-          // Capitalize first letter of each element in the array
-          const dataColumns = await data.column_names.map((column) => column);
-          setDataColumns(dataColumns);
-        } else {
-          // Handle HTTP errors
-          console.error('Failed to fetch:', data);
-        }
-      } catch (error) {
-        // Handle network errors
-        console.error('Network error:', error);
-      }
-    };
-    getColumnNames();
-  }, []);
-
   return (
     <div className="relative" ref={dropdownRef}>
       <button
@@ -93,7 +60,7 @@ function OptionsMenu({ sessionId }) {
 
       <div className={`z-50 ${isOpen ? 'opacity-100 visible' : 'opacity-0 invisible'} transition ease-in-out duration-300 absolute rounded-xl bg-white divide-y divide-gray-100 shadow w-full dark:bg-gray-800`}>
         <ul className="py-2 text-sm text-gray-700 dark:text-gray-200" aria-labelledby="dropdownDefaultButton">
-          {dataColumns.map((column, index) => (
+          {columns.map((column, index) => (
             <li key={index}>
               <button type="button" onClick={() => setValue(column)} href="#" className="flex w-full justify-start px-4 py-2 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 dark:hover:text-white">{column}</button>
             </li>

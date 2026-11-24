@@ -3,7 +3,7 @@ import { getServerSession } from 'next-auth';
 import { redirect } from 'next/navigation';
 import { authOptions } from '../../api/auth/[...nextauth]/route';
 import HomeSideNav from '../../../components/HomeSideNav';
-import SearchBar from '../../../components/SearchBar';
+import { connectMongoDB } from '../../../../lib/mongodb';
 import UserCard from '../../../components/UserCard';
 import OpenHomeSideNav from '../../../components/OpenHomeSideNav';
 import ThemeSwitcher from '../../../components/ThemeSwitcher';
@@ -11,13 +11,19 @@ import '../../globals.css';
 
 export default async function Page() {
   const session = await getServerSession(authOptions);
-  if (!session) {
+  if (!session?.userId) {
     redirect('/login');
   }
-  // Array simulating data from the database
-  const cardsData = [
-    { title: 'The Consumption of Cars during the years', description: 'Here are the biggest enterprise technology acquisitions of 2021 so far, in reverse chronological order. Here are the biggest enterprise technology acquisitions of 2021 so far, in reverse chronological order. Here are the biggest enterprise technology acquisitions of 2021 so far, in reverse chronological order.', isUploadCard: false },
-  ];
+  const { connection } = await connectMongoDB();
+  const owner = { user_id: session.userId };
+  const savedDrafts = { ...owner, revision: { $gt: 0 } };
+  const titlesOnly = { projection: { dataset_id: 1, title: 1 } };
+  const [datasets, drafts] = await Promise.all([
+    connection.collection('datasets').find(owner, { projection: { title: 1, column_names: 1 } })
+      .sort({ _id: -1 }).toArray(),
+    connection.collection('documents').find(savedDrafts, titlesOnly).toArray(),
+  ]);
+  const titles = new Map(drafts.map((draft) => [draft.dataset_id, draft.title]));
 
   return (
     <div className="h-screen flex bg-bgGrey text-black">
@@ -40,18 +46,15 @@ export default async function Page() {
         </div>
         <div className="col-span-5 md:col-span-4 lg:col-span-4 xl:col-span-5 p-12 overflow-auto homepage delayAnimation">
           <div className="flex flex-col md:grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {cardsData.map((card) => (
-              <div key={card.title}>
-                <UserCard
-                  title={card.title}
-                  description={card.description}
-                  isUploadCard={card.isUploadCard}
-                  sessionId={card.sessionId}
-                  userId={card.userId}
-                />
-              </div>
+            {datasets.map((dataset) => (
+              <UserCard
+                key={dataset._id.toString()}
+                datasetId={dataset._id.toString()}
+                title={titles.get(dataset._id.toString()) ?? dataset.title}
+                description={dataset.column_names.join(', ')}
+              />
             ))}
-            <UserCard title="Upload Dataset" description="" isUploadCard sessionId={session.sessionId} userId={session.userId} />
+            <UserCard title="Upload Dataset" description="" isUploadCard />
           </div>
         </div>
       </section>

@@ -1,3 +1,4 @@
+import os
 from flask import Flask, jsonify, request, session, redirect
 from application import db
 import bcrypt, datetime, uuid, json, random
@@ -46,6 +47,7 @@ class insights:
     all_insights = {}
     # Function to get outliers templates
     
+    @staticmethod
     def is_year_or_date_column(column, column_name):
         date_time_keywords = ['year', 'date', 'time', 'month', 'day']
 
@@ -59,27 +61,19 @@ class insights:
         #     pass
         return False
 
-    cursor = db['cars'].find()
-    df = pd.DataFrame(iter(cursor))
-    df = df.drop(['_id'], axis=1)
-
-    #global NUMERICAL_COLUMNS, CATEGORICAL_COLUMNS, DATE_LIKE_COLUMNS
-
-    NUMERICAL_COLUMNS = df.select_dtypes(include=['int64', 'float64']).columns.tolist()
-    CATEGORICAL_COLUMNS = df.select_dtypes(include=['object', 'category']).columns.tolist()
-    DATE_LIKE_COLUMNS = []
-
-    for col in df.columns:
-        if is_year_or_date_column(df[col], col):
-            DATE_LIKE_COLUMNS.append(col)
-            if col in NUMERICAL_COLUMNS:
-                NUMERICAL_COLUMNS.remove(col)
-            if col in CATEGORICAL_COLUMNS:
-                CATEGORICAL_COLUMNS.remove(col)
+    def __init__(self, rows):
+        df = pd.DataFrame(rows).drop(columns=['_id'], errors='ignore')
+        df = df.replace([np.inf, -np.inf], np.nan).dropna(axis=1, how='all')
+        for col in df.select_dtypes(exclude='number'):
+            df[col] = df[col].map(str, na_action='ignore')
+        self.data = df
+        self.DATE_LIKE_COLUMNS = [col for col in df if self.is_year_or_date_column(df[col], col)]
+        remaining = df.drop(columns=self.DATE_LIKE_COLUMNS)
+        self.NUMERICAL_COLUMNS = remaining.select_dtypes(include=['int64', 'float64']).columns.tolist()
+        self.CATEGORICAL_COLUMNS = remaining.select_dtypes(include=['object', 'category']).columns.tolist()
 
     def get_outliers(self, column_name):
-        cursor = db['cars'].find()
-        df = pd.DataFrame(iter(cursor))
+        df = self.data
 
         # Combine categorical and date-like columns for analysis
         combined_categorical_columns = self.CATEGORICAL_COLUMNS + self.DATE_LIKE_COLUMNS
@@ -141,8 +135,7 @@ class insights:
     # Function to get trends templates
 
     def get_trends(self, column_name):
-        cursor = db['cars'].find()
-        df = pd.DataFrame(iter(cursor))
+        df = self.data
 
         insights = []
 
@@ -170,8 +163,12 @@ class insights:
                     insights.append(f"From {curr_segment} to {next_segment} in {column_name}, {num_col} shows a {segment_trend} trend.")
 
                 for cat_col in self.CATEGORICAL_COLUMNS:
-                    curr_seg_most = df_sorted[df_sorted[column_name] == curr_segment][cat_col].value_counts().idxmax()
-                    next_seg_most = df_sorted[df_sorted[column_name] == next_segment][cat_col].value_counts().idxmax()
+                    current_counts = df_sorted[df_sorted[column_name] == curr_segment][cat_col].value_counts()
+                    next_counts = df_sorted[df_sorted[column_name] == next_segment][cat_col].value_counts()
+                    if current_counts.empty or next_counts.empty:
+                        continue
+                    curr_seg_most = current_counts.idxmax()
+                    next_seg_most = next_counts.idxmax()
                     
                     if curr_seg_most != next_seg_most:
                         insights.append(f"From {curr_segment} to {next_segment} in {column_name}, the most frequent {cat_col} goes from {curr_seg_most} to {next_seg_most}.")
@@ -237,13 +234,12 @@ class insights:
         # Trend Analysis for Categorical Columns
         elif column_name in self.CATEGORICAL_COLUMNS:
             for date_col in self.DATE_LIKE_COLUMNS:
-                grouped_data = df.groupby([date_col, column_name]).size().reset_index(name='count')
-                sorted_grouped_data = grouped_data.sort_values(by=date_col)
-
                 prev_most_freq_category = None
-                for _, group in sorted_grouped_data.groupby(date_col):
-                    current_date = group[date_col].iloc[0]
-                    most_freq_category = group.loc[group['count'].idxmax()][column_name]
+                for current_date, group in df.groupby(date_col):
+                    counts = group[column_name].value_counts()
+                    if counts.empty:
+                        continue
+                    most_freq_category = counts.idxmax()
 
                     if most_freq_category != prev_most_freq_category:
                         if prev_most_freq_category is not None:
@@ -257,8 +253,7 @@ class insights:
     # Function to get distributions templates
 
     def get_distributions(self, column_name):
-        cursor = db['cars'].find()
-        df = pd.DataFrame(iter(cursor))
+        df = self.data
 
         insights = []
 
@@ -273,7 +268,7 @@ class insights:
                 skew_type = "very positively (right)"
                 insights.append(f"{column_name} was found to be {skew_type} skewed, indicating that few unusually large values above the average may be having a large impact.")
                 threshold = non_null_data.mean() + 2 * non_null_data.std()   
-            elif column_skewness < 0.5: 
+            elif column_skewness < -0.5:
                 skew_type = "very negatively (left)"
                 insights.append(f"{column_name} was found to be {skew_type} skewed, indicating that few unusually small values below the average may be having a large impact.")
                 threshold = non_null_data.mean() - 2 * non_null_data.std()
@@ -286,7 +281,7 @@ class insights:
                         col_max = df.loc[df[column_name] > threshold, col].dropna()
                         for val in col_max.unique():
                             insights.append(f'The value in {col} that could be leading to a positive skew in {column_name} is {val}.')
-                    elif column_skewness < 0.5:
+                    elif column_skewness < -0.5:
                         col_min = df.loc[df[column_name] < threshold, col].dropna()
                         for val in col_min.unique():
                             insights.append(f'The value in {col} that could be leading to a negative skew in {column_name} is {val}.')
@@ -294,8 +289,7 @@ class insights:
 
     # Function to get basic stats templates
     def get_basic_stats(self, column_name):
-        cursor = db['cars'].find()
-        df = pd.DataFrame(iter(cursor))
+        df = self.data.copy()
         numerical_columns = df.select_dtypes(include=['int64', 'float64']).columns.tolist()
         categorical_columns = df.select_dtypes(include=['object', 'category', 'datetime64']).columns.tolist()
         categorical_columns = [ name for name in  categorical_columns if name != '_id' ]
@@ -340,8 +334,12 @@ class insights:
                 insights += ['The total ' + column_name + ' in this dataset, is equal to ' + str(df[column_name].sum())]
 
         if column_name in categorical_columns:
+            counts = df[column_name].value_counts()
+            if not counts.empty:
+                insights.append(f"The most frequent value in {column_name} is {counts.index[0]} ({counts.iloc[0]} records).")
             for numerical_column in numerical_columns:
-                # avg = df[numerical_column].mean()
+                if df[[column_name, numerical_column]].dropna().empty:
+                    continue
                 if numerical_column in units.keys():
                     category = df.loc[df[numerical_column].idxmax()][column_name]
                     insights += [f'The record with maximum {numerical_column} happens when the {column_name} is {int(category) if isinstance(category, float) else category}, in this case the {numerical_column} is equal to {df.loc[df[numerical_column].idxmax()][numerical_column]} {units[numerical_column]}']
@@ -364,7 +362,9 @@ class insights:
                     category = amean.loc[amean[numerical_column].idxmin()][column_name]
                     insights += [f'The {column_name} with the lowest average {numerical_column} is {int(category) if isinstance(category, float) else category}, the lowest average is {amean.loc[amean[numerical_column].idxmin()][numerical_column]} {units[numerical_column]}']
 
-                    std = df.groupby(column_name)[numerical_column].std().reset_index()
+                    std = df.groupby(column_name)[numerical_column].std().dropna().reset_index()
+                    if std.empty:
+                        continue
                     category = std.loc[std[numerical_column].idxmax()][column_name]
                     insights += [f'The {column_name} with the highest standard deviation in {numerical_column} is {int(category) if isinstance(category, float) else category}, the standard deviation is {std.loc[std[numerical_column].idxmax()][numerical_column]:.2f} {units[numerical_column]}']
 
@@ -391,7 +391,9 @@ class insights:
                     category = amean.loc[amean[numerical_column].idxmin()][column_name]
                     insights += [f'The {column_name} with the lowest average {numerical_column} is {int(category) if isinstance(category, float) else category}, the lowest average is {amean.loc[amean[numerical_column].idxmin()][numerical_column]}']
 
-                    std = df.groupby(column_name)[numerical_column].std().reset_index()
+                    std = df.groupby(column_name)[numerical_column].std().dropna().reset_index()
+                    if std.empty:
+                        continue
                     category = std.loc[std[numerical_column].idxmax()][column_name]
                     insights += [f'The {column_name} with the highest standard deviation in {numerical_column} is {int(category) if isinstance(category, float) else category}, the standard deviation is {std.loc[std[numerical_column].idxmax()][numerical_column]:.2f}']
 
@@ -403,8 +405,7 @@ class insights:
 
     # Function to get rank templates
     def get_rank(self, column_name):
-        cursor = db['cars'].find()
-        df = pd.DataFrame(iter(cursor))
+        df = self.data
 
         insights = []
 
@@ -439,8 +440,7 @@ class insights:
 
     # Function to get associations templates
     def get_associations(self, column_name):
-        cursor = db['cars'].find()
-        df = pd.DataFrame(iter(cursor))
+        df = self.data
 
         insights = []
 
@@ -463,6 +463,8 @@ class insights:
             # Association with Categorical Columns
             for cat_col in self.CATEGORICAL_COLUMNS:
                 category_means = df.groupby(cat_col)[column_name].mean()
+                if category_means.dropna().empty:
+                    continue
                 highest_mean_category = category_means.idxmax()
                 lowest_mean_category = category_means.idxmin()
                 insights.append(f"There's a notable association between '{column_name}' and '{cat_col}', where '{highest_mean_category}' consistently aligns with higher values and '{lowest_mean_category}' with lower values.")
@@ -472,6 +474,8 @@ class insights:
             for num_col in self.NUMERICAL_COLUMNS:
                 valid_data = df.dropna(subset=[column_name, num_col])
                 category_means = valid_data.groupby(column_name)[num_col].mean()
+                if category_means.empty:
+                    continue
                 top_category = category_means.idxmax()
                 insights.append(f"Analysis shows that different categories in '{column_name}' have significantly different average values in {num_col}, particularly {top_category} with the highest average.")
 
@@ -484,6 +488,8 @@ class insights:
             for cat_col in self.CATEGORICAL_COLUMNS:
                 if cat_col != column_name:
                     contingency_table = pd.crosstab(df[column_name], df[cat_col])
+                    if contingency_table.empty:
+                        continue
                     top_combination = contingency_table.unstack().idxmax()
                     insights.append(f"Certain combinations of categories from '{column_name}' and '{cat_col}' occur more frequently than others, especially between '{top_combination[0]}' and '{top_combination[1]}'.")
 
@@ -494,9 +500,9 @@ class insights:
         import random
         insights = {}
         def datetime_numerical_graph_insights (column_name,col):
-            cursor = (db.cars.find({col : {'$ne': 0}},{'_id': 0, column_name: 1, col: 1}))
-            df = pd.DataFrame(iter(cursor))
-            df.sort_values(by=column_name, inplace=True)
+            df = self.data.loc[self.data[col] != 0, [column_name, col]].dropna().sort_values(column_name)
+            if df[column_name].nunique() < 2:
+                return
                             
             asum = df.groupby(column_name)[col].sum().reset_index()
             slope, _, _, _, _ = linregress(asum[column_name], asum[col])                
@@ -646,8 +652,7 @@ class insights:
         if column_name in self.CATEGORICAL_COLUMNS:
             for col in self.NUMERICAL_COLUMNS:
                 
-                cursor = (db.cars.find({col : {'$ne': 0}},{'_id': 0, column_name: 1, col: 1}))
-                df = pd.DataFrame(iter(cursor)).dropna()
+                df = self.data.loc[self.data[col] != 0, [column_name, col]].dropna()
                 asum = df.groupby(column_name)[col].sum().reset_index().sort_values(by=col, ascending=True)
                 med = len(asum) // 2
                 if len(asum) > 11:
@@ -764,185 +769,37 @@ class insights:
                 datetime_numerical_graph_insights (col,column_name)
             for col in self.NUMERICAL_COLUMNS:
                 if col != column_name:
-                    cursor = (db.cars.find({col : {'$ne': 0}, column_name : {'$ne': 0}},{'_id': 0, column_name: 1, col: 1}))
-                    df = pd.DataFrame(iter(cursor))
-                    df.dropna(inplace=True)
-                    if len(df) > 0:
-                        correlation = df[[column_name, col]].corr().iloc[0, 1]
-                        
-                        Q1 = df[col].quantile(0.25)
-                        Q3 = df[col].quantile(0.75)
-                        IQR = Q3 - Q1
-                        col_lower_bound = Q1 - (1.5 * IQR)
-                        col_upper_bound = Q3 + (1.5 * IQR)
-                        
-                        Q1 = df[column_name].quantile(0.25)
-                        Q3 = df[column_name].quantile(0.75)
-                        IQR = Q3 - Q1
-                        column_name_lower_bound = Q1 - (1.5 * IQR)
-                        column_name_upper_bound = Q3 + (1.5 * IQR)
-                        df['is_outlier'] = (df[column_name] > column_name_upper_bound) | (df[column_name] < column_name_lower_bound )| (df[col] > col_upper_bound ) | (df[col] < col_lower_bound) 
-                        
-                        slope, intercept, _, _, _ = linregress(df[column_name], df[col])
-                        df['expected'] = slope*df[column_name] + intercept
-                        
-                        above_curve = len(df[(df['is_outlier'] == True) & (df[col] > df['expected'])])
-                        below_curve = len(df[(df['is_outlier'] == True) & (df[col] < df['expected'])])
-                        correlation_value = ''
-                        if abs(correlation) > 0.5:
-                            correlation_value = 'strong'
-                        else:
-                            correlation_value = 'weak'
-                            
-                        if correlation == 0:
-                            correlation_value = 'no correlation'
-                        elif correlation > 0:
-                            correlation_value += ' positive correlation'
-                        else:
-                            correlation_value += ' negative correlation'
-                        if above_curve + below_curve > 0:
-                            insights[f"When looking at instances where both '{col}' and '{column_name}' are non-zero, the correlation value is approximately {correlation:.2f}. This indicates that there is {correlation_value} between the two columns when taking into account records where both columns are non-zero. It is estimated that there are/is {above_curve} outliers above the expected line and {below_curve} outliers below the expected line"] = ['scatter',column_name , col,f'Non-Zero {column_name}' ,f'Non-Zero {col}', df[[column_name,col]].to_dict('records')]
+                    pair = self.data[[column_name, col]].dropna()
+                    nonzero = pair[(pair != 0).all(axis=1)]
 
-                        else:
-                            insights[f"When looking at instances where both '{col}' and '{column_name}' are non-zero, the correlation value is approximately {correlation:.2f}. This indicates that there is {correlation_value} between the two columns when taking into account records where both columns are non-zero."] = ['scatter',column_name , col,f'Non-Zero {column_name}' ,f'Non-Zero {col}', df[[column_name,col]].to_dict('records')]
-                
-                        
+                    def add_scatter(points, x_label, y_label):
+                        if points[column_name].nunique() < 2 or points[col].nunique() < 2:
+                            return
+                        correlation = points[column_name].corr(points[col])
+                        slope, intercept, *_ = linregress(points[column_name], points[col])
+                        q1, q3 = points.quantile(0.25), points.quantile(0.75)
+                        spread = 1.5 * (q3 - q1)
+                        outliers = points[((points < q1 - spread) | (points > q3 + spread)).any(axis=1)]
+                        expected = slope * outliers[column_name] + intercept
+                        above = int((outliers[col] > expected).sum())
+                        below = int((outliers[col] < expected).sum())
+                        description = f"The correlation between {x_label} and {y_label} is {correlation:.2f}."
+                        if above or below:
+                            description += f" Of the outliers, {above} fall above the fitted line and {below} below."
+                        insights[description] = [
+                            'scatter', column_name, col, x_label, y_label, points.to_dict('records'),
+                        ]
+
+                    add_scatter(nonzero, f'Non-Zero {column_name}', f'Non-Zero {col}')
                     for datecol in self.DATE_LIKE_COLUMNS:
-                        cursor = (db.cars.find({},{'_id': 0, column_name: 1, col: 1, datecol:1}))
-                        df = pd.DataFrame(iter(cursor))    
-                        data = df.groupby(datecol).sum().reset_index().sort_values(by=datecol)
-                        
-                        
-                        correlation = data[[column_name, col]].corr().iloc[0, 1]
-                    
-                        Q1 = data[col].quantile(0.25)
-                        Q3 = data[col].quantile(0.75)
-                        IQR = Q3 - Q1
-                        col_lower_bound = Q1 - (1.5 * IQR)
-                        col_upper_bound = Q3 + (1.5 * IQR)
-                        
-                        Q1 = data[column_name].quantile(0.25)
-                        Q3 = data[column_name].quantile(0.75)
-                        IQR = Q3 - Q1
-                        column_name_lower_bound = Q1 - (1.5 * IQR)
-                        column_name_upper_bound = Q3 + (1.5 * IQR)
-                        data['is_outlier'] = (data[column_name] > column_name_upper_bound) | (data[column_name] < column_name_lower_bound )| (data[col] > col_upper_bound ) | (data[col] < col_lower_bound) 
-                        
-                        slope, intercept, _, _, _ = linregress(data[column_name], data[col])
-                        data['expected'] = slope*data[column_name] + intercept
-                        
-                        above_curve = len(data[(data['is_outlier'] == True) & (data[col] > data['expected'])])
-                        below_curve = len(data[(data['is_outlier'] == True) & (data[col] < data['expected'])])
-                        correlation_value = ''
-                        if abs(correlation) > 0.5:
-                            correlation_value = 'strong'
-                        else:
-                            correlation_value = 'weak'
-                            
-                        if correlation == 0:
-                            correlation_value = 'no correlation'
-                        elif correlation > 0:
-                            correlation_value += ' positive correlation'
-                        else:
-                            correlation_value += ' negative correlation'
-                                    
-                        if above_curve + below_curve > 0:
-                            insights[f"When taking the sum of '{col}' and '{column_name}' across {datecol}, the correlation value is approximately {correlation:.2f}. This indicates that there is {correlation_value} between the two columns when comparing their sum over an ordered '{datecol}' column. It is estimated that there are/is {above_curve} outliers above the expected line and {below_curve} outliers below the expected line"] = ['scatter',column_name , col,f'Sum of {column_name} over {datecol}' ,f'Sum of {col} over {datecol}', data[[column_name,col]].to_dict('records')]
+                        values = self.data[[datecol, column_name, col]].dropna()
+                        grouped = values.groupby(datecol)[[column_name, col]]
+                        counts = values[[column_name, col]].ne(0).groupby(values[datecol]).sum()
+                        for label, points in [('Sum', grouped.sum()), ('Average', grouped.mean()),
+                                              ('Frequency of recorded entries', counts)]:
+                            add_scatter(points, f'{label} of {column_name} over {datecol}',
+                                        f'{label} of {col} over {datecol}')
 
-                        else:
-                            insights[f"When taking the sum of '{col}' and '{column_name}' across {datecol}, the correlation value is approximately {correlation:.2f}. This indicates that there is {correlation_value} between the two columns when comparing their sum over an ordered '{datecol}' column."] = ['scatter',column_name , col,f'Sum of {column_name} over {datecol}' ,f'Sum of {col} over {datecol}', data[[column_name,col]].to_dict('records')]
-
-
-
-                        data = df.groupby(datecol).mean().reset_index().sort_values(by=datecol)
-                        
-                        
-                        correlation = data[[column_name, col]].corr().iloc[0, 1]
-                    
-                        Q1 = data[col].quantile(0.25)
-                        Q3 = data[col].quantile(0.75)
-                        IQR = Q3 - Q1
-                        col_lower_bound = Q1 - (1.5 * IQR)
-                        col_upper_bound = Q3 + (1.5 * IQR)
-                        
-                        Q1 = data[column_name].quantile(0.25)
-                        Q3 = data[column_name].quantile(0.75)
-                        IQR = Q3 - Q1
-                        column_name_lower_bound = Q1 - (1.5 * IQR)
-                        column_name_upper_bound = Q3 + (1.5 * IQR)
-                        data['is_outlier'] = (data[column_name] > column_name_upper_bound) | (data[column_name] < column_name_lower_bound )| (data[col] > col_upper_bound ) | (data[col] < col_lower_bound) 
-                        
-                        slope, intercept, _, _, _ = linregress(data[column_name], data[col])
-                        data['expected'] = slope*data[column_name] + intercept
-                        
-                        above_curve = len(data[(data['is_outlier'] == True) & (data[col] > data['expected'])])
-                        below_curve = len(data[(data['is_outlier'] == True) & (data[col] < data['expected'])])
-                        correlation_value = ''
-                        if abs(correlation) > 0.5:
-                            correlation_value = 'strong'
-                        else:
-                            correlation_value = 'weak'
-                            
-                        if correlation == 0:
-                            correlation_value = 'no correlation'
-                        elif correlation > 0:
-                            correlation_value += ' positive correlation'
-                        else:
-                            correlation_value += ' negative correlation'
-                                    
-                        if above_curve + below_curve > 0:
-                            insights[f"When taking the average of '{col}' and '{column_name}' across {datecol}, the correlation value is approximately {correlation:.2f}. This indicates that there is {correlation_value} between the two columns when comparing their average over an ordered '{datecol}' column. It is estimated that there are/is {above_curve} outliers above the expected line and {below_curve} outliers below the expected line"] = ['scatter',column_name , col,f'Average {column_name} over {datecol}' ,f'Average {col} over {datecol}', data[[column_name,col]].to_dict('records')]
-
-                        else:
-                            insights[f"When taking the average of '{col}' and '{column_name}' across {datecol}, the correlation value is approximately {correlation:.2f}. This indicates that there is {correlation_value} between the two columns when comparing their average over an ordered '{datecol}' column."] = ['scatter',column_name , col,f'Average {column_name} over {datecol}' ,f'Average {col} over {datecol}', data[[column_name,col]].to_dict('records')]
-
-                        
-                        def get_nonzero_count(x):
-                            return (x.dropna() != 0).sum()
-                        data = df.groupby(datecol).agg({column_name: lambda x: get_nonzero_count(x), col: lambda x: get_nonzero_count(x)}).reset_index().sort_values(by=datecol)
-                        
-                        correlation = data[[column_name, col]].corr().iloc[0, 1]
-                    
-                        Q1 = data[col].quantile(0.25)
-                        Q3 = data[col].quantile(0.75)
-                        IQR = Q3 - Q1
-                        col_lower_bound = Q1 - (1.5 * IQR)
-                        col_upper_bound = Q3 + (1.5 * IQR)
-                        
-                        Q1 = data[column_name].quantile(0.25)
-                        Q3 = data[column_name].quantile(0.75)
-                        IQR = Q3 - Q1
-                        column_name_lower_bound = Q1 - (1.5 * IQR)
-                        column_name_upper_bound = Q3 + (1.5 * IQR)
-                        data['is_outlier'] = (data[column_name] > column_name_upper_bound) | (data[column_name] < column_name_lower_bound )| (data[col] > col_upper_bound ) | (data[col] < col_lower_bound) 
-                        
-                        slope, intercept, _, _, _ = linregress(data[column_name], data[col])
-                        data['expected'] = slope*data[column_name] + intercept
-                        
-                        above_curve = len(data[(data['is_outlier'] == True) & (data[col] > data['expected'])])
-                        below_curve = len(data[(data['is_outlier'] == True) & (data[col] < data['expected'])])
-                        correlation_value = ''
-                        if abs(correlation) > 0.5:
-                            correlation_value = 'strong'
-                        else:
-                            correlation_value = 'weak'
-                            
-                        if correlation == 0:
-                            correlation_value = 'no correlation'
-                        elif correlation > 0:
-                            correlation_value += ' positive correlation'
-                        else:
-                            correlation_value += ' negative correlation'
-                                    
-                        if above_curve + below_curve > 0:
-                            insights[f"When taking the frequency of non-zero entries of '{col}' and '{column_name}' across {datecol}, the correlation value is approximately {correlation:.2f}. This indicates that there is {correlation_value} between the two columns when comparing their frequency of non-zero entries over an ordered '{datecol}' column. It is estimated that there are/is {above_curve} outliers above the expected line and {below_curve} outliers below the expected line"] = ['scatter',column_name , col,f'Frequency of recorded entries for {column_name} over {datecol}' ,f'Frequency of recorded entries for {col} over {datecol}', data[[column_name,col]].to_dict('records')]
-
-                        else:
-                            insights[f"When taking the frequency of non-zero entries of '{col}' and '{column_name}' across {datecol}, the correlation value is approximately {correlation:.2f}. This indicates that there is {correlation_value} between the two columns when comparing their frequency of non-zero entries over an ordered '{datecol}' column."] = ['scatter',column_name , col,f'Frequency of recorded entries for {column_name} over {datecol}' ,f'Frequency of recorded entries for {col} over {datecol}', data[[column_name,col]].to_dict('records')]
-
-
-                                
-                        
         return dict(random.sample(list(insights.items()), min(insight_count, len(insights))))                
     
     def generate_insights(self, column_name, prev_insights, insight_count):
@@ -979,33 +836,7 @@ class insights:
         output =  {k: v for k, v in output.items() if v != [] and v != {}}      
         return jsonify({'insights' : output, 'prev_insights' : prev_insights, 'count' : new_insights_count})
             
-    def get_insights(self):
-        column_name = request.json.get('column_name')
-        prev_insights = request.json.get('prev_insights')
-        insight_count = request.json.get('insight_count')
-        
-        if not prev_insights:
-            prev_insights = []
-  
-        return self.generate_insights(column_name, prev_insights, insight_count)
-        
-        
 class hypothesis:
-    def create_history (self, column_name, dataset_name, user_id, history):
-        document = {
-        'column_name' : column_name,
-        'dataset_name' : dataset_name,
-        'user_id' : user_id,
-        'history' : history
-        }
-        query = {'column_name': column_name, 'dataset_name' : dataset_name, 'user_id': user_id}
-        if db['hypothesis_history'].find_one(query) is None:
-            db['hypothesis_history'].insert_one(document)
-        else:
-            update_operation = {'$set': {'history': history}}
-            db['hypothesis_history'].update_one(query, update_operation)
-
-
     def get_hypothesis(self):
         # Get all variables
         column_name = request.json.get('column_name')
@@ -1018,19 +849,21 @@ class hypothesis:
         insights_used = []
         hypo_id = {}
         # HuggingFace credentials
-        API_URL = "https://api-inference.huggingface.co/models/tiiuae/falcon-7b-instruct"
-        headers = {"Authorization": "Bearer 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"}
+        api_url = os.getenv("HF_INFERENCE_URL") or "https://api-inference.huggingface.co/models/tiiuae/falcon-7b-instruct"
+        token = os.getenv("HF_TOKEN")
+        if not token:
+            return jsonify({"error": "Hypothesis generation is not configured."}), 503
+        headers = {"Authorization": f"Bearer {token}"}
         
         def query_ai(payload):
-            response = requests.post(API_URL, headers=headers, json=payload)
+            response = requests.post(api_url, headers=headers, json=payload, timeout=30)
             return response.json()
         
         # get history variable if it exists, else make new history
-        query = {'column_name': column_name, 'dataset_name' : dataset_name, 'user_id': user_id}
-        if db['hypothesis_history'].find_one(query) is not None:
-            history = db['hypothesis_history'].find_one(query)['history']
-        else : 
-            history = []
+        query = {'column_name': column_name, 'dataset_name': dataset_name, 'user_id': user_id,
+                 'dataset_id': request.json.get('dataset_id')}
+        previous = db.hypothesis_history.find_one(query)
+        history = previous['history'] if previous else []
 
         # check if context is not empty
         if context and context != ".":
@@ -1062,7 +895,7 @@ class hypothesis:
                     'Thumbs_Down': False,
                     'column_name' : column_name,
                     'user_id' : user_id,
-                    'dataset_name' : dataset_name,
+                    'dataset_name' : dataset_name, 'dataset_id': query['dataset_id'],
                     'date_created' : datetime.datetime.utcnow()
                 } 
                 db['Hypothesis_logs'].insert_one(hypoSummary)
@@ -1100,7 +933,7 @@ class hypothesis:
                         'Thumbs_Down': False,
                         'column_name' : column_name,
                         'user_id' : user_id,
-                        'dataset_name' : dataset_name,
+                        'dataset_name' : dataset_name, 'dataset_id': query['dataset_id'],
                         'date_created' : datetime.datetime.utcnow()
                     }
                     db['Hypothesis_logs'].insert_one(hypoSummary)
@@ -1142,7 +975,7 @@ class hypothesis:
                         'Thumbs_Down': False,
                         'column_name' : column_name,
                         'user_id' : user_id,
-                        'dataset_name' : dataset_name,
+                        'dataset_name' : dataset_name, 'dataset_id': query['dataset_id'],
                         'date_created' : datetime.datetime.utcnow()
                     }
                     db['Hypothesis_logs'].insert_one(hypoSummary)
@@ -1151,9 +984,7 @@ class hypothesis:
                     pass
         
         # create/update history variable
-        self.create_history (column_name, dataset_name, user_id, history)
+        db.hypothesis_history.update_one(query, {'$set': {'history': history}}, upsert=True)
         
         return jsonify({'data' : data,
                         'insights_used': insights_used, 'hypothesis_ids' : hypo_id})
-
-    

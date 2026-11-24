@@ -1,11 +1,13 @@
+import os
 import requests
 import time
 
-API_URL = "https://api-inference.huggingface.co/models/tiiuae/falcon-7b-instruct"
-headers = {"Authorization": "Bearer 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"}
+API_URL = os.getenv("HF_INFERENCE_URL") or "https://api-inference.huggingface.co/models/tiiuae/falcon-7b-instruct"
+token = os.environ["HF_TOKEN"]
+headers = {"Authorization": f"Bearer {token}"}
 
 def query(payload):
-	response = requests.post(API_URL, headers=headers, json=payload)
+	response = requests.post(API_URL, headers=headers, json=payload, timeout=30)
 	return response.json()
 
 start = time.time()

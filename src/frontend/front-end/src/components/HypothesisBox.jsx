@@ -26,7 +26,9 @@ const buttonVariants = {
   normal: { scale: 1, backgroundColor: '#FFFFFF' },
 };
 
-function HypothesisBox({ userId, sessionId }) {
+function HypothesisBox({
+  userId, sessionId, datasetName, datasetId,
+}) {
   const { selectedColumn } = useContext(SelectedColumnContext);
   const { updateHypothesisData, hypothesisData, setHypothesisData } = useContext(HypothesisDataContext);
   const { insightsData, selectedInsights } = useContext(InsightsDataContext);
@@ -38,13 +40,10 @@ function HypothesisBox({ userId, sessionId }) {
   const closeModal = () => setIsModalOpen(false);
 
   const [refresh, setRefresh] = useState(false);
-  const [error, setError] = useState(false);
+  const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
   const getHypothesisData = async () => {
-    const storedDataString = localStorage.getItem('dataSetInfo');
-    const storedData = JSON.parse(storedDataString);
-
     if (!selectedColumn) {
       return;
     }
@@ -56,7 +55,8 @@ function HypothesisBox({ userId, sessionId }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           column_name: selectedColumn,
-          dataset_name: storedData.title,
+          dataset_name: datasetName,
+          dataset_id: datasetId,
           insights: insightsData,
           context: contextText,
           user_id: userId,
@@ -70,19 +70,20 @@ function HypothesisBox({ userId, sessionId }) {
         setHypothesisIds(data.hypothesis_ids);
         if (data.data.length > 0) {
           updateHypothesisData(true);
-          setError(false);
-          setIsLoading(false); // Stop loading after API call is complete
+          setError('');
         } else {
           updateHypothesisData(false);
-          setError(true);
-          setIsLoading(false); // Stop loading after API call is complete
+          setError('No hypotheses were returned.');
         }
       } else {
-        console.error('Failed to fetch hypothesisData: ', data);
-        setIsLoading(false); // Stop loading after API call is complete
+        updateHypothesisData(false);
+        setError(data.error || 'Could not load hypotheses.');
       }
     } catch (err) {
-      console.error('Network error:', err);
+      updateHypothesisData(false);
+      setError('Could not reach the hypothesis service.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -177,7 +178,7 @@ function HypothesisBox({ userId, sessionId }) {
         </div>
       ) : error ? (
         <div className="text-center p-4 font-medium">
-          No data available.
+          {error}
         </div>
       ) : selectedColumn === undefined || selectedColumn === null || selectedColumn === '' ? (
         <div className="text-center p-4 font-medium">

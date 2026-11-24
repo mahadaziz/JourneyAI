@@ -2,7 +2,8 @@
 flask.dockerfile
 __pycache__
     .Python
-    .env
+.env
+.env.*
     .tox
     .cache
     .git

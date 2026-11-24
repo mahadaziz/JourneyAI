@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { HomeIcon } from '@heroicons/react/24/solid';
 import SideNav from './SideNav';
 import DocumentTitle from './DocumentTitle';
@@ -10,36 +10,9 @@ import ThemeSwitcher from './ThemeSwitcher';
 
 import '../app/globals.css';
 
-function NavBar({ userId, sessionId }) {
-  const [title, setTitle] = useState('');
-  const [columns, setColumns] = useState({});
-
-  useEffect(() => {
-    // Function to update state based on localStorage data
-    const updateFromLocalStorage = () => {
-      const storedDataString = localStorage.getItem('dataSetInfo');
-      if (storedDataString) {
-        const storedData = JSON.parse(storedDataString);
-        setTitle(storedData.title);
-        setColumns(storedData.column_names);
-      }
-    };
-    // Call once to initialize state
-    updateFromLocalStorage();
-
-    // Event listener for storage changes
-    const handleStorageChange = (event) => {
-      if (event.key === 'dataSetInfo') {
-        updateFromLocalStorage();
-      }
-    };
-    window.addEventListener('storage', handleStorageChange);
-    // Cleanup event listener
-    return () => {
-      window.removeEventListener('storage', handleStorageChange);
-    };
-  }, []);
-
+function NavBar({
+  datasetId, dataset, userId, sessionId,
+}) {
   return (
     <div className="bg-neutral-900 w-screen p-3">
       <div className="flex flex-row justify-between items-center w-full">
@@ -53,16 +26,21 @@ function NavBar({ userId, sessionId }) {
         </div>
 
         <div>
-          <DocumentTitle title={title} />
+          <DocumentTitle />
         </div>
 
         {/* DropDown Menu */}
         <div className="flex justify-center lg:justify-end lg:pl-4 mr-3 lg:ml-9 w-full">
-          <OptionsMenu columns={columns} sessionId={sessionId} />
+          <OptionsMenu columns={dataset.columns} />
         </div>
 
         <div className="md:hidden">
-          <ToggleButton />
+          <ToggleButton
+            datasetId={datasetId}
+            datasetName={dataset.title}
+            userId={userId}
+            sessionId={sessionId}
+          />
         </div>
 
         <div className="hidden md:col-span-2 md:flex md:justify-end flex-grow items-center w-full pl-3 pr-5">

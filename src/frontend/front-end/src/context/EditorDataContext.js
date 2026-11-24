@@ -1,21 +1,25 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 
-export const EditorDataContext = React.createContext({
-  editorText: '',
-  setEditorText: () => {},
-  contextText: '',
-  setContextText: () => {},
-});
+export const EditorDataContext = React.createContext({});
 
-export function EditorDataProvider({ children }) {
-  const [editorText, setEditorText] = useState('');
+export function EditorDataProvider({
+  children, datasetId, initialTitle, revision,
+}) {
+  const [title, setTitle] = useState(initialTitle);
   const [contextText, setContextText] = useState('');
+
+  useEffect(() => {
+    if (revision === 0) {
+      const previousTitle = localStorage.getItem(`journeyai:title:${datasetId}`);
+      if (previousTitle?.trim()) setTitle(previousTitle);
+    }
+  }, [datasetId, revision]);
 
   return (
     <EditorDataContext.Provider value={{
-      editorText, setEditorText, contextText, setContextText,
+      title, setTitle, contextText, setContextText,
     }}
     >
       {children}

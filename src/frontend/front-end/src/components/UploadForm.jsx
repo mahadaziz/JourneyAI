@@ -1,17 +1,18 @@
 'use client';
 
-import React, { useState, useContext } from 'react';
+import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { UploadIcon } from './Icons';
 import '../app/globals.css';
 
 function UploadForm({
-  isVisible, toggleVisibility, userId,
+  isVisible, toggleVisibility,
 }) {
   const [selectedFile, setSelectedFile] = useState(null);
   const [title, setTitle] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
+  const [error, setError] = useState('');
   const router = useRouter();
 
   const handleFileUpload = (event) => {
@@ -30,35 +31,43 @@ function UploadForm({
   const handleSubmit = async (event) => {
     event.preventDefault();
     if (!selectedFile) {
-      console.log('No file selected');
+      setError('Choose a CSV file to continue.');
       return;
     }
+    setError('');
+    setIsLoading(true);
     const formData = new FormData();
     formData.append('file', selectedFile);
-    formData.append('user_id', userId);
     formData.append('title', title);
     try {
+      const ticketResponse = await fetch('/api/datasets/upload-ticket', { method: 'POST' });
+      const ticket = await ticketResponse.json();
+      if (!ticketResponse.ok) {
+        setError(ticket.error || 'Sign in and retry the upload.');
+        return;
+      }
+      formData.append('upload_ticket', ticket.token);
       const response = await fetch(`${process.env.NEXT_PUBLIC_LOCAL_URL}/upload_dataset`, {
         method: 'POST',
         body: formData,
       });
 
-      if (response.ok) {
-        const data = await response.json();
-        console.log('File uploaded successfully', data);
-        localStorage.setItem('dataSetInfo', JSON.stringify(data)); // Store the data in localStorage
-        toggleVisibility(false);
-        router.push('/dashboard');
-      } else {
-        console.error('Upload failed with status:', response.status);
+      const data = await response.json();
+      if (!response.ok) {
+        setError(data.error || 'The upload failed. Try again.');
+        return;
       }
-    } catch (error) {
-      console.error('Error making the API call:', error.message);
+      router.push(`/dashboard?dataset=${encodeURIComponent(data.dataset_id)}`);
+      toggleVisibility(false);
+    } catch {
+      setError('Could not reach the upload service.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
-    <div id="authentication-modal" aria-hidden="true" className={`${isVisible ? '' : 'hidden'} overflow-y-auto overflow-x-hidden flex z-50 justify-center items-center w-full md:inset-0 h-[calc(100%-1rem)] max-h-full`}>
+    <div id="authentication-modal" role="dialog" aria-modal="true" aria-label="Upload dataset" className={`${isVisible ? '' : 'hidden'} overflow-y-auto overflow-x-hidden flex z-50 justify-center items-center w-full md:inset-0 h-[calc(100%-1rem)] max-h-full`}>
       <div className="p-4 w-full max-w-md max-h-full">
 
         <div className="relative bg-white rounded-lg shadow dark:bg-gray-700">
@@ -74,7 +83,7 @@ function UploadForm({
             </button>
           </div>
           <div className="p-4 md:p-5">
-            <form className="space-y-4 " action="#">
+            <form className="space-y-4" onSubmit={handleSubmit}>
               <div>
                 <label className="block mb-2 text-md font-medium text-gray-900 dark:text-white">Enter your Title:</label>
                 <input
@@ -104,6 +113,7 @@ function UploadForm({
                   {selectedFile?.name}
                 </div>
               </div>
+              {error && <p role="alert">{error}</p>}
               <div className="flex justify-center">
                 {isLoading ? (
                   <div className="flex justify-center items-center pt-12" role="status">
@@ -114,7 +124,7 @@ function UploadForm({
                     <span className="sr-only">Loading...</span>
                   </div>
                 ) : (
-                  <button type="button" onClick={handleSubmit}>
+                  <button type="submit">
                     Submit
                   </button>
                 )}

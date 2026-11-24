@@ -10,12 +10,8 @@ export const InsightsDataContext = React.createContext({
 });
 
 export function InsightsDataProvider({ children }) {
-  const [insightsData, setInsightsData] = useState([]);
+  const [insightsData, updateInsightsData] = useState({});
   const [selectedInsights, setSelectedInsights] = useState([]);
-
-  const updateInsightsData = (status) => {
-    setInsightsData(status);
-  };
 
   const updateSelectedInsights = (newInsight) => {
     if (selectedInsights.includes(newInsight)) {

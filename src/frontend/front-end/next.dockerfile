@@ -21,6 +21,7 @@ COPY . .
 # Learn more here: https://nextjs.org/telemetry
 # Uncomment the following line in case you want to disable telemetry during the build.
 ENV NEXT_TELEMETRY_DISABLED 1
+ARG NEXT_PUBLIC_LOCAL_URL=http://127.0.0.1:8080
 
 # RUN yarn build
 

@@ -1,6 +1,4 @@
-import React from 'react';
 import '../globals.css';
-import { EditorDataProvider } from '../../context/EditorDataContext';
 
 export const metadata = {
   title: 'Data Driven Stories',
@@ -8,10 +6,5 @@ export const metadata = {
 };
 
 export default function RootLayout({ children }) {
-  return (
-    <EditorDataProvider>
-      {children}
-    </EditorDataProvider>
-
-  );
+  return children;
 }
