@@ -836,155 +836,123 @@ class insights:
         output =  {k: v for k, v in output.items() if v != [] and v != {}}      
         return jsonify({'insights' : output, 'prev_insights' : prev_insights, 'count' : new_insights_count})
             
+def generate_hypothesis(groq_key, hf_token, finding, history):
+    instruction = (
+        "Suggest one concise, testable hypothesis for a journalist investigating the current "
+        "finding. Refer to the finding and present your explanation as a possibility."
+    )
+    prompt = json.dumps({"recent_inputs": history, "current_finding": finding}, ensure_ascii=False)
+    custom_url = os.getenv("HF_INFERENCE_URL") if not groq_key else None
+    if custom_url:
+        url = custom_url
+        payload = {
+            "inputs": f"{instruction}\n{prompt}\nHypothesis:",
+            "parameters": {"return_full_text": False, "max_new_tokens": 160},
+        }
+    else:
+        if groq_key:
+            url = "https://api.groq.com/openai/v1/chat/completions"
+            model = "openai/gpt-oss-20b"
+        else:
+            url = "https://router.huggingface.co/v1/chat/completions"
+            model = os.getenv("HF_MODEL") or "Qwen/Qwen3-30B-A3B-Instruct-2507"
+        payload = {
+            "model": model,
+            "messages": [
+                {"role": "system", "content": instruction},
+                {"role": "user", "content": prompt},
+            ],
+        }
+        if groq_key:
+            payload.update(max_completion_tokens=512, reasoning_effort="low")
+        else:
+            payload["max_tokens"] = 160
+    response = requests.post(
+        url, headers={"Authorization": f"Bearer {groq_key or hf_token}"},
+        json=payload, timeout=(5, 30), allow_redirects=False,
+    )
+    response.raise_for_status()
+    result = response.json()
+    text = result[0]["generated_text"] if custom_url else result["choices"][0]["message"]["content"]
+    if not isinstance(text, str) or not text.strip():
+        raise ValueError("Empty hypothesis")
+    return text.strip()
+
+
 class hypothesis:
     def get_hypothesis(self):
-        # Get all variables
-        column_name = request.json.get('column_name')
-        dataset_name = request.json.get('dataset_name')
-        user_id = request.json.get('user_id')
-        insights = request.json.get('insights')
-        selected_insights = request.json.get('selected_insights')
-        context = request.json.get('context')
-        data = []
-        insights_used = []
-        hypo_id = {}
-        # HuggingFace credentials
-        api_url = os.getenv("HF_INFERENCE_URL") or "https://api-inference.huggingface.co/models/tiiuae/falcon-7b-instruct"
-        token = os.getenv("HF_TOKEN")
-        if not token:
-            return jsonify({"error": "Hypothesis generation is not configured."}), 503
-        headers = {"Authorization": f"Bearer {token}"}
-        
-        def query_ai(payload):
-            response = requests.post(api_url, headers=headers, json=payload, timeout=30)
-            return response.json()
-        
-        # get history variable if it exists, else make new history
-        query = {'column_name': column_name, 'dataset_name': dataset_name, 'user_id': user_id,
-                 'dataset_id': request.json.get('dataset_id')}
-        previous = db.hypothesis_history.find_one(query)
-        history = previous['history'] if previous else []
+        groq_key = os.getenv("GROQ_API_KEY", "").strip()
+        hf_token = os.getenv("HF_TOKEN", "").strip()
+        if not (groq_key or hf_token):
+            return jsonify(error="Hypothesis generation is not configured."), 503
 
-        # check if context is not empty
-        if context and context != ".":
-            # make API call to generate hypothesis with the context
-            output = query_ai({
-                "inputs": "User Inputs: " + str(history) + "\nCurrent Input: " + context + "\nGenerate an answer for why this is the case in the form of a hypothesis. Make sure to reference the current input in the hypothesis." + "\nAnswer:",
-                "parameters": {
-                    "return_full_text": False,
-                    "repetition_penalty": 1.5,
-                    "temperature": 0.6,
-                    "max_time": 1.5
-                    }
-            })
-            # insert context to history
-            history.insert(0, context)
-            if len(history) > 10:
-                history.pop()
-            try:
-                # add output to dictionary
-                data.append(output[0]['generated_text'])
-                insights_used.append(context)
-                tempid = str(uuid.uuid4())
-                hypoSummary = {
-                    '_id' : tempid,
-                    'hypothesis' : output[0]['generated_text'],
-                    'context_used' : context,
-                    'insight_used' : None,
-                    'Thumbs_Up' : False,
-                    'Thumbs_Down': False,
-                    'column_name' : column_name,
-                    'user_id' : user_id,
-                    'dataset_name' : dataset_name, 'dataset_id': query['dataset_id'],
-                    'date_created' : datetime.datetime.utcnow()
-                } 
-                db['Hypothesis_logs'].insert_one(hypoSummary)
-                hypo_id[output[0]['generated_text']] = tempid
-                
-            except KeyError as e:
-                pass
-        
-        # if user selected insights
-        if selected_insights:
-            for insight in selected_insights:
-                # generate hypothesis with selected insights
-                output = query_ai({
-                    "inputs": "User Inputs: " + str(history) + "\nCurrent Input: " + insight + "\nGenerate an answer for why this is the case in the form of a hypothesis. Make sure to reference the current input in the hypothesis." + "\nAnswer:",
-                    "parameters": {
-                        "return_full_text": False,
-                        "repetition_penalty": 1.5,
-                        "temperature": 0.6,
-                        "max_time": 1.5
-                        }
-                })
-                history.insert(0, insight)
-                if len(history) > 10:
-                    history.pop()
-                try:
-                    data.append(output[0]['generated_text'])
-                    insights_used.append(insight)
-                    tempid = str(uuid.uuid4())
-                    hypoSummary = {
-                        '_id' : tempid,
-                        'hypothesis' : output[0]['generated_text'],
-                        'context_used' : context,
-                        'insight_used' : None,
-                        'Thumbs_Up' : False,
-                        'Thumbs_Down': False,
-                        'column_name' : column_name,
-                        'user_id' : user_id,
-                        'dataset_name' : dataset_name, 'dataset_id': query['dataset_id'],
-                        'date_created' : datetime.datetime.utcnow()
-                    }
-                    db['Hypothesis_logs'].insert_one(hypoSummary)
-                    hypo_id[output[0]['generated_text']] = tempid
-                except KeyError as e:
-                    pass
-        else:
+        body = request.get_json(silent=True)
+        if not isinstance(body, dict):
+            return jsonify(error="Expected a JSON object."), 400
+        ticket = body.get("hypothesis_ticket")
+        if not isinstance(ticket, str) or not ticket:
+            return jsonify(error="Sign in and retry generating hypotheses."), 401
+        issued = db.hypothesis_tickets.find_one_and_delete({
+            "_id": ticket, "expires_at": {"$gt": datetime.datetime.utcnow()},
+        })
+        if not issued:
+            return jsonify(error="Sign in and retry generating hypotheses."), 401
+        scope = {key: issued[key] for key in ("column_name", "dataset_name", "user_id", "dataset_id")}
+
+        context = body.get("context") or ""
+        selected = body.get("selected_insights") or []
+        if not isinstance(context, str) or not isinstance(selected, list):
+            return jsonify(error="Invalid draft or selected insights."), 400
+        if not selected:
+            insights = body.get("insights") or []
             if isinstance(insights, dict):
-                insights = [value for list_value in insights.values() for value in list_value]
+                # Graph descriptions are the keys of the graphs group.
+                insights = [item for group in insights.values() if isinstance(group, (list, dict))
+                            for item in group]
+            if not isinstance(insights, list):
+                return jsonify(error="Invalid insights."), 400
+            selected = random.sample(insights, min(2, len(insights)))
+        if any(not isinstance(item, str) for item in selected):
+            return jsonify(error="Expected text for each insight."), 400
 
-            # select any two random insights
-            if len(insights) >= 2:
-                insights = random.sample(insights, 2)            
+        inputs = []
+        if context.strip() and context.strip() != ".":
+            inputs.append(("context_used", context))
+        inputs.extend(("insight_used", item) for item in selected if item.strip())
+        if not inputs:
+            return jsonify(error="Select a finding or write a sentence to generate a hypothesis."), 400
 
-            for insight in insights:
-                # generate hypothesis with insights
-                output = query_ai({
-                    "inputs": "User Inputs: " + str(history) + "\nCurrent Input: " + insight + "\nGenerate an answer for why this is the case in the form of a hypothesis. Make sure to reference the current input in the hypothesis." + "\nAnswer:",
-                    "parameters": {
-                        "return_full_text": False,
-                        "repetition_penalty": 1.5,
-                        "temperature": 0.6,
-                        "max_time": 1.5
-                        }
-                })
-                history.insert(0, insight)
-                if len(history) > 10:
-                    history.pop()
-                try:
-                    data.append(output[0]['generated_text'])
-                    insights_used.append(insight)
-                    tempid = str(uuid.uuid4())
-                    hypoSummary = {
-                        '_id' : tempid,
-                        'hypothesis' : output[0]['generated_text'],
-                        'context_used' : context,
-                        'insight_used' : None,
-                        'Thumbs_Up' : False,
-                        'Thumbs_Down': False,
-                        'column_name' : column_name,
-                        'user_id' : user_id,
-                        'dataset_name' : dataset_name, 'dataset_id': query['dataset_id'],
-                        'date_created' : datetime.datetime.utcnow()
-                    }
-                    db['Hypothesis_logs'].insert_one(hypoSummary)
-                    hypo_id[output[0]['generated_text']] = tempid
-                except KeyError as e:
-                    pass
-        
-        # create/update history variable
-        db.hypothesis_history.update_one(query, {'$set': {'history': history}}, upsert=True)
-        
-        return jsonify({'data' : data,
-                        'insights_used': insights_used, 'hypothesis_ids' : hypo_id})
+        previous = db.hypothesis_history.find_one(scope)
+        history = previous["history"][:10] if previous else []
+        logs = []
+        for field, finding in inputs:
+            try:
+                text = generate_hypothesis(groq_key, hf_token, finding, history)
+            except requests.HTTPError as exc:
+                messages = {
+                    401: "The model provider rejected the backend API key.",
+                    403: "Check the backend key's inference permissions and access to the selected model.",
+                    402: "Inference credits are unavailable for this account.",
+                    429: "The model's request limit was reached. Try again later.",
+                    503: "The model service is starting or busy. Try again shortly.",
+                }
+                return jsonify(error=messages.get(exc.response.status_code, "The model provider could not generate a hypothesis.")), 502
+            except requests.Timeout:
+                return jsonify(error="The model took too long to respond. Try again."), 504
+            except (requests.RequestException, ValueError, KeyError, IndexError, TypeError):
+                return jsonify(error="The model service did not return a usable hypothesis."), 502
+            logs.append({
+                **scope, "_id": str(uuid.uuid4()), "hypothesis": text,
+                "context_used": None, "insight_used": None, field: finding,
+                "Thumbs_Up": False, "Thumbs_Down": False,
+                "date_created": datetime.datetime.utcnow(),
+            })
+            history = [finding, *history[:9]]
+
+        db.Hypothesis_logs.insert_many(logs)
+        used = [finding for _, finding in inputs]
+        db.hypothesis_history.update_one(scope, {"$push": {"history": {
+            "$each": list(reversed(used)), "$position": 0, "$slice": 10,
+        }}}, upsert=True)
+        return jsonify(data=[log["hypothesis"] for log in logs], insights_used=used,
+                       hypothesis_ids={log["hypothesis"]: log["_id"] for log in logs})

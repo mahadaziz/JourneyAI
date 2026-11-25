@@ -7,6 +7,7 @@ from unittest.mock import patch
 
 import mongomock
 import pandas as pd
+import requests
 
 
 SAMPLE = Path(__file__).resolve().parents[3] / "examples" / "vehicles.csv"
@@ -22,6 +23,7 @@ class DashboardTests(unittest.TestCase):
 
     def setUp(self):
         self.db = mongomock.MongoClient().db
+        self.enterContext(patch.dict(os.environ, {"GROQ_API_KEY": "", "HF_TOKEN": "", "HF_INFERENCE_URL": ""}))
         self.enterContext(patch("application.routes.db", self.db))
         self.enterContext(patch("application.models.db", self.db))
 
@@ -42,9 +44,72 @@ class DashboardTests(unittest.TestCase):
                 self.assertTrue(response.get_json()["insights"]["graphs"])
 
     def test_hypotheses_without_a_token(self):
-        with patch.dict(os.environ, {"HF_TOKEN": ""}):
-            response = self.client.post("/get_hypothesis", json={})
+        response = self.client.post("/get_hypothesis", json={})
         self.assertEqual(response.status_code, 503)
+
+    def hypothesis_body(self, **fields):
+        self.db.hypothesis_tickets.insert_one({
+            "_id": "one-use", "dataset_id": "vehicles", "dataset_name": "Vehicles",
+            "column_name": "year", "user_id": "writer",
+            "expires_at": datetime.utcnow() + timedelta(minutes=1),
+        })
+        return {"hypothesis_ticket": "one-use", **fields}
+
+    def test_chat_hypothesis_and_feedback(self):
+        options = {"HF_TOKEN": "test", "HF_MODEL": "test-model"}
+        with patch.dict(os.environ, options), patch("application.models.requests.post") as send:
+            send.return_value.json.return_value = {
+                "choices": [{"message": {"content": "Newer engines may use less fuel."}}]
+            }
+            response = self.client.post("/get_hypothesis", json=self.hypothesis_body(
+                selected_insights=["City consumption fell from 10.6 to 9.2 L/100 km."],
+            ))
+        self.assertEqual(response.status_code, 200)
+        text, = response.json["data"]
+        self.assertEqual(text, "Newer engines may use less fuel.")
+        args, kwargs = send.call_args
+        self.assertEqual(args[0], "https://router.huggingface.co/v1/chat/completions")
+        self.assertEqual(kwargs["json"]["model"], "test-model")
+        self.assertIn("10.6 to 9.2", kwargs["json"]["messages"][-1]["content"])
+        log_id = response.json["hypothesis_ids"][text]
+        self.assertEqual(self.client.post("/good_hypothesis", json={"hypothesis_id": log_id}).status_code, 200)
+        self.assertTrue(self.db.Hypothesis_logs.find_one({"_id": log_id})["Thumbs_Up"])
+
+    def test_custom_text_generation_endpoint(self):
+        url = "https://example.test/generate"
+        with patch.dict(os.environ, {"HF_TOKEN": "test", "HF_INFERENCE_URL": url}), patch("application.models.requests.post") as send:
+            send.return_value.json.return_value = [{"generated_text": "Engine size may explain the change."}]
+            response = self.client.post("/get_hypothesis", json=self.hypothesis_body(context="Cars used less fuel."))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json["data"], ["Engine size may explain the change."])
+        self.assertEqual(send.call_args.args[0], url)
+        self.assertIn("Cars used less fuel.", send.call_args.kwargs["json"]["inputs"])
+
+    def test_provider_failure_preserves_history_for_retry(self):
+        denied = requests.Response()
+        denied.status_code = 403
+        with patch.dict(os.environ, {"HF_TOKEN": "test"}), patch("application.models.requests.post") as send:
+            send.return_value = denied
+            response = self.client.post("/get_hypothesis", json=self.hypothesis_body(context="Sales doubled."))
+        self.assertEqual(response.status_code, 502)
+        self.assertIn("inference permissions", response.json["error"])
+        self.assertEqual(self.db.Hypothesis_logs.count_documents({}), 0)
+        self.assertEqual(self.db.hypothesis_history.count_documents({}), 0)
+
+    def test_groq_uses_its_own_key_and_scopes_history_to_ticket(self):
+        config = {"GROQ_API_KEY": "groq-test-key", "HF_TOKEN": "hf-test-key"}
+        with patch.dict(os.environ, config), patch("application.models.requests.post") as send:
+            send.return_value.json.return_value = {"choices": [{"message": {"content": "A testable explanation."}}]}
+            body = self.hypothesis_body(context="Sales fell.", user_id="another-writer")
+            response = self.client.post("/get_hypothesis", json=body)
+            replay = self.client.post("/get_hypothesis", json=body)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(replay.status_code, 401)
+        send.assert_called_once()
+        self.assertEqual(send.call_args.args[0], "https://api.groq.com/openai/v1/chat/completions")
+        self.assertEqual(send.call_args.kwargs["headers"], {"Authorization": "Bearer groq-test-key"})
+        self.assertEqual(send.call_args.kwargs["json"]["model"], "openai/gpt-oss-20b")
+        self.assertEqual(self.db.hypothesis_history.count_documents({"user_id": "another-writer"}), 0)
 
     def test_sparse_columns_and_count_header(self):
         rows = [

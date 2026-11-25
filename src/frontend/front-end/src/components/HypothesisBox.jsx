@@ -26,9 +26,7 @@ const buttonVariants = {
   normal: { scale: 1, backgroundColor: '#FFFFFF' },
 };
 
-function HypothesisBox({
-  userId, sessionId, datasetName, datasetId,
-}) {
+function HypothesisBox({ sessionId, datasetId }) {
   const { selectedColumn } = useContext(SelectedColumnContext);
   const { updateHypothesisData, hypothesisData, setHypothesisData } = useContext(HypothesisDataContext);
   const { insightsData, selectedInsights } = useContext(InsightsDataContext);
@@ -50,16 +48,24 @@ function HypothesisBox({
 
     setIsLoading(true); // Set loading to true before API call
     try {
+      const ticketResponse = await fetch(`/api/datasets/${datasetId}/hypothesis-ticket`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ column_name: selectedColumn }),
+      });
+      const ticket = await ticketResponse.json();
+      if (!ticketResponse.ok) {
+        updateHypothesisData(false);
+        setError(ticket.error || 'Sign in and try again.');
+        return;
+      }
       const response = await fetch(`${process.env.NEXT_PUBLIC_LOCAL_URL}/get_hypothesis`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          column_name: selectedColumn,
-          dataset_name: datasetName,
-          dataset_id: datasetId,
+          hypothesis_ticket: ticket.token,
           insights: insightsData,
           context: contextText,
-          user_id: userId,
           selected_insights: selectedInsights,
         }),
       });
@@ -155,6 +161,8 @@ function HypothesisBox({
         </div>
         <motion.button
           onClick={handleRefresh}
+          disabled={isLoading || !selectedColumn}
+          aria-label="Generate hypotheses"
           type="button"
           className="text-black bg-white hover:bg-gray-400 focus:outline-none font-medium rounded-full text-sm px-5 py-2.5 text-center inline-flex items-center me-2 dark:text-gray-800 dark:bg-white dark:hover:bg-gray-300"
           variants={buttonVariants}

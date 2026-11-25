@@ -1,5 +1,17 @@
 import { Types } from 'mongoose';
+import { randomBytes } from 'crypto';
 import { connectMongoDB } from './mongodb';
+
+export async function issueDatasetTicket(collectionName, scope) {
+  const { connection } = await connectMongoDB();
+  const tickets = connection.collection(collectionName);
+  await tickets.createIndex({ expires_at: 1 }, { expireAfterSeconds: 0 });
+  const token = randomBytes(32).toString('hex');
+  await tickets.insertOne({
+    _id: token, ...scope, expires_at: new Date(Date.now() + 10 * 60 * 1000),
+  });
+  return token;
+}
 
 export async function findUserDataset(userId, datasetId, projection) {
   if (!userId) return null;

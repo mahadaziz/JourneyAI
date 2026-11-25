@@ -60,8 +60,6 @@ export default async function Dashboard({ searchParams }) {
                 <div className="w-full overflow-y-auto">
                   <HypothesisBox
                     datasetId={datasetId}
-                    datasetName={dataset.title}
-                    userId={session.userId}
                     sessionId={session.sessionId}
                   />
                 </div>

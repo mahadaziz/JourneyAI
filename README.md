@@ -9,7 +9,7 @@ In the sample CSV, average city fuel consumption falls from 10.6 to 9.2 L/100 km
 ## Inside the dashboard
 
 - **Explore a column.** The Flask analysis code looks for outliers, trends, distributions and associations. The React dashboard renders the results, with D3 bar, line and scatter plots for graphical findings.
-- **Develop a story.** A Tiptap editor sits beside the findings. The hypothesis panel can send selected insights or writing context to a Hugging Face text-generation endpoint and record thumbs-up or thumbs-down feedback.
+- **Develop a story.** A Tiptap editor sits beside the findings. The hypothesis panel sends findings and writing context to a hosted model and records thumbs-up or thumbs-down feedback.
 - **Return to a draft.** Upload a CSV, name the story and select **Save** to store its title, text and formatting in MongoDB. Open the story from your homepage to resume writing alongside the same dataset. If another tab has saved a newer revision, the editor keeps your current edits on screen and explains the conflict.
 
 ## Run locally
@@ -18,7 +18,9 @@ The frontend uses Next.js 14, React 18 and NextAuth. The backend uses Flask, pan
 
 1. Start MongoDB locally or provide a development database. The app creates its collections on first use.
 2. For a fresh checkout, copy the [frontend environment template](src/frontend/front-end/.env.example) and [backend environment template](src/backend/.env.example) to a file named `.env` beside each template. Point both connection strings at the same instance. Generate a separate private value for each signing secret using the commands in the templates.
-3. For the optional hypothesis feature, set `HF_TOKEN` and, if needed, `HF_INFERENCE_URL` on the backend. The prototype originally targeted Falcon-7B-Instruct. A replacement endpoint must accept Hugging Face text-generation inputs and return a list containing `generated_text`.
+3. To use the online hypothesis model during development, set `GROQ_API_KEY` in `src/backend/.env` and restart Flask. Select a column in the dashboard, click a finding, then click the refresh arrow beside **Hypotheses**. This sends the finding, recent inputs and supplied draft context to Groq.
+
+Alternatively, leave `GROQ_API_KEY` empty and set `HF_TOKEN` to use Hugging Face Inference Providers with inference credits. Set `HF_MODEL` to override the router model or `HF_INFERENCE_URL` for a dedicated text-generation endpoint.
 
 **Backend.** From the repository root in PowerShell, use Python 3.11 to start Flask in one terminal.
 
@@ -44,6 +46,15 @@ Open the app at `http://localhost:3000`. The Flask health route at `http://127.0
 ```powershell
 docker compose --env-file src/frontend/front-end/.env -f src/compose.yml up --build
 ```
+
+## Run online
+
+The frontend runs on Vercel, the Flask API runs on Render, and both connect to the same Atlas database. Groq hosts [gpt-oss-20b](https://huggingface.co/openai/gpt-oss-20b) under its [free-plan limits](https://console.groq.com/docs/rate-limits).
+
+1. Create a [Groq API key](https://console.groq.com/keys) on the free plan.
+2. Open the Render backend service, go to **Environment** and save the key as `GROQ_API_KEY`. Also set `MONGO_URI` to the Atlas connection string for the `db` database and set a private `SECRET_KEY`. Deploy the backend with those settings.
+3. On Vercel, use `src/frontend/front-end` as the Next.js project root. Set `MONGODB_URI` to the same database, `NEXTAUTH_URL` to the public frontend URL, `NEXTAUTH_SECRET` to its own private key, and `NEXT_PUBLIC_LOCAL_URL` to the public Render URL. Redeploy the frontend to apply the build-time API address.
+4. Sign in, upload [the vehicle sample](examples/vehicles.csv), choose **model year**, select a finding, and click the refresh arrow labeled **Generate hypotheses**.
 
 ## Check the dashboard
 
