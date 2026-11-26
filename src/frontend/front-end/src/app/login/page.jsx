@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { signIn } from 'next-auth/react';
+import Link from 'next/link';
 
 export default function page() {
   const [email, setEmail] = useState('');
@@ -116,6 +117,12 @@ export default function page() {
                 Dont have an account?
                 {' '}
                 <a href="/register" className="flex items-center justify-centerfont-bold ml-2 text-[#8077FF] hover:underline md:ml-2 md:mt-0">Register here</a>
+              </div>
+
+              <div className="flex justify-center text-sm font-bold text-white">
+                <Link href="/demo" className="underline hover:text-bgLight">
+                  Explore the sample dashboard
+                </Link>
               </div>
 
               {/* Forgot password div */}

@@ -1,3 +1,4 @@
+import json
 import os
 import unittest
 from datetime import datetime, timedelta
@@ -47,10 +48,10 @@ class DashboardTests(unittest.TestCase):
         response = self.client.post("/get_hypothesis", json={})
         self.assertEqual(response.status_code, 503)
 
-    def hypothesis_body(self, **fields):
+    def hypothesis_body(self, dataset_id="vehicles", column_name="year", **fields):
         self.db.hypothesis_tickets.insert_one({
-            "_id": "one-use", "dataset_id": "vehicles", "dataset_name": "Vehicles",
-            "column_name": "year", "user_id": "writer",
+            "_id": "one-use", "dataset_id": dataset_id, "dataset_name": "Vehicles",
+            "column_name": column_name, "user_id": "writer",
             "expires_at": datetime.utcnow() + timedelta(minutes=1),
         })
         return {"hypothesis_ticket": "one-use", **fields}
@@ -74,6 +75,45 @@ class DashboardTests(unittest.TestCase):
         log_id = response.json["hypothesis_ids"][text]
         self.assertEqual(self.client.post("/good_hypothesis", json={"hypothesis_id": log_id}).status_code, 200)
         self.assertTrue(self.db.Hypothesis_logs.find_one({"_id": log_id})["Thumbs_Up"])
+
+    def test_vehicle_hypothesis_uses_years_from_the_writers_upload(self):
+        rows = pd.read_csv(SAMPLE).to_dict("records")
+        dataset_id = self.db.datasets.insert_one({"user_id": "writer", "data": rows}).inserted_id
+        self.db.datasets.insert_one({"user_id": "another-writer", "data": [{"model year": 2016}]})
+        finding = "The maximum city consumption was 13.4 L/100 km for a 2018 model."
+        cases = [
+            ("Compare the mean for 2018 with vehicles from 2016 and 2017.", 502),
+            ("Vehicle class may explain the peak. Compare SUVs in 2018 and 2023.", 200),
+        ]
+        with patch.dict(os.environ, {"GROQ_API_KEY": "test"}), patch("application.models.requests.post") as send:
+            for answer, status in cases:
+                with self.subTest(answer=answer):
+                    send.return_value.json.return_value = {"choices": [{"message": {"content": answer}}]}
+                    body = self.hypothesis_body(str(dataset_id), "model year", selected_insights=[finding])
+                    response = self.client.post("/get_hypothesis", json=body)
+                    self.assertEqual(response.status_code, status)
+                    prompt = json.loads(send.call_args.kwargs["json"]["messages"][-1]["content"])
+                    self.assertEqual(prompt["examples_of_observed_years"], list(range(2018, 2024)))
+                    if status == 502:
+                        self.assertEqual(self.db.Hypothesis_logs.count_documents({}), 0)
+                        self.assertEqual(self.db.hypothesis_history.count_documents({}), 0)
+                    else:
+                        self.assertEqual(response.json["data"], [answer])
+
+    def test_year_coverage_preserves_gaps_and_accepts_measurements_in_the_finding(self):
+        rows = [{"model year": value} for value in (2018.0, None, "2020")]
+        dataset_id = self.db.datasets.insert_one({"user_id": "writer", "data": rows}).inserted_id
+        finding = "The heaviest 2018 vehicle weighed 2100 kg."
+        with patch.dict(os.environ, {"HF_TOKEN": "test"}), patch("application.models.requests.post") as send:
+            for year, status in [(2019, 502), (2020, 200)]:
+                send.return_value.json.return_value = {
+                    "choices": [{"message": {"content": f"Compare the 2100 kg vehicle with models from {year}."}}]
+                }
+                body = self.hypothesis_body(str(dataset_id), "model year", selected_insights=[finding])
+                response = self.client.post("/get_hypothesis", json=body)
+                self.assertEqual(response.status_code, status)
+                prompt = json.loads(send.call_args.kwargs["json"]["messages"][-1]["content"])
+                self.assertEqual(prompt["examples_of_observed_years"], [2018, 2020])
 
     def test_custom_text_generation_endpoint(self):
         url = "https://example.test/generate"

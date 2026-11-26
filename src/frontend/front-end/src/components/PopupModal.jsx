@@ -62,7 +62,7 @@ function PopupModal({ isModalOpen, closeModal, array }) {
 
     switch (chartType) {
       case 'line':
-        return <LineGraph chartData={array} {...getAdditionalProps()} />;
+        return <LineGraph rows={array[4]} {...getAdditionalProps()} />;
       case 'bar':
         return <BarGraph chartData={array} {...getAdditionalProps()} />;
       case 'scatter':

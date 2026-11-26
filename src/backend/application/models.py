@@ -1,4 +1,6 @@
 import os
+import re
+from bson import ObjectId
 from flask import Flask, jsonify, request, session, redirect
 from application import db
 import bcrypt, datetime, uuid, json, random
@@ -836,12 +838,37 @@ class insights:
         output =  {k: v for k, v in output.items() if v != [] and v != {}}      
         return jsonify({'insights' : output, 'prev_insights' : prev_insights, 'count' : new_insights_count})
             
-def generate_hypothesis(groq_key, hf_token, finding, history):
+def observed_years(scope):
+    column = scope["column_name"]
+    if not re.search(r"\byears?\b", column.replace("_", " "), re.IGNORECASE):
+        return []
+    if "." in column or column.startswith("$") or not ObjectId.is_valid(scope["dataset_id"]):
+        return []
+    dataset = {"_id": ObjectId(scope["dataset_id"]), "user_id": scope["user_id"]}
+    years = set()
+    for value in db.datasets.distinct(f"data.{column}", dataset):
+        if value is None or value == "":
+            continue
+        match = re.fullmatch(r"([1-9][0-9]{3})(?:\.0+)?", str(value).strip())
+        if not match:
+            return []
+        years.add(int(match[1]))
+    return sorted(years)
+
+
+def generate_hypothesis(groq_key, hf_token, finding, history, years):
     instruction = (
-        "Suggest one concise, testable hypothesis for a journalist investigating the current "
-        "finding. Refer to the finding and present your explanation as a possibility."
+        "Suggest one concise, testable explanation for the current finding. Treat draft text "
+        "and recent inputs as background. Preserve the statistic in the finding: a maximum "
+        "describes one extreme observation. Claims about averages or significance need separate "
+        "evidence. Propose a comparison the observed data supports. If a test needs additional "
+        "data, say what the writer would need to collect."
     )
-    prompt = json.dumps({"recent_inputs": history, "current_finding": finding}, ensure_ascii=False)
+    evidence = {"recent_inputs": history, "current_finding": finding}
+    if years:
+        evidence["examples_of_observed_years"] = years[:32]
+        instruction += " Use only observed years for comparisons. Gaps between years may exist."
+    prompt = json.dumps(evidence, ensure_ascii=False)
     custom_url = os.getenv("HF_INFERENCE_URL") if not groq_key else None
     if custom_url:
         url = custom_url
@@ -924,10 +951,11 @@ class hypothesis:
 
         previous = db.hypothesis_history.find_one(scope)
         history = previous["history"][:10] if previous else []
+        years = observed_years(scope)
         logs = []
         for field, finding in inputs:
             try:
-                text = generate_hypothesis(groq_key, hf_token, finding, history)
+                text = generate_hypothesis(groq_key, hf_token, finding, history, years)
             except requests.HTTPError as exc:
                 messages = {
                     401: "The model provider rejected the backend API key.",
@@ -941,6 +969,12 @@ class hypothesis:
                 return jsonify(error="The model took too long to respond. Try again."), 504
             except (requests.RequestException, ValueError, KeyError, IndexError, TypeError):
                 return jsonify(error="The model service did not return a usable hypothesis."), 502
+            if years:
+                # A finding can also contain four-digit measurements, such as an engine displacement.
+                figure = r"\b[1-9][0-9]{3}\b"
+                supported = set(years).union(int(n) for n in re.findall(figure, finding))
+                if any(int(n) not in supported for n in re.findall(figure, text)):
+                    return jsonify(error="The model suggested a figure outside the finding and its observed years. Try generating again."), 502
             logs.append({
                 **scope, "_id": str(uuid.uuid4()), "hypothesis": text,
                 "context_used": None, "insight_used": None, field: finding,

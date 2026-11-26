@@ -6,13 +6,13 @@ import React, { useEffect, useRef } from 'react';
 import * as d3 from 'd3';
 
 function LineGraph({
-  chartData, xField, yField, title,
+  rows, xField, yField, title,
 }) {
   const d3Container = useRef(null);
 
   useEffect(() => {
-    if (chartData && d3Container.current) {
-      const data = chartData[4].map((item) => ({
+    if (rows && d3Container.current) {
+      const data = rows.map((item) => ({
         xValue: item[xField],
         yValue: item[yField],
       }));
@@ -128,14 +128,14 @@ function LineGraph({
         .attr('x', width / 2)
         .attr('y', -20)
         .attr('text-anchor', 'middle')
-        .style('font-size', '16px')
+        .attr('font-size', '16px')
         .style('font-weight', '600')
         .text(title);
     }
-  }, [chartData, xField, yField, title]);
+  }, [rows, xField, yField, title]);
 
   return (
-    <svg ref={d3Container} role="img" aria-label={title} viewBox="0 0 700 400" width="700" style={{ maxWidth: '75vw', height: 'auto' }} />
+    <svg ref={d3Container} role="img" aria-label={title} viewBox="0 0 700 400" width="700" style={{ maxWidth: 'var(--line-chart-max-width, 75vw)', height: 'auto' }} />
   );
 }
 

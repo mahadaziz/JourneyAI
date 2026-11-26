@@ -2,9 +2,11 @@
 
 JourneyAI is a writing assistant for journalists exploring a dataset. A writer can inspect a statistical finding, open its chart and draft a paragraph in the same workspace. The prototype also uses selected findings and draft text to prompt a language model for hypotheses the writer can investigate.
 
+[Explore the sample dashboard](https://journey-ai-5con.vercel.app/demo) · [Sign in to JourneyAI](https://journey-ai-5con.vercel.app/login) · [Sample vehicle CSV](examples/vehicles.csv)
+
 ![JourneyAI dashboard with a draft and a line chart of average city fuel consumption by model year](docs/dashboard-preview.png)
 
-In the sample CSV, average city fuel consumption falls from 10.6 to 9.2 L/100 km between 2018 and 2023. Selecting **model year** and opening its average fuel consumption chart reproduces this view.
+In the public demo, choose a vehicle class to explore its chart, finding and example hypothesis. The sample covers 18 synthetic records. Average city fuel consumption falls from 10.6 to 9.2 L/100 km between 2018 and 2023. To write a draft or generate a new hypothesis, sign in and upload the sample CSV.
 
 ## Inside the dashboard
 
@@ -18,7 +20,7 @@ The frontend uses Next.js 14, React 18 and NextAuth. The backend uses Flask, pan
 
 1. Start MongoDB locally or provide a development database. The app creates its collections on first use.
 2. For a fresh checkout, copy the [frontend environment template](src/frontend/front-end/.env.example) and [backend environment template](src/backend/.env.example) to a file named `.env` beside each template. Point both connection strings at the same instance. Generate a separate private value for each signing secret using the commands in the templates.
-3. To use the online hypothesis model during development, set `GROQ_API_KEY` in `src/backend/.env` and restart Flask. Select a column in the dashboard, click a finding, then click the refresh arrow beside **Hypotheses**. This sends the finding, recent inputs and supplied draft context to Groq.
+3. To use the online hypothesis model during development, set `GROQ_API_KEY` in `src/backend/.env` and restart Flask. Select a column in the dashboard, click a finding, then click the refresh arrow beside **Hypotheses**. This sends the finding, recent inputs and supplied draft context to Groq. For a year column, the request also includes examples of years recorded in the upload.
 
 Alternatively, leave `GROQ_API_KEY` empty and set `HF_TOKEN` to use Hugging Face Inference Providers with inference credits. Set `HF_MODEL` to override the router model or `HF_INFERENCE_URL` for a dedicated text-generation endpoint.
 
@@ -73,6 +75,8 @@ npm run test:draft
 ```
 
 The browser test opens `http://localhost:3000` by default. Set `JOURNEYAI_TEST_URL` for a different local port or `JOURNEYAI_BROWSER_PATH` to use an existing Chromium or Edge executable.
+
+With the frontend running, `npm run test:demo` checks the signed-out demo, its vehicle filters, chart data and sample CSV download. The demo reads a bundled copy of the repository sample and can run independently of Flask, MongoDB and the model provider.
 
 ## Project materials
 
